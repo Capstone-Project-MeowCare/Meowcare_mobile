@@ -1,135 +1,184 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   StyleSheet,
   View,
   Text,
-  ScrollView,
+  FlatList,
   Image,
   Dimensions,
+  TextInput,
 } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 import CatSitterCard from "./CatSitterCard";
 import BecomeCatSitterCard from "./BecomeCatSitterCard";
+import HomeFooter from "./HomeFooter";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 
 const { width, height } = Dimensions.get("window");
 
+const catSitterData = [
+  {
+    id: "1",
+    sitterName: "Nguyễn Hoài Phúc",
+    address: "25 Thủ Đức, TP.HCM",
+    isVerified: true,
+    imageSource: require("../../assets/1.jpg"),
+  },
+  {
+    id: "2",
+    sitterName: "Dịch vụ chăm sóc thú cưng",
+    address: "200000",
+    isVerified: true,
+    imageSource: require("../../assets/bannerlogo2.png"),
+  },
+  {
+    id: "3",
+    sitterName: "Dịch vụ trông cưng",
+    address: "150000",
+    isVerified: true,
+    imageSource: require("../../assets/bannerlogo2.png"),
+  },
+  {
+    id: "4",
+    sitterName: "Dịch vụ trông cưng",
+    address: "150000",
+    isVerified: true,
+    imageSource: require("../../assets/bannerlogo2.png"),
+  },
+];
+
+function FirstRoute() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFFAF5",
+      }}
+    >
+      <View style={styles.catSitterGridContainer}>
+        {catSitterData.map((item) => (
+          <View key={item.id} style={styles.catSitterItemContainer}>
+            <CatSitterCard
+              sitterName={item.sitterName}
+              address={item.address}
+              imageSource={item.imageSource}
+              overlayText={item.overlayText}
+              isVerified={item.isVerified}
+            />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function SecondRoute() {
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Trông tại nhà</Text>
+    </View>
+  );
+}
+
+const Tab = createMaterialTopTabNavigator();
+
 export default function Home({ navigation }) {
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollViewContent}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Image
-            source={require("../../assets/bannerlogo2.png")}
-            style={styles.logo}
-          />
-        </View>
+    <View style={styles.container}>
+      <FlatList
+        data={[]}
+        keyExtractor={(item, index) => index.toString()}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.flatListContentContainer}
+        ListHeaderComponent={
+          <>
+            <View style={styles.headerContainer}>
+              <Image
+                source={require("../../assets/Group358.png")}
+                style={styles.logo}
+              />
+            </View>
 
-        <View style={styles.squareContainer}>
-          <View style={styles.contentContainer}>
-            <View style={styles.leftSide}>
-              <View style={styles.iconContainer}>
-                <FontAwesome
-                  name="money"
-                  size={24}
-                  color="#2ebf11"
-                  style={styles.icon}
-                />
-                <Text style={styles.moneyText}>0.00 VNĐ</Text>
+            <View style={styles.topBarContainer}>
+              <View style={styles.squareContainer}>
+                <FontAwesome name="map-o" size={24} color="#000857" />
               </View>
-              <Text style={styles.cashbackText}>
-                Nhận hoàn tiền với mỗi lần book thứ 3
-              </Text>
+              <View style={styles.searchBarContainer}>
+                <TextInput
+                  placeholder="Tìm kiếm người chăm sóc theo vị trí"
+                  style={styles.searchBar}
+                />
+                <FontAwesome
+                  name="heart-o"
+                  size={24}
+                  color="#000857"
+                  style={styles.searchIcon}
+                />
+              </View>
+            </View>
+            <View style={{ flex: 1, height: height * 0.6 }}>
+              <Tab.Navigator
+                screenOptions={({ route }) => ({
+                  tabBarLabel: ({ focused }) => (
+                    <View style={styles.tabLabelContainer}>
+                      <Image
+                        source={
+                          route.name === "Gửi thú cưng"
+                            ? require("../../assets/Vector.png")
+                            : require("../../assets/Vector1.png")
+                        }
+                        style={
+                          route.name === "Gửi thú cưng"
+                            ? styles.tabIcon
+                            : styles.tabIcon1
+                        }
+                      />
+                      <Text
+                        style={[
+                          // Áp dụng các style riêng biệt dựa trên tên tab
+                          route.name === "Gửi thú cưng"
+                            ? styles.tabTextStyle1
+                            : styles.tabTextStyle2,
+                          {
+                            color: focused ? "#000857" : "rgba(0, 8, 87, 0.6)",
+                          },
+                        ]}
+                      >
+                        {route.name}
+                      </Text>
+                    </View>
+                  ),
+                  tabBarIndicatorStyle: {
+                    backgroundColor: "#000857", // Đặt màu cho chỉ báo (underline khi tab được chọn)
+                  },
+                  tabBarStyle: {
+                    backgroundColor: "#FFFAF5",
+                  },
+                  tabBarInactiveTintColor: "#000857",
+                  tabBarActiveTintColor: "rgba(0, 8, 87, 0.6)",
+                })}
+              >
+                <Tab.Screen name="Gửi thú cưng" component={FirstRoute} />
+                <Tab.Screen name="Trông tại nhà" component={SecondRoute} />
+              </Tab.Navigator>
+            </View>
+          </>
+        }
+        ListFooterComponent={
+          <>
+            <View style={styles.centeredContainer}>
+              <BecomeCatSitterCard />
             </View>
 
-            <View style={styles.divider} />
-            <View style={styles.rightSide}>
-              <Text style={styles.text}>Book ngay !</Text>
+            <View style={styles.footerWrapper}>
+              <HomeFooter />
             </View>
-          </View>
-        </View>
-        <View style={styles.buttonContainer}>
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity style={styles.roundButton}>
-              <FontAwesome5 name="cat" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.buttonText}>Gửi thú cưng</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity style={styles.roundButton}>
-              <FontAwesome5 name="cut" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.buttonText}>Chải chuốt</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity style={styles.roundButton}>
-              <FontAwesome5 name="paw" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.buttonText}>Dắt bộ</Text>
-          </View>
-        </View>
-
-        <View style={styles.buttonContainerBottom}>
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity style={styles.roundButtonBottom}>
-              <Image
-                source={require("../../assets/PetCommandsTrain.png")}
-                style={styles.buttonImage}
-              />
-            </TouchableOpacity>
-            <Text style={styles.buttonText}>Huấn luyện</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity style={styles.roundButtonBottom}>
-              <Image
-                source={require("../../assets/CatCaregivers.png")}
-                style={styles.buttonImage}
-              />
-            </TouchableOpacity>
-            <Text style={styles.buttonText}>Trông thú cưng</Text>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity style={styles.roundButtonBottom}>
-              <FontAwesome5 name="syringe" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.buttonText}>Tiêm Vaccine</Text>
-          </View>
-        </View>
-
-        <View style={styles.catSitterContainer}>
-          <Text style={styles.catSitterText}>Cat Sitter gần bạn:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.catSitterCardsContainer}>
-              <CatSitterCard
-                serviceName="Dịch vụ trông thú cưng"
-                price="150000"
-                rating={5}
-                imageSource={require("../../assets/bannerlogo2.png")}
-              />
-              <CatSitterCard
-                serviceName="Dịch vụ chăm sóc thú cưng"
-                price="200000"
-                rating={5}
-                imageSource={require("../../assets/bannerlogo2.png")}
-              />
-              <CatSitterCard
-                serviceName="Dịch vụ trông thú cưng"
-                price="150000"
-                rating={5}
-                imageSource={require("../../assets/bannerlogo2.png")}
-              />
-              <CatSitterCard overlayText="Xem thêm" />
-            </View>
-          </ScrollView>
-        </View>
-        <View style={styles.centeredContainer}>
-          <BecomeCatSitterCard />
-        </View>
-      </View>
-    </ScrollView>
+          </>
+        }
+      />
+    </View>
   );
 }
 
@@ -151,133 +200,104 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: "cover",
   },
+  topBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
   squareContainer: {
-    position: "absolute",
-    top: (width * 226) / 500 - width * 0.03,
-    left: (width - width * 0.8) / 2,
-    width: width * 0.8,
-    height: width * 0.2,
+    width: width * 0.15,
+    height: width * 0.12,
     borderRadius: 10,
     backgroundColor: "#FFFFFF",
-    zIndex: 2,
+    justifyContent: "center",
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 5, // Shadow cho Android
+    elevation: 5,
+    marginRight: width * 0.03,
   },
-  contentContainer: {
+  searchBarContainer: {
+    width: width * (308 / 375),
+    height: width * (50 / 375),
     flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    height: "100%",
-    paddingHorizontal: width * 0.03,
-  },
-  leftSide: {
     flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
-    padding: width * 0.03,
-  },
-  iconContainer: {
-    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
     alignItems: "center",
-    marginBottom: height * 0.005,
+    paddingLeft: height * 0.01,
   },
-  icon: {
-    marginRight: width * 0.02,
-  },
-  moneyText: {
-    fontSize: width * 0.04,
-    color: "black",
-  },
-  cashbackText: {
-    fontSize: width * 0.03,
-    color: "#c6c9cf",
-    marginTop: height * 0.01,
-  },
-  rightSide: {
+  searchBar: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    padding: height * 0.01,
+    fontSize: 16,
   },
-  divider: {
-    position: "absolute",
-    height: "60%",
-    width: 1,
-    backgroundColor: "#c6c9cf",
-    left: width * 0.4,
-    top: "20%",
+  searchIcon: {
+    padding: height * 0.01,
+    marginRight: height * 0.009,
   },
-  text: {
-    fontSize: 15,
-    color: "black",
-  },
-  buttonContainer: {
+  tabLabelContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    marginTop: height * 0.1,
-    marginBottom: height * 0.04,
-    paddingHorizontal: width * 0.1,
-  },
-  roundButton: {
-    width: width * 0.15,
-    height: width * 0.15,
-    borderRadius: (width * 0.15) / 3,
-    backgroundColor: "#872B6E",
-    justifyContent: "center",
     alignItems: "center",
   },
-  buttonContainerBottom: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    marginTop: -height * 0.02,
-    marginBottom: height * 0.06,
-    paddingHorizontal: width * 0.1,
+  tabIcon: {
+    width: 30,
+    height: 40,
+    marginRight: height * 0.008,
   },
-  roundButtonBottom: {
-    width: width * 0.15,
-    height: width * 0.15,
-    borderRadius: (width * 0.15) / 3,
-    backgroundColor: "#872B6E",
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: width * 0.05,
-  },
-  buttonText: {
-    fontSize: width * 0.04,
-    marginTop: height * 0.01,
-    color: "black",
-    textAlign: "center",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  buttonImage: {
-    width: width * 0.12,
-    height: width * 0.12,
-    resizeMode: "contain",
-  },
-  scrollViewContent: {
-    paddingBottom: 100,
-  },
-  catSitterContainer: {
+  tabIcon1: {
+    width: 24,
+    height: 35,
+    marginRight: height * 0.01,
     marginTop: height * 0.01,
   },
-  catSitterText: {
-    fontSize: width * 0.04,
+  tabTextStyle1: {
+    fontSize: height * 0.022,
+    marginTop: height * 0.01,
+    marginLeft: height * 0.01,
     fontWeight: "bold",
-    color: "black",
-    marginBottom: height * 0.01,
-    marginLeft: width * 0.02,
   },
-  catSitterCardsContainer: {
-    flexDirection: "row",
+  tabTextStyle2: {
+    fontSize: height * 0.022,
+    marginTop: height * 0.01,
+    marginLeft: height * 0.01,
+    fontWeight: "bold",
   },
   centeredContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginTop: height * 0.02, // Khoảng cách trên từ các thành phần khác
+    marginTop: height * 0.02,
+    backgroundColor: "#FFFAF5",
+  },
+  footerWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: height * 0.02,
+  },
+  catSitterCardsContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 10,
+  },
+  catSitterGridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    marginVertical: 10,
+  },
+  catSitterItemContainer: {
+    width: "48%",
+    marginBottom: 10,
+  },
+  flatListContentContainer: {
+    paddingBottom: height * 0.075,
   },
 });

@@ -7,6 +7,7 @@ import { Intro } from "./src/Login/Intro";
 import Header from "./src/Login/Header";
 import Login from "./src/Login/Login";
 import Home from "./src/Homepage/Home";
+import Profile from "./src/Profile/Profile";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const App = () => {
@@ -24,7 +25,7 @@ const App = () => {
           component={Login}
         />
         <Stack.Screen
-          name="Home"
+          name="Homes"
           options={{ headerLeft: null, headerShown: false }}
           component={MyBottomNavigationBarWithHeader}
         />
@@ -60,16 +61,17 @@ function MyBottomNavigationBar() {
         tabBarIcon: ({ focused, size }) => {
           let iconName;
           if (route.name === "Home") {
-            iconName = focused ? "ios-home" : "ios-home-outline";
+            iconName = focused ? "home" : "home-outline";
           }
           // Comment these sections out for Service, Notification, and Profile
           // else if (route.name === "Service") {
           //   iconName = focused ? "ios-clipboard" : "ios-clipboard-outline";
           // } else if (route.name === "Notification") {
           //   iconName = focused ? "notifications" : "notifications-outline";
-          // } else if (route.name === "Profile") {
-          //   iconName = focused ? "ios-person" : "ios-person-outline";
           // }
+          else if (route.name === "Profile") {
+            iconName = focused ? "person" : "person-outline";
+          }
           return <Ionicons name={iconName} size={size} color={"#F6F6F6"} />;
         },
       })}
@@ -89,11 +91,12 @@ function MyBottomNavigationBar() {
         options={{ headerShown: false }}
         component={Notification}
       />
+      */}
       <Tab.Screen
         name="Profile"
         options={{ headerShown: false }}
-        component={ProfileSettingScreen}
-      /> */}
+        component={Profile}
+      />
     </Tab.Navigator>
   );
 }

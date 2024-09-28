@@ -11,7 +11,7 @@ export default function CustomButton({
 
   const handlePress = () => {
     setIsPressed(!isPressed);
-    // Thực hiện các hành động khác khi nút được bấm vào
+
     onPress();
   };
   return (
@@ -19,7 +19,7 @@ export default function CustomButton({
       <View
         style={[
           styles.button,
-          { height: height, backgroundColor: backgroundColor || "#FF5B2E" }, // Màu nền của nút
+          { height: height, backgroundColor: backgroundColor || "#FFE3D5" }, // Màu nền của nút
         ]}
       >
         <Text style={styles.text}>{title}</Text>
@@ -31,12 +31,12 @@ const styles = StyleSheet.create({
   button: {
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 10, // Bo tròn góc trên bên trái
+    borderRadius: 10,
   },
   text: {
-    color: "white",
-    fontSize: 16, // Thay đổi cỡ chữ nếu cần
-    fontWeight: "bold", // Thay đổi nếu cần
+    color: "#000857",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
 // Sử dụng CustomButton trong component cha của bạn

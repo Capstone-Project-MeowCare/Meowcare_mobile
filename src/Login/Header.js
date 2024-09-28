@@ -51,16 +51,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: height * 0.02,
     paddingHorizontal: width * 0.05,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFE3D5",
     height: height * 0.08,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
-    // paddingTop: height * 0.02, // Đừng thêm paddingTop để tránh làm dính vào thanh Status Bar
   },
   logo: {
     width: width * 0.3,
     height: height * 0.05,
-    // marginTop: height * 0.01,
   },
   icon: {
     marginRight: width * 0.02,
