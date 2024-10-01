@@ -55,7 +55,7 @@ function MyBottomNavigationBar() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
         tabBarStyle: {
           position: "absolute",
           backgroundColor: "#FFFAF5",
@@ -67,41 +67,46 @@ function MyBottomNavigationBar() {
           shadowRadius: 8,
           elevation: 10,
         },
-        tabBarIcon: ({ focused, size }) => {
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginBottom: height * 0.01,
+          fontWeight: "600",
+        },
+        tabBarActiveTintColor: "#902C6C", // Màu khi nhấn
+        tabBarInactiveTintColor: "rgba(0, 0, 0, 0.6)",
+        tabBarIcon: ({ focused, size, color }) => {
           let iconName;
-          let iconColor = focused ? "#902C6C" : "rgba(0, 0, 0, 0.6)";
-          if (route.name === "Home") {
+          if (route.name === "Trang Chủ") {
             iconName = focused ? "home" : "home-outline";
-          } else if (route.name === "Activity") {
+          } else if (route.name === "Hoạt Động") {
             iconName = focused ? "list" : "list-outline";
-          } else if (route.name === "Service") {
+          } else if (route.name === "Công Việc") {
             iconName = focused ? "clipboard" : "clipboard-outline";
-          } else if (route.name === "Profile") {
+          } else if (route.name === "Tài Khoản") {
             iconName = focused ? "person" : "person-outline";
           }
 
-          return <Ionicons name={iconName} size={size} color={iconColor} />;
+          return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
       <Tab.Screen
-        name="Home"
+        name="Trang Chủ"
         options={{ headerShown: false }}
         component={Home}
       />
       <Tab.Screen
-        name="Activity"
+        name="Hoạt Động"
         options={{ headerShown: false }}
         component={Activity}
       />
       <Tab.Screen
-        name="Service"
+        name="Công Việc"
         options={{ headerShown: false }}
         component={Service}
       />
-
       <Tab.Screen
-        name="Profile"
+        name="Tài Khoản"
         options={{ headerShown: false }}
         component={Profile}
       />

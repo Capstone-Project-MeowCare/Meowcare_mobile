@@ -61,7 +61,7 @@ function FirstRoute() {
     >
       <View style={styles.catSitterGridContainer}>
         {catSitterData.map((item) => (
-          <View key={item.id} style={styles.catSitterItemContainer}>
+          <TouchableOpacity key={item.id} style={styles.catSitterItemContainer}>
             <CatSitterCard
               sitterName={item.sitterName}
               address={item.address}
@@ -69,7 +69,7 @@ function FirstRoute() {
               overlayText={item.overlayText}
               isVerified={item.isVerified}
             />
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </View>
@@ -88,7 +88,7 @@ function SecondRoute() {
     >
       <View style={styles.catSitterGridContainer}>
         {catSitterData.map((item) => (
-          <View key={item.id} style={styles.catSitterItemContainer}>
+          <TouchableOpacity key={item.id} style={styles.catSitterItemContainer}>
             <CatSitterCard
               sitterName={item.sitterName}
               address={item.address}
@@ -96,7 +96,7 @@ function SecondRoute() {
               overlayText={item.overlayText}
               isVerified={item.isVerified}
             />
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </View>

@@ -43,10 +43,9 @@ export default function Login() {
 
     if (email === validEmail && password === validPassword) {
       AsyncStorage.setItem("@myKey", JSON.stringify({ email }));
-      console.log("Login successful, navigating to Home.");
       navigation.navigate("Homes", { screen: "home" });
     } else {
-      Alert.alert("Error", "Invalid email or password.");
+      Alert.alert("Lỗi", "Email hoặc mật khẩu không hợp lệ");
     }
   };
 
@@ -203,7 +202,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: "#C0C0C0",
-    marginHorizontal: 10,
+    marginHorizontal: height * 0.01,
   },
   lineText: {
     textAlign: "center",
