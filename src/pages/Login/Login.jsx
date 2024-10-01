@@ -13,37 +13,36 @@ import { Text, TextInput } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/FontAwesome";
-import CustomButton from "../../components/CustomButton";
+import CustomButton from "../../../components/CustomButton";
 
 const { width, height } = Dimensions.get("window");
 
 export default function Login() {
   const navigation = useNavigation();
-  const [email, setEmail] = useState("test");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("test@gmail.com");
+  const [password, setPassword] = useState("123");
   const emailInputRef = useRef(null);
   const passwordInputRef = useRef(null);
 
   const handleLogin = () => {
     Keyboard.dismiss();
-    let fullEmail = `${email}@gmail.com`;
     const validEmail = "test@gmail.com";
     const validPassword = "123";
 
     if (!email) {
-      Alert.alert("Error", "Please enter your email.");
+      Alert.alert("Lỗi", "Vui lòng nhập email");
       emailInputRef.current.focus();
       return;
     }
 
     if (!password) {
-      Alert.alert("Error", "Please enter your password.");
+      Alert.alert("Lỗi", "Vui lòng nhập mật khẩu");
       passwordInputRef.current.focus();
       return;
     }
 
-    if (fullEmail === validEmail && password === validPassword) {
-      AsyncStorage.setItem("@myKey", JSON.stringify({ email: fullEmail }));
+    if (email === validEmail && password === validPassword) {
+      AsyncStorage.setItem("@myKey", JSON.stringify({ email }));
       console.log("Login successful, navigating to Home.");
       navigation.navigate("Homes", { screen: "home" });
     } else {
@@ -58,7 +57,7 @@ export default function Login() {
         showsVerticalScrollIndicator={false}
       >
         <Image
-          source={require("../../assets/Group347.png")}
+          source={require("../../../assets/Group347.png")}
           style={styles.logo}
         />
         <View style={styles.separator} />
@@ -71,7 +70,7 @@ export default function Login() {
             mode="outlined"
             style={styles.textInput}
             onChangeText={(text) => setEmail(text)}
-            value={`${email}@gmail.com`}
+            value={email}
             keyboardType="email-address"
             left={<TextInput.Icon icon="email" />}
             onSubmitEditing={() => passwordInputRef.current.focus()}
@@ -161,10 +160,10 @@ const styles = StyleSheet.create({
     marginTop: height * 0.03,
   },
   body: {
-    padding: width * 0.04, // Giữ padding cho toàn bộ body
+    padding: width * 0.04,
   },
   textInput: {
-    marginVertical: height * 0.01, // Khoảng cách giữa các TextInput
+    marginVertical: height * 0.01,
   },
   footer: {
     marginVertical: height * 0.02,

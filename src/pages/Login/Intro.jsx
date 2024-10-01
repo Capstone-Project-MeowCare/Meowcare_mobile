@@ -16,7 +16,7 @@ export const Intro = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/meowcarelogo.png")}
+        source={require("../../../assets/meowcarelogo.png")}
         style={styles.logo}
       />
     </View>

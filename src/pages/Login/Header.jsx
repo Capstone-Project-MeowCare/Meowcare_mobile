@@ -22,7 +22,7 @@ export default function Header() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.headerContainer}>
           <Image
-            source={require("../../assets/meowcarelogo.png")}
+            source={require("../../../assets/meowcarelogo.png")}
             style={styles.logo}
           />
 

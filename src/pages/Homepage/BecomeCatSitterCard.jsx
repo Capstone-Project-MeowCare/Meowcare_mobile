@@ -16,7 +16,10 @@ const BecomeCatSitterCard = () => {
           <Text style={styles.learnMoreText}>Bắt đầu</Text>
         </View>
       </View>
-      <Image source={require("../../assets/image4.png")} style={styles.image} />
+      <Image
+        source={require("../../../assets/image4.png")}
+        style={styles.image}
+      />
     </View>
   );
 };

@@ -13,6 +13,8 @@ import CatSitterCard from "./CatSitterCard";
 import BecomeCatSitterCard from "./BecomeCatSitterCard";
 import HomeFooter from "./HomeFooter";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { useNavigation } from "@react-navigation/native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 const { width, height } = Dimensions.get("window");
 
@@ -22,28 +24,28 @@ const catSitterData = [
     sitterName: "Nguyễn Hoài Phúc",
     address: "25 Thủ Đức, TP.HCM",
     isVerified: true,
-    imageSource: require("../../assets/1.jpg"),
+    imageSource: require("../../../assets/1.jpg"),
   },
   {
     id: "2",
     sitterName: "Dịch vụ chăm sóc thú cưng",
     address: "200000",
     isVerified: true,
-    imageSource: require("../../assets/bannerlogo2.png"),
+    imageSource: require("../../../assets/bannerlogo2.png"),
   },
   {
     id: "3",
     sitterName: "Dịch vụ trông cưng",
     address: "150000",
     isVerified: true,
-    imageSource: require("../../assets/bannerlogo2.png"),
+    imageSource: require("../../../assets/bannerlogo2.png"),
   },
   {
     id: "4",
     sitterName: "Dịch vụ trông cưng",
     address: "150000",
     isVerified: true,
-    imageSource: require("../../assets/bannerlogo2.png"),
+    imageSource: require("../../../assets/bannerlogo2.png"),
   },
 ];
 
@@ -76,7 +78,7 @@ function FirstRoute() {
 
 function SecondRoute() {
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <View style={{ flex: 1 }}>
       <Text>Trông tại nhà</Text>
     </View>
   );
@@ -96,15 +98,19 @@ export default function Home({ navigation }) {
           <>
             <View style={styles.headerContainer}>
               <Image
-                source={require("../../assets/Group358.png")}
+                source={require("../../../assets/Group358.png")}
                 style={styles.logo}
               />
             </View>
 
             <View style={styles.topBarContainer}>
-              <View style={styles.squareContainer}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Map")}
+                style={styles.squareContainer}
+              >
                 <FontAwesome name="map-o" size={24} color="#000857" />
-              </View>
+              </TouchableOpacity>
+
               <View style={styles.searchBarContainer}>
                 <TextInput
                   placeholder="Tìm kiếm người chăm sóc theo vị trí"
@@ -126,8 +132,8 @@ export default function Home({ navigation }) {
                       <Image
                         source={
                           route.name === "Gửi thú cưng"
-                            ? require("../../assets/Vector.png")
-                            : require("../../assets/Vector1.png")
+                            ? require("../../../assets/Vector.png")
+                            : require("../../../assets/Vector1.png")
                         }
                         style={
                           route.name === "Gửi thú cưng"
@@ -151,7 +157,7 @@ export default function Home({ navigation }) {
                     </View>
                   ),
                   tabBarIndicatorStyle: {
-                    backgroundColor: "#000857", // Đặt màu cho chỉ báo (underline khi tab được chọn)
+                    backgroundColor: "#000857",
                   },
                   tabBarStyle: {
                     backgroundColor: "#FFFAF5",
@@ -274,7 +280,7 @@ const styles = StyleSheet.create({
   centeredContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginTop: height * 0.02,
+    marginBottom: height * 0.025,
     backgroundColor: "#FFFAF5",
   },
   footerWrapper: {
@@ -284,20 +290,20 @@ const styles = StyleSheet.create({
   },
   catSitterCardsContainer: {
     flexDirection: "row",
-    paddingHorizontal: 10,
+    paddingHorizontal: height * 0.01,
   },
   catSitterGridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
-    marginVertical: 10,
+    paddingHorizontal: -height * 0.001,
+    marginVertical: height * 0.01,
   },
   catSitterItemContainer: {
     width: "48%",
-    marginBottom: 10,
+    marginBottom: height * 0.01,
   },
   flatListContentContainer: {
-    paddingBottom: height * 0.075,
+    paddingBottom: height * 0.044,
   },
 });

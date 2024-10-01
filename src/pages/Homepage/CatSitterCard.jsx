@@ -18,7 +18,7 @@ const CatSitterCard = ({
   overlayText,
   isVerified,
 }) => {
-  const [isLiked, setIsLiked] = useState(false); // Quản lý trạng thái của biểu tượng trái tim
+  const [isLiked, setIsLiked] = useState(false);
 
   const handleLikePress = () => {
     setIsLiked(!isLiked); // Đổi trạng thái khi nhấn vào
@@ -28,23 +28,21 @@ const CatSitterCard = ({
     <View style={styles.card}>
       <Image source={imageSource} style={styles.image} />
 
-      {/* Biểu tượng check nếu isVerified là true */}
       {isVerified && (
         <Image
-          source={require("../../assets/Check.png")}
+          source={require("../../../assets/Check.png")}
           style={styles.checkIcon}
         />
       )}
 
-      {/* Biểu tượng trái tim từ Ionicons */}
       <TouchableOpacity
         style={styles.heartIconContainer}
         onPress={handleLikePress}
       >
         <Ionicons
-          name={isLiked ? "heart" : "heart-outline"} // Trạng thái trái tim
-          size={width * 0.07} // Responsive kích thước trái tim
-          color={isLiked ? "#db1c07" : "grey"} // Đổi màu khi nhấn
+          name={isLiked ? "heart" : "heart-outline"}
+          size={width * 0.07}
+          color={isLiked ? "#db1c07" : "grey"}
         />
       </TouchableOpacity>
 
@@ -69,7 +67,7 @@ const styles = StyleSheet.create({
     margin: width * 0.02,
     borderRadius: width * 0.02,
     padding: 0,
-    position: "relative", // Để có thể dùng absolute positioning cho check icon và heart icon
+    position: "relative",
   },
   image: {
     width: "100%",
@@ -79,16 +77,16 @@ const styles = StyleSheet.create({
   },
   checkIcon: {
     position: "absolute",
-    bottom: height * 0.07, // Responsive vị trí dưới
-    right: height * 0.01, // Responsive vị trí bên phải
-    width: width * 0.07, // Responsive kích thước check icon
+    bottom: height * 0.07,
+    right: height * 0.01,
+    width: width * 0.07,
     height: width * 0.07,
     resizeMode: "contain",
   },
   heartIconContainer: {
     position: "absolute",
-    top: height * 0.01, // Điều chỉnh vị trí trên cùng của trái tim
-    right: height * 0.01, // Điều chỉnh vị trí bên phải của trái tim
+    top: height * 0.01,
+    right: height * 0.01,
   },
   overlay: {
     position: "absolute",

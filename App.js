@@ -1,15 +1,17 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Intro } from "./src/Login/Intro";
-import Header from "./src/Login/Header";
-import Login from "./src/Login/Login";
-import Home from "./src/Homepage/Home";
-import Profile from "./src/Profile/Profile";
+import { Intro } from "./src/pages/Login/Intro";
+import Header from "./src/pages/Login/Header";
+import Login from "./src/pages/Login/Login";
+import Home from "./src/pages/Homepage/Home";
+import Profile from "./src/pages/Profile/Profile";
+import FindSitterByMap from "./src/pages/Homepage/Map";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const { width, height } = Dimensions.get("window");
 const App = () => {
   return (
     <NavigationContainer>
@@ -23,6 +25,11 @@ const App = () => {
           name="Login"
           options={{ headerLeft: null, headerShown: false }}
           component={Login}
+        />
+        <Stack.Screen
+          name="Map"
+          options={{ headerLeft: null, headerShown: false }}
+          component={FindSitterByMap}
         />
         <Stack.Screen
           name="Homes"
@@ -49,17 +56,18 @@ function MyBottomNavigationBar() {
         tabBarShowLabel: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: "#FF5B2E",
-          borderTopLeftRadius: 15,
-          borderTopRightRadius: 15,
-          height: 90,
+          backgroundColor: "#FFFAF5",
+          height: height * 0.09,
           elevation: 30,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.4,
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 10,
         },
         tabBarIcon: ({ focused, size }) => {
           let iconName;
+          let iconColor = focused ? "#902C6C" : "rgba(0, 0, 0, 0.6)";
           if (route.name === "Home") {
             iconName = focused ? "home" : "home-outline";
           }
@@ -72,7 +80,7 @@ function MyBottomNavigationBar() {
           else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline";
           }
-          return <Ionicons name={iconName} size={size} color={"#F6F6F6"} />;
+          return <Ionicons name={iconName} size={size} color={iconColor} />;
         },
       })}
     >

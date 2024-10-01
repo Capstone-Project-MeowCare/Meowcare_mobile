@@ -51,11 +51,11 @@ export default function Profile({}) {
   const list2 = [
     {
       name: "Account Setting",
-      icon: require("../../assets/bannerlogo2.png"),
+      icon: require("../../../assets/bannerlogo2.png"),
     },
     {
       name: "Password",
-      icon: require("../../assets/bannerlogo2.png"),
+      icon: require("../../../assets/bannerlogo2.png"),
     },
     {
       name: "Payment Method",
@@ -63,7 +63,7 @@ export default function Profile({}) {
     },
     {
       name: "Help Center",
-      icon: require("../../assets/bannerlogo2.png"),
+      icon: require("../../../assets/bannerlogo2.png"),
     },
   ];
 
