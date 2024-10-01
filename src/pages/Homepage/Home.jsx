@@ -28,24 +28,24 @@ const catSitterData = [
   },
   {
     id: "2",
-    sitterName: "Dịch vụ chăm sóc thú cưng",
+    sitterName: "Nguyễn A",
     address: "200000",
     isVerified: true,
-    imageSource: require("../../../assets/bannerlogo2.png"),
+    imageSource: require("../../../assets/catpeople.jpg"),
   },
   {
     id: "3",
-    sitterName: "Dịch vụ trông cưng",
+    sitterName: "Trần B",
     address: "150000",
     isVerified: true,
-    imageSource: require("../../../assets/bannerlogo2.png"),
+    imageSource: require("../../../assets/catpeople.jpg"),
   },
   {
     id: "4",
-    sitterName: "Dịch vụ trông cưng",
+    sitterName: "Thị C",
     address: "150000",
     isVerified: true,
-    imageSource: require("../../../assets/bannerlogo2.png"),
+    imageSource: require("../../../assets/catpeople.jpg"),
   },
 ];
 
@@ -78,8 +78,27 @@ function FirstRoute() {
 
 function SecondRoute() {
   return (
-    <View style={{ flex: 1 }}>
-      <Text>Trông tại nhà</Text>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFFAF5",
+      }}
+    >
+      <View style={styles.catSitterGridContainer}>
+        {catSitterData.map((item) => (
+          <View key={item.id} style={styles.catSitterItemContainer}>
+            <CatSitterCard
+              sitterName={item.sitterName}
+              address={item.address}
+              imageSource={item.imageSource}
+              overlayText={item.overlayText}
+              isVerified={item.isVerified}
+            />
+          </View>
+        ))}
+      </View>
     </View>
   );
 }

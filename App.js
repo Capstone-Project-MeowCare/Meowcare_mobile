@@ -9,6 +9,8 @@ import Login from "./src/pages/Login/Login";
 import Home from "./src/pages/Homepage/Home";
 import Profile from "./src/pages/Profile/Profile";
 import FindSitterByMap from "./src/pages/Homepage/Map";
+import Service from "./src/pages/Services/Service";
+import Activity from "./src/pages/Services/Activity";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const { width, height } = Dimensions.get("window");
@@ -70,16 +72,14 @@ function MyBottomNavigationBar() {
           let iconColor = focused ? "#902C6C" : "rgba(0, 0, 0, 0.6)";
           if (route.name === "Home") {
             iconName = focused ? "home" : "home-outline";
-          }
-          // Comment these sections out for Service, Notification, and Profile
-          // else if (route.name === "Service") {
-          //   iconName = focused ? "ios-clipboard" : "ios-clipboard-outline";
-          // } else if (route.name === "Notification") {
-          //   iconName = focused ? "notifications" : "notifications-outline";
-          // }
-          else if (route.name === "Profile") {
+          } else if (route.name === "Activity") {
+            iconName = focused ? "list" : "list-outline";
+          } else if (route.name === "Service") {
+            iconName = focused ? "clipboard" : "clipboard-outline";
+          } else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline";
           }
+
           return <Ionicons name={iconName} size={size} color={iconColor} />;
         },
       })}
@@ -89,17 +89,17 @@ function MyBottomNavigationBar() {
         options={{ headerShown: false }}
         component={Home}
       />
-      {/* <Tab.Screen
+      <Tab.Screen
+        name="Activity"
+        options={{ headerShown: false }}
+        component={Activity}
+      />
+      <Tab.Screen
         name="Service"
         options={{ headerShown: false }}
         component={Service}
       />
-      <Tab.Screen
-        name="Notification"
-        options={{ headerShown: false }}
-        component={Notification}
-      />
-      */}
+
       <Tab.Screen
         name="Profile"
         options={{ headerShown: false }}

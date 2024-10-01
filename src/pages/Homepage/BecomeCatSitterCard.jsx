@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Dimensions, Image } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 const { width } = Dimensions.get("window");
 
@@ -12,9 +13,11 @@ const BecomeCatSitterCard = () => {
           Hỗ trợ tăng thu nhập và mở ra cơ hội mới bằng cách chia sẻ không gian
           và tình yêu của bạn với thú cưng.
         </Text>
-        <View style={styles.learnMoreButton}>
-          <Text style={styles.learnMoreText}>Bắt đầu</Text>
-        </View>
+        <TouchableOpacity>
+          <View style={styles.learnMoreButton}>
+            <Text style={styles.learnMoreText}>Bắt đầu</Text>
+          </View>
+        </TouchableOpacity>
       </View>
       <Image
         source={require("../../../assets/image4.png")}
