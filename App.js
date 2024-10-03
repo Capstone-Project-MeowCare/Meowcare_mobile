@@ -11,6 +11,7 @@ import Profile from "./src/pages/Profile/Profile";
 import FindSitterByMap from "./src/pages/Homepage/Map";
 import Service from "./src/pages/Services/Service";
 import Activity from "./src/pages/Services/Activity";
+import CatSitterServicePage from "./src/pages/CatSitter/CatSitterServicePage";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const { width, height } = Dimensions.get("window");
@@ -32,6 +33,11 @@ const App = () => {
           name="Map"
           options={{ headerLeft: null, headerShown: false }}
           component={FindSitterByMap}
+        />
+        <Stack.Screen
+          name="SitterServicePage"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CatSitterServicePage}
         />
         <Stack.Screen
           name="Homes"
@@ -72,7 +78,7 @@ function MyBottomNavigationBar() {
           marginBottom: height * 0.01,
           fontWeight: "600",
         },
-        tabBarActiveTintColor: "#902C6C", // Màu khi nhấn
+        tabBarActiveTintColor: "#902C6C",
         tabBarInactiveTintColor: "rgba(0, 0, 0, 0.6)",
         tabBarIcon: ({ focused, size, color }) => {
           let iconName;

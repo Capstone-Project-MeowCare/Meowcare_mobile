@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -28,28 +28,37 @@ const catSitterData = [
   },
   {
     id: "2",
-    sitterName: "Nguyễn A",
-    address: "200000",
+    sitterName: "User",
+    address: "25 Thủ Đức, TP.HCM",
     isVerified: true,
     imageSource: require("../../../assets/catpeople.jpg"),
   },
   {
     id: "3",
-    sitterName: "Trần B",
-    address: "150000",
+    sitterName: "User",
+    address: "25 Thủ Đức, TP.HCM",
     isVerified: true,
     imageSource: require("../../../assets/catpeople.jpg"),
   },
   {
     id: "4",
-    sitterName: "Thị C",
-    address: "150000",
+    sitterName: "User",
+    address: "25 Thủ Đức, TP.HCM",
     isVerified: true,
     imageSource: require("../../../assets/catpeople.jpg"),
   },
 ];
 
-function FirstRoute() {
+function FirstRoute({ navigation }) {
+  const [parentPressEnabled, setParentPressEnabled] = useState(true);
+
+  const disableParentPress = () => {
+    setParentPressEnabled(false);
+  };
+
+  const enableParentPress = () => {
+    setParentPressEnabled(true);
+  };
   return (
     <View
       style={{
@@ -61,13 +70,19 @@ function FirstRoute() {
     >
       <View style={styles.catSitterGridContainer}>
         {catSitterData.map((item) => (
-          <TouchableOpacity key={item.id} style={styles.catSitterItemContainer}>
+          <TouchableOpacity
+            key={item.id}
+            style={styles.catSitterItemContainer}
+            onPress={() => navigation.navigate("SitterServicePage")}
+          >
             <CatSitterCard
               sitterName={item.sitterName}
               address={item.address}
               imageSource={item.imageSource}
               overlayText={item.overlayText}
               isVerified={item.isVerified}
+              disableParentPress={disableParentPress}
+              enableParentPress={enableParentPress}
             />
           </TouchableOpacity>
         ))}
@@ -77,6 +92,15 @@ function FirstRoute() {
 }
 
 function SecondRoute() {
+  const [parentPressEnabled, setParentPressEnabled] = useState(true);
+
+  const disableParentPress = () => {
+    setParentPressEnabled(false);
+  };
+
+  const enableParentPress = () => {
+    setParentPressEnabled(true);
+  };
   return (
     <View
       style={{
@@ -95,6 +119,8 @@ function SecondRoute() {
               imageSource={item.imageSource}
               overlayText={item.overlayText}
               isVerified={item.isVerified}
+              disableParentPress={disableParentPress}
+              enableParentPress={enableParentPress}
             />
           </TouchableOpacity>
         ))}

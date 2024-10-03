@@ -17,11 +17,13 @@ const CatSitterCard = ({
   imageSource,
   overlayText,
   isVerified,
+  disableParentPress,
+  enableParentPress,
 }) => {
   const [isLiked, setIsLiked] = useState(false);
 
   const handleLikePress = () => {
-    setIsLiked(!isLiked); // Đổi trạng thái khi nhấn vào
+    setIsLiked(!isLiked);
   };
 
   return (
@@ -38,6 +40,8 @@ const CatSitterCard = ({
       <TouchableOpacity
         style={styles.heartIconContainer}
         onPress={handleLikePress}
+        onPressIn={disableParentPress}
+        onPressOut={enableParentPress}
       >
         <Ionicons
           name={isLiked ? "heart" : "heart-outline"}
@@ -46,17 +50,10 @@ const CatSitterCard = ({
         />
       </TouchableOpacity>
 
-      {overlayText && (
-        <View style={styles.overlay}>
-          <Text style={styles.overlayText}>{overlayText}</Text>
-        </View>
-      )}
-      {!overlayText && (
-        <>
-          <Text style={styles.sitterName}>{sitterName}</Text>
-          <Text style={styles.address}>{address}</Text>
-        </>
-      )}
+      <>
+        <Text style={styles.sitterName}>{sitterName}</Text>
+        <Text style={styles.address}>{address}</Text>
+      </>
     </View>
   );
 };
