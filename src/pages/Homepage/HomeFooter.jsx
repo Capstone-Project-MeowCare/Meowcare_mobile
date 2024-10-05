@@ -16,30 +16,15 @@ export default function HomeFooter() {
       <View style={styles.rowContainer}>
         <View style={styles.columnContainer}>
           <Text style={styles.footerText}>Cho chủ thú cưng</Text>
-          <View
-            style={[
-              styles.separator,
-              { width: maxTextLength }, // Áp dụng chiều rộng cho các separator
-            ]}
-          />
+          <View style={[styles.separator, { width: maxTextLength }]} />
           <Text style={styles.footerTextGroup1}>Giữ an toàn với MeowCare</Text>
           <Text style={styles.footerTextGroup2}>
             Giúp bạn và thú cưng an toàn
           </Text>
-          <View
-            style={[
-              styles.separator,
-              { width: maxTextLength }, // Áp dụng chiều rộng cho các separator
-            ]}
-          />
+          <View style={[styles.separator, { width: maxTextLength }]} />
           <Text style={styles.footerTextGroup1}>Hủy dịch vụ booking</Text>
           <Text style={styles.footerTextGroup2}>Tìm hiểu các điều bao gồm</Text>
-          <View
-            style={[
-              styles.separator,
-              { width: maxTextLength }, // Áp dụng chiều rộng cho các separator
-            ]}
-          />
+          <View style={[styles.separator, { width: maxTextLength }]} />
           <Text style={styles.footerTextGroup1}>Trung tâm trợ giúp</Text>
           <Text style={styles.footerTextGroup2}>Nhận hỗ trợ</Text>
         </View>

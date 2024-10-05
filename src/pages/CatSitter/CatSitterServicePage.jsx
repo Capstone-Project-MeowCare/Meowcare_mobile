@@ -6,15 +6,17 @@ import { Ionicons } from "@expo/vector-icons";
 import Swiper from "react-native-swiper"; // Import Swiper
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs"; // Import Top Tab Navigator
 import CatSitterInformation from "./CatSitterInformation";
+import CatSitterReviews from "./CatSitterReviews";
+import CatSitterAssistance from "./CatSitterAssistance";
 
 const { width, height } = Dimensions.get("window");
 
 const catSitters = [
   {
     id: "1",
-    name: "Nguyễn Văn A",
+    name: "Nguyễn Phương Đại",
     description: "Yêu mèo, có kinh nghiệm chăm sóc",
-    address: "Linh Xuân, Tp.Thủ Đức, Tp.HCM",
+    address: "Phường 10, Quận 6, Tp.HCM",
     price: "150.000đ",
     imageSource: require("../../../assets/avatar.png"),
   },
@@ -44,16 +46,38 @@ function FirstRoute() {
 
 function SecondRoute() {
   return (
-    <View style={styles.tabContent}>
-      <Text>Lịch chăm sóc</Text>
+    <View style={styles.secondRouteContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.tabContent}>
+          <CatSitterReviews />
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 function ThirdRoute() {
   return (
-    <View style={styles.tabContent}>
-      <Text>Đánh giá</Text>
+    <View style={styles.thirdRouteContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.tabContent}>
+          <CatSitterAssistance />
+        </View>
+      </ScrollView>
+
+      <View style={styles.fixedFooter}>
+        <TouchableOpacity style={styles.bookingButton}>
+          <Text style={styles.bookingText}>Đặt Lịch</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -283,13 +307,20 @@ const styles = StyleSheet.create({
     marginRight: width * 0.02,
   },
   firstRouteContainer: {
-    // Đặt tên khác cho container
+    flex: 1,
+    backgroundColor: "#FFFAF5",
+  },
+  secondRouteContainer: {
+    flex: 1,
+    backgroundColor: "#FFFAF5",
+  },
+  thirdRouteContainer: {
     flex: 1,
     backgroundColor: "#FFFAF5",
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: height * 0.1, // Khoảng trống dưới để không đè lên nút
+    paddingBottom: height * 0.1,
   },
   scrollView: {
     flex: 1,
