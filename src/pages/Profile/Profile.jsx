@@ -2,22 +2,30 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, View, ScrollView, Dimensions } from "react-native";
 import { Avatar, Text, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "../../../auth/useAuth"; // Đảm bảo import đúng đường dẫn
 
 const { width, height } = Dimensions.get("window");
 
 export default function Profile() {
   const [userData, setUserData] = useState({});
   const navigation = useNavigation();
+  const { logout, user } = useAuth(); // Sử dụng useAuth để lấy logout và user
+
+  useEffect(() => {
+    // Cập nhật thông tin người dùng từ user trong useAuth
+    if (user) {
+      setUserData(user);
+    }
+  }, [user]);
 
   const handleLogout = () => {
-    AsyncStorage.removeItem("@myKey")
+    logout()
       .then(() => {
-        console.log("Data removed successfully!");
-        navigation.navigate("Login");
+        console.log("Đã đăng xuất thành công!");
+        navigation.navigate("Login"); // Điều hướng về trang đăng nhập
       })
       .catch((error) => {
-        console.error("Error removing data:", error);
+        console.error("Error during logout:", error);
       });
   };
 
@@ -29,7 +37,7 @@ export default function Profile() {
       <View style={styles.avatarContainer}>
         <Avatar.Image
           size={width * 0.12}
-          source={{ uri: userData.avatar }}
+          source={{ uri: userData.avatar }} // Hiển thị avatar từ userData
           style={styles.avatarImage}
         />
         <Text style={styles.userName}>{userData.fullName || "User Name"}</Text>

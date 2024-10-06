@@ -1,52 +1,142 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import {
-  Alert,
-  Image,
   Keyboard,
   StyleSheet,
   TouchableOpacity,
   View,
   Dimensions,
   ScrollView,
+  ActivityIndicator,
+  Image,
 } from "react-native";
 import { Text, TextInput } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome";
-import CustomButton from "../../../components/CustomButton";
+import CustomButton from "../../components/CustomButton";
+import CustomToast from "../../components/CustomToast";
+import { FieldError } from "../../components/FieldError";
+import { useStorage } from "../../hooks/useLocalStorage";
+import { postData } from "../../api/api"; // API function import
+import { useAuth } from "../../../auth/useAuth";
+import * as yup from "yup";
+import { useForm, FormProvider } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 const { width, height } = Dimensions.get("window");
 
 export default function Login() {
   const navigation = useNavigation();
-  const [email, setEmail] = useState("test@gmail.com");
-  const [password, setPassword] = useState("123");
-  const emailInputRef = useRef(null);
-  const passwordInputRef = useRef(null);
+  const [token, setToken] = useStorage("accessToken", null);
+  const [savedEmail, setSavedEmail, removeSavedEmail] = useStorage(
+    "savedEmail",
+    ""
+  ); // Lưu email
+  const [savedPassword, setSavedPassword, removeSavedPassword] = useStorage(
+    "savedPassword",
+    ""
+  ); // Lưu password
+  const [LoginState, setLoginState] = useState(true);
+  const [LoginError, setLoginError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const { accessToken, role, logout } = useAuth(); // Auth hook cho đăng xuất
 
-  const handleLogin = () => {
+  // Validation schema using yup
+  const loginSchema = yup.object().shape({
+    email: yup
+      .string()
+      .trim()
+      .required("Email là bắt buộc")
+      .email("Email không hợp lệ"),
+    password: yup.string().trim().required("Mật khẩu là bắt buộc"),
+  });
+
+  const methods = useForm({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      email: savedEmail, // Gán giá trị mặc định từ localStorage
+      password: savedPassword, // Gán giá trị mặc định từ localStorage
+    },
+  });
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = methods;
+
+  // Điều hướng khi đã có access token
+  useFocusEffect(
+    useCallback(() => {
+      if (accessToken && role?.name === "Customer") {
+        navigation.navigate("Homes", { screen: "Home" });
+      } else if (accessToken && role?.name === "CatSitter") {
+        navigation.navigate("Homes", { screen: "Home" });
+      } else {
+        setLoginState(false);
+        setLoginError(false);
+        setErrorMessage("");
+        setLoading(false);
+        methods.reset({
+          email: "",
+          password: "",
+        });
+      }
+    }, [accessToken])
+  );
+
+  const handleLogin = (data) => {
+    setLoginError(false);
+    setLoginState(false);
+    setLoading(true);
     Keyboard.dismiss();
-    const validEmail = "test@gmail.com";
-    const validPassword = "123";
 
-    if (!email) {
-      Alert.alert("Lỗi", "Vui lòng nhập email");
-      emailInputRef.current.focus();
-      return;
-    }
+    postData("/auth/generateToken", {
+      email: data.email,
+      password: data.password,
+    })
+      .then((responseData) => {
+        console.log("Full response data:", responseData);
 
-    if (!password) {
-      Alert.alert("Lỗi", "Vui lòng nhập mật khẩu");
-      passwordInputRef.current.focus();
-      return;
-    }
+        const accessToken = responseData;
 
-    if (email === validEmail && password === validPassword) {
-      AsyncStorage.setItem("@myKey", JSON.stringify({ email }));
-      navigation.navigate("Homes", { screen: "home" });
-    } else {
-      Alert.alert("Lỗi", "Email hoặc mật khẩu không hợp lệ");
-    }
+        if (accessToken.startsWith("Bearer ")) {
+          const token = accessToken.replace("Bearer ", "");
+          setToken(token);
+          setSavedEmail(data.email); // Lưu email sau khi đăng nhập
+          setSavedPassword(data.password); // Lưu password sau khi đăng nhập
+          CustomToast({ text: "Đăng nhập thành công" });
+        } else {
+          throw new Error("No valid token found in response");
+        }
+
+        setLoading(false);
+
+        // Chờ setToken hoàn thành trước khi điều hướng
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            navigation.navigate("Homes", { screen: "Home" });
+            resolve();
+          }, 0);
+        });
+      })
+      .catch((error) => {
+        console.log("Error during login:", error);
+        console.log("Error response:", error?.response?.data); // Log chi tiết lỗi từ API
+
+        if (error?.response?.status === 401) {
+          CustomToast({
+            text: "Thông tin đăng nhập không chính xác",
+            position: 300,
+          });
+        } else {
+          CustomToast({
+            text: "Đã có lỗi xảy ra. Vui lòng thử lại.",
+            position: 190,
+          });
+        }
+        setLoading(false);
+      });
   };
 
   return (
@@ -63,42 +153,43 @@ export default function Login() {
         <View style={styles.body}>
           <Text style={styles.welcomeText}>Đăng nhập</Text>
           <View style={{ margin: height * 0.02 }} />
-          <TextInput
-            ref={emailInputRef}
-            label="Địa chỉ Email"
-            mode="outlined"
-            style={styles.textInput}
-            onChangeText={(text) => setEmail(text)}
-            value={email}
-            keyboardType="email-address"
-            left={<TextInput.Icon icon="email" />}
-            onSubmitEditing={() => passwordInputRef.current.focus()}
-          />
-          <TextInput
-            ref={passwordInputRef}
-            label="Mật khẩu của bạn"
-            mode="outlined"
-            style={styles.textInput}
-            onChangeText={(text) => setPassword(text)}
-            value={password}
-            secureTextEntry
-            onSubmitEditing={handleLogin}
-            left={<TextInput.Icon icon="lock" />}
-          />
-          <View style={styles.footer}>
-            <Text
-              style={{
-                textAlign: "right",
-                color: "rgba(0, 8, 87, 0.6)",
-                fontWeight: "bold",
-                fontSize: height * 0.02,
-              }}
+          <FormProvider {...methods}>
+            <TextInput
+              label="Địa chỉ Email"
+              mode="outlined"
+              style={styles.textInput}
+              onChangeText={(text) => methods.setValue("email", text)}
+              keyboardType="email-address"
+              left={<TextInput.Icon icon="email" />}
+              error={!!errors.email}
+              value={methods.watch("email")}
+            />
+            <FieldError>{errors.email?.message}</FieldError>
+
+            <TextInput
+              label="Mật khẩu"
+              mode="outlined"
+              style={styles.textInput}
+              onChangeText={(text) => methods.setValue("password", text)}
+              secureTextEntry
+              left={<TextInput.Icon icon="lock" />}
+              error={!!errors.password}
+              value={methods.watch("password")}
+            />
+            <FieldError>{errors.password?.message}</FieldError>
+
+            <View style={styles.footer}>
+              <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
+            </View>
+
+            <CustomButton
+              title="Đăng nhập"
+              height={50}
+              onPress={handleSubmit(handleLogin)}
             >
-              Quên mật khẩu ?
-            </Text>
-          </View>
-          <View style={{ margin: height * 0.02 }} />
-          <CustomButton title="Đăng nhập" height={50} onPress={handleLogin} />
+              {loading && <ActivityIndicator color="#fff" />}
+            </CustomButton>
+          </FormProvider>
           <View style={{ margin: height * 0.02 }} />
           <View style={styles.lineContainer}>
             <View style={styles.line} />
@@ -121,7 +212,7 @@ export default function Login() {
               fontSize: height * 0.02,
             }}
           >
-            Không có tài khoản?{" "}
+            Không có tài khoản?
             <Text style={{ color: "#000857", fontWeight: "bold" }}>
               Đăng ký
             </Text>
@@ -167,6 +258,29 @@ const styles = StyleSheet.create({
   footer: {
     marginVertical: height * 0.02,
   },
+  forgotPasswordText: {
+    textAlign: "right",
+    color: "rgba(0, 8, 87, 0.6)",
+    fontWeight: "bold",
+    fontSize: height * 0.02,
+  },
+  lineContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: height * 0.02,
+  },
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#C0C0C0",
+    marginHorizontal: height * 0.01,
+  },
+  lineText: {
+    textAlign: "center",
+    color: "rgba(0, 8, 87, 0.6)",
+    fontSize: height * 0.02,
+  },
   iconContainer: {
     flexDirection: "row",
     justifyContent: "space-evenly",
@@ -191,22 +305,5 @@ const styles = StyleSheet.create({
     borderColor: "#FFFFFF",
     borderWidth: 1,
     backgroundColor: "#6B93DB",
-  },
-  lineContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: height * 0.02,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#C0C0C0",
-    marginHorizontal: height * 0.01,
-  },
-  lineText: {
-    textAlign: "center",
-    color: "rgba(0, 8, 87, 0.6)",
-    fontSize: height * 0.02,
   },
 });

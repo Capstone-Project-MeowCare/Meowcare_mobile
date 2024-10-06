@@ -39,6 +39,3 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
-// Sử dụng CustomButton trong component cha của bạn
-// Ví dụ:
-// <CustomButton title="Log in" onPress={() => navigation.navigate('Home')} height={300} />
