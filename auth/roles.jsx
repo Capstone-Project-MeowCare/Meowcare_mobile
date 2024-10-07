@@ -8,7 +8,7 @@ export const defineRulesFor = (user) => {
   console.log("User role in defineRulesFor:", userRole);
 
   switch (userRole) {
-    case "cat_sitter":
+    case "CatSitter":
       can("manage", "Service");
       can("update", "Profile");
       can("view", "BookingRequests");
