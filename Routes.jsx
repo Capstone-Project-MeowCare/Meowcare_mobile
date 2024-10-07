@@ -13,6 +13,7 @@ import FindSitterByMap from "./src/pages/Homepage/Map";
 import Service from "./src/pages/Services/Service";
 import Activity from "./src/pages/Services/Activity";
 import CatSitterServicePage from "./src/pages/CatSitter/CatSitterServicePage";
+import Register from "./src/pages/Register/Register";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -113,6 +114,11 @@ export function Routes() {
           name="SitterServicePage"
           options={{ headerLeft: null, headerShown: false }}
           component={CatSitterServicePage}
+        />
+        <Stack.Screen
+          name="Register"
+          options={{ headerLeft: null, headerShown: false }}
+          component={Register}
         />
         <Stack.Screen
           name="Homes"
