@@ -17,14 +17,23 @@ export const AuthProvider = ({ children }) => {
     ""
   );
 
-  const login = (userData, expoPushToken) => {
+  const login = (userData, expoPushToken = "") => {
+    console.log("User data received:", userData);
+    console.log("Roles:", userData.roles);
+
     const ability = new Ability(defineRulesFor(userData));
     setUser({ ...userData });
-    setRole(userData?.roles[0]);
-    setExpoPushToken(expoPushToken);
+
+    if (userData?.roles && userData.roles.length > 0) {
+      setRole(userData.roles[0].name);
+      console.log("Role set:", userData.roles[0].name); // Log role được set
+    }
+
+    setExpoPushToken(expoPushToken || ""); // Đảm bảo expoPushToken không bị undefined
   };
 
   const logout = async () => {
+    console.log("Logging out...");
     await removeUser();
     await setUser(null);
     await removeAccessToken();

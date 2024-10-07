@@ -14,9 +14,8 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import CustomButton from "../../components/CustomButton";
 import CustomToast from "../../components/CustomToast";
-import { FieldError } from "../../components/FieldError";
 import { useStorage } from "../../hooks/useLocalStorage";
-import { postData } from "../../api/api"; // API function import
+import { postData } from "../../api/api";
 import { useAuth } from "../../../auth/useAuth";
 import * as yup from "yup";
 import { useForm, FormProvider } from "react-hook-form";
@@ -27,15 +26,14 @@ const { width, height } = Dimensions.get("window");
 export default function Login() {
   const navigation = useNavigation();
   const [token, setToken] = useStorage("accessToken", null);
-  const [savedEmail, setSavedEmail] = useStorage("savedEmail", ""); // Lưu email
-  const [savedPassword, setSavedPassword] = useStorage("savedPassword", ""); // Lưu password
+  const [savedEmail, setSavedEmail] = useStorage("savedEmail", "");
+  const [savedPassword, setSavedPassword] = useStorage("savedPassword", "");
   const [LoginState, setLoginState] = useState(true);
   const [LoginError, setLoginError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const { accessToken, role, logout } = useAuth(); // Auth hook cho đăng xuất
+  const { accessToken, role, logout, login } = useAuth();
 
-  // Validation schema using yup
   const loginSchema = yup.object().shape({
     email: yup
       .string()
@@ -97,8 +95,16 @@ export default function Login() {
         if (accessToken.startsWith("Bearer ")) {
           const token = accessToken.replace("Bearer ", "");
           setToken(token);
-          setSavedEmail(data.email); // Lưu email sau khi đăng nhập
-          setSavedPassword(data.password); // Lưu password sau khi đăng nhập
+          setSavedEmail(data.email);
+          setSavedPassword(data.password);
+
+          // Lưu thông tin người dùng vào Auth context
+          const userData = {
+            email: data.email,
+            roles: [{ name: "User" }],
+          };
+          login(userData); // Gọi login để lưu thông tin user vào useAuth
+
           CustomToast({ text: "Đăng nhập thành công" });
         } else {
           throw new Error("No valid token found in response");
@@ -106,7 +112,6 @@ export default function Login() {
 
         setLoading(false);
 
-        // Chờ setToken hoàn thành trước khi điều hướng
         return new Promise((resolve) => {
           setTimeout(() => {
             navigation.navigate("Homes", { screen: "Home" });

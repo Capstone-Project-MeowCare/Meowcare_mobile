@@ -14,9 +14,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import CustomButton from "../../components/CustomButton";
 import CustomToast from "../../components/CustomToast";
-import { useStorage } from "../../hooks/useLocalStorage";
-import { postData } from "../../api/api"; // API function import
-import { useAuth } from "../../../auth/useAuth";
+import { postData } from "../../api/api";
 import * as yup from "yup";
 import { useForm, FormProvider } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
