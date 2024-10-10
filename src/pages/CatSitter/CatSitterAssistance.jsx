@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, Image, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CatSitterCalendarSetting from "./CatSitterCalendarSetting";
 import { Picker } from "@react-native-picker/picker";
+import { HeadingSubscriber } from "expo-location/build/LocationSubscribers";
 
 const { width, height } = Dimensions.get("window");
 
@@ -280,6 +281,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#D9D9D9",
     alignSelf: "center",
     marginTop: height * 0.02,
+    right: height * 0.02,
   },
   extraServiceContainer: {
     flexDirection: "row",
@@ -302,6 +304,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#CCC",
     borderRadius: 5,
+    right: height * 0.02,
   },
   picker: {
     height: height * 0.05,
@@ -314,6 +317,7 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
     width: width * 0.9,
     alignSelf: "center",
+    right: height * 0.02,
   },
   squareContainer: {
     flexDirection: "row",

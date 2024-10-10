@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { Text, View, StyleSheet, Dimensions, Image } from "react-native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
-import Swiper from "react-native-swiper"; // Import Swiper
-import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs"; // Import Top Tab Navigator
+import Swiper from "react-native-swiper";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import CatSitterInformation from "./CatSitterInformation";
 import CatSitterReviews from "./CatSitterReviews";
 import CatSitterAssistance from "./CatSitterAssistance";
@@ -24,32 +24,24 @@ const catSitters = [
 
 function FirstRoute() {
   return (
-    <View style={styles.firstRouteContainer}>
+    <View style={styles.routeContainer}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
-        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.tabContent}>
           <CatSitterInformation />
         </View>
       </ScrollView>
-
-      <View style={styles.fixedFooter}>
-        <TouchableOpacity style={styles.bookingButton}>
-          <Text style={styles.bookingText}>Đặt Lịch</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
 
 function SecondRoute() {
   return (
-    <View style={styles.secondRouteContainer}>
+    <View style={styles.routeContainer}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
-        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.tabContent}>
@@ -62,27 +54,19 @@ function SecondRoute() {
 
 function ThirdRoute() {
   return (
-    <View style={styles.thirdRouteContainer}>
+    <View style={styles.routeContainer}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
-        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.tabContent}>
           <CatSitterAssistance />
         </View>
       </ScrollView>
-
-      <View style={styles.fixedFooter}>
-        <TouchableOpacity style={styles.bookingButton}>
-          <Text style={styles.bookingText}>Đặt Lịch</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
 
-// Tạo Tab Navigator
 const Tab = createMaterialTopTabNavigator();
 
 export default function CatSitterServicePage({ navigation }) {
@@ -100,7 +84,11 @@ export default function CatSitterServicePage({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.mainScrollContainer}
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -138,61 +126,69 @@ export default function CatSitterServicePage({ navigation }) {
           ))}
         </Swiper>
       </View>
+
       <View style={styles.infoContainer}>
         {catSitters.map((item) => (
           <View key={item.id} style={styles.infoContent}>
             <Image source={item.imageSource} style={styles.sitterImage} />
             <View style={styles.textContainer}>
-              <View style={styles.headerRow}>
-                <Text style={styles.name}>{item.name}</Text>
-              </View>
-              <View style={styles.centerRow}>
-                <Text style={styles.description}>{item.description}</Text>
-              </View>
-              <View style={styles.addressRow}>
-                <Text style={styles.address}>{item.address}</Text>
-              </View>
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.description}>{item.description}</Text>
+              <Text style={styles.address}>{item.address}</Text>
             </View>
           </View>
         ))}
       </View>
 
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarLabel: ({ focused }) => (
-            <Text
-              style={{
-                fontSize: height * 0.018,
-                fontWeight: "bold",
-                color: focused ? "#000857" : "rgba(0, 8, 87, 0.6)",
-              }}
-            >
-              {route.name}
-            </Text>
-          ),
-          tabBarIndicatorStyle: { backgroundColor: "#000857" },
-          tabBarStyle: { backgroundColor: "#FFFAF5" },
-        })}
-      >
-        <Tab.Screen name="Thông tin" component={FirstRoute} />
-        <Tab.Screen name="Đánh giá" component={SecondRoute} />
-        <Tab.Screen name="Dịch vụ" component={ThirdRoute} />
-      </Tab.Navigator>
-    </View>
+      {/* Tab Navigator */}
+      <View style={{ height: height * 0.6 }}>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarLabel: ({ focused }) => (
+              <Text
+                style={{
+                  fontSize: height * 0.018,
+                  fontWeight: "bold",
+                  color: focused ? "#000857" : "rgba(0, 8, 87, 0.6)",
+                }}
+              >
+                {route.name}
+              </Text>
+            ),
+            tabBarIndicatorStyle: { backgroundColor: "#000857" },
+            tabBarStyle: { backgroundColor: "#FFFAF5" },
+          })}
+        >
+          <Tab.Screen name="Thông tin" component={FirstRoute} />
+          <Tab.Screen name="Đánh giá" component={SecondRoute} />
+          <Tab.Screen name="Dịch vụ" component={ThirdRoute} />
+        </Tab.Navigator>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.fixedFooter}>
+        <TouchableOpacity style={styles.bookingButton}>
+          <Text style={styles.bookingText}>Đặt Lịch</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFAF5",
+    backgroundColor: "#FFFAF5", // Background màu nền cho toàn màn hình
+  },
+  mainScrollContainer: {
+    paddingBottom: height * 0.12,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingTop: height * 0.02,
     paddingHorizontal: width * 0.02,
-    backgroundColor: "#FFFAF5",
+    backgroundColor: "#FFFAF5", // Đồng nhất màu nền
   },
   backButton: {
     flex: 1,
@@ -216,6 +212,7 @@ const styles = StyleSheet.create({
   swiperContainer: {
     height: height * 0.35,
     marginTop: height * 0.02,
+    backgroundColor: "#FFFAF5", // Đảm bảo background đồng bộ
   },
   wrapper: {
     height: height * 0.35,
@@ -252,12 +249,13 @@ const styles = StyleSheet.create({
   infoContainer: {
     width: "100%",
     padding: height * 0.02,
+    backgroundColor: "#FFFAF5", // Đảm bảo background đồng bộ
   },
   infoContent: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: height * 0.02, // Thêm margin để tránh đè lên nhau
   },
-
   sitterImage: {
     width: width * 0.16,
     height: height * 0.08,
@@ -269,29 +267,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingLeft: height * 0.01,
   },
-
   name: {
     fontSize: height * 0.021,
     fontWeight: "bold",
     color: "#000857",
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: height * 0.005,
-  },
-  centerRow: {
-    marginBottom: height * 0.01,
-  },
-  addressRow: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    flexWrap: "wrap",
-    marginBottom: height * 0.005,
-  },
-
   description: {
     fontSize: height * 0.015,
     color: "#000",
@@ -301,29 +281,15 @@ const styles = StyleSheet.create({
   address: {
     fontSize: height * 0.015,
     color: "#000",
-    marginVertical: -height * 0.2,
     fontWeight: "600",
-    flexShrink: 1,
-    marginRight: width * 0.02,
   },
-  firstRouteContainer: {
+  routeContainer: {
     flex: 1,
-    backgroundColor: "#FFFAF5",
-  },
-  secondRouteContainer: {
-    flex: 1,
-    backgroundColor: "#FFFAF5",
-  },
-  thirdRouteContainer: {
-    flex: 1,
-    backgroundColor: "#FFFAF5",
+    backgroundColor: "#FFFAF5", // Đảm bảo màu nền đồng nhất cho từng tab
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: height * 0.1,
-  },
-  scrollView: {
-    flex: 1,
+    padding: width * 0.05,
   },
   tabContent: {
     flexGrow: 1,
@@ -334,17 +300,14 @@ const styles = StyleSheet.create({
     paddingTop: height * 0.02,
   },
   fixedFooter: {
-    position: "absolute",
-    bottom: height * 0.02,
-    left: width * 0.05,
-    right: width * 0.05,
-    backgroundColor: "transparent",
+    paddingTop: 10,
+    backgroundColor: "#FFFAF5", // Đồng bộ màu nền với toàn bộ trang
     justifyContent: "center",
     alignItems: "center",
   },
   bookingButton: {
     width: width * 0.9,
-    height: 33,
+    height: 40,
     backgroundColor: "#2E67D1",
     justifyContent: "center",
     alignItems: "center",
