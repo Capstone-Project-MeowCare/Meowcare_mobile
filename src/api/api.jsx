@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 const api = axios.create({
-  baseURL: "https://meow-care-demo.onrender.com/meow-care/api/v1/",
+  baseURL: "http://52.62.80.49/meow-care/api/v1/",
 });
 
 api.interceptors.request.use(

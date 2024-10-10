@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: "flex-start",
-    marginLeft: -width * 0.05,
+    marginLeft: -width * 0.08,
   },
   title: {
     textAlign: "left",
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   scheduleContainer: {
     marginTop: height * 0.02,
-    marginLeft: -width * 0.05,
+    marginLeft: -width * 0.08,
   },
   scheduleTitle: {
     textAlign: "left",
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   },
   skillContainer: {
     marginTop: height * 0.02,
-    marginLeft: -width * 0.05,
+    marginLeft: -width * 0.08,
   },
   skillText: {
     textAlign: "left",
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   },
   locationInfoContainer: {
     marginTop: height * 0.02,
-    marginLeft: -width * 0.05,
+    marginLeft: -width * 0.08,
   },
   locationInfoText: {
     textAlign: "left",
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   trustSafetyContainer: {
     marginTop: height * 0.02,
-    marginLeft: -width * 0.05,
+    marginLeft: -width * 0.08,
   },
   trustSafetyTitle: {
     textAlign: "left",
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   },
   addressContainer: {
     marginTop: height * 0.02,
-    marginLeft: -width * 0.05,
+    marginLeft: -width * 0.08,
   },
   addressTitle: {
     textAlign: "left",

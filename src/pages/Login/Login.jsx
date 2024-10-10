@@ -95,12 +95,6 @@ export default function Login() {
   //       setSavedEmail(data.email);
   //       setSavedPassword(data.password);
 
-  //       const userData = {
-  //         email: data.email,
-  //         roles: [{ name: "User" }],
-  //       };
-  //       login(userData);
-
   //       CustomToast({ text: "Đăng nhập thành công", position: 190 });
 
   //       setLoading(false);
@@ -116,7 +110,7 @@ export default function Login() {
   //       console.log("Error during login:", error);
   //       console.log("Error response:", error?.response?.data);
 
-  //       if (error?.response?.status === 401) {
+  //       if (error?.response?.status === 403) {
   //         CustomToast({
   //           text: "Thông tin đăng nhập không chính xác",
   //           position: 300,
@@ -157,7 +151,7 @@ export default function Login() {
             email: data.email,
             roles: [{ name: "User" }],
           };
-          login(userData); // Gọi login để lưu thông tin user vào useAuth
+          login(userData);
 
           setLoading(false);
 
