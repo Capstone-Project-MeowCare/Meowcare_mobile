@@ -10,16 +10,18 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Checkbox from "expo-checkbox";
+import { useNavigation } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
-export default function BookingStep1({ navigation }) {
+export default function BookingStep1() {
   const [selectedService, setSelectedService] = useState(
     "Gửi thú cưng tại nhà người chăm sóc"
   );
   const [selectedFood, setSelectedFood] = useState(
     "NATURAL CORE Bene Chicken Salmon"
   );
+  const navigation = useNavigation();
   const [isChecked, setIsChecked] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("Tỉnh/Thành phố");
   const [isCustomFoodChecked, setIsCustomFoodChecked] = useState(false);
@@ -253,6 +255,7 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     fontSize: 16,
     color: "#000857",
+    fontWeight: "bold",
   },
   textInput: {
     width: "100%",
