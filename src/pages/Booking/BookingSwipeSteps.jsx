@@ -10,6 +10,9 @@ import {
 import GestureRecognizer from "react-native-swipe-gestures";
 import BookingStep1 from "./BookingStep1";
 import BookingStep2 from "./BookingStep2";
+import BookingStep3 from "./BookingStep3";
+import BookingStep4 from "./BookingStep4"; // Add Step 4
+import BookingStep5 from "./BookingStep5"; // Add Step 5
 
 const { width, height } = Dimensions.get("window");
 
@@ -17,7 +20,8 @@ export default function SwipeStep({ navigation }) {
   const [currentStep, setCurrentStep] = useState(1);
 
   const onSwipeLeft = () => {
-    if (currentStep < 2) {
+    if (currentStep < 5) {
+      // Set limit to 5 steps
       setCurrentStep(currentStep + 1);
     }
   };
@@ -33,7 +37,13 @@ export default function SwipeStep({ navigation }) {
       case 1:
         return <BookingStep1 />;
       case 2:
-        return <BookingStep2 onGoBack={() => setCurrentStep(1)} />; // Truyền onGoBack để quay lại step 1
+        return <BookingStep2 onGoBack={() => setCurrentStep(1)} />;
+      case 3:
+        return <BookingStep3 onGoBack={() => setCurrentStep(2)} />;
+      case 4:
+        return <BookingStep4 onGoBack={() => setCurrentStep(3)} />;
+      case 5:
+        return <BookingStep5 onGoBack={() => setCurrentStep(4)} />;
       default:
         return <BookingStep1 />;
     }
@@ -51,15 +61,15 @@ export default function SwipeStep({ navigation }) {
     >
       {renderStep()}
       <View style={styles.fixedFooter}>
-        {currentStep === 1 && (
+        {currentStep < 5 && (
           <TouchableOpacity
             style={styles.nextButton}
-            onPress={() => setCurrentStep(2)}
+            onPress={() => setCurrentStep(currentStep + 1)}
           >
             <Text style={styles.nextText}>Tiếp tục</Text>
           </TouchableOpacity>
         )}
-        {currentStep === 2 && (
+        {currentStep === 5 && (
           <TouchableOpacity
             style={styles.nextButton}
             onPress={() => navigation.goBack()}
