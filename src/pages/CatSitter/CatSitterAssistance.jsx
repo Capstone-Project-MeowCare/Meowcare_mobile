@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#D9D9D9",
     alignSelf: "center",
     marginTop: height * 0.02,
-    right: height * 0.02,
+    right: height * 0.03,
   },
   extraServiceContainer: {
     flexDirection: "row",
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#CCC",
     borderRadius: 5,
-    right: height * 0.02,
+    right: height * 0.03,
   },
   picker: {
     height: height * 0.05,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
     width: width * 0.9,
     alignSelf: "center",
-    right: height * 0.02,
+    right: height * 0.03,
   },
   squareContainer: {
     flexDirection: "row",

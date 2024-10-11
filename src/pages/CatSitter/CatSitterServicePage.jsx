@@ -164,10 +164,11 @@ export default function CatSitterServicePage({ navigation }) {
           <Tab.Screen name="Dịch vụ" component={ThirdRoute} />
         </Tab.Navigator>
       </View>
-
-      {/* Footer */}
       <View style={styles.fixedFooter}>
-        <TouchableOpacity style={styles.bookingButton}>
+        <TouchableOpacity
+          style={styles.bookingButton}
+          onPress={() => navigation.navigate("SwipeStep")}
+        >
           <Text style={styles.bookingText}>Đặt Lịch</Text>
         </TouchableOpacity>
       </View>
@@ -178,7 +179,7 @@ export default function CatSitterServicePage({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFAF5", // Background màu nền cho toàn màn hình
+    backgroundColor: "#FFFAF5",
   },
   mainScrollContainer: {
     paddingBottom: height * 0.12,
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: height * 0.02,
     paddingHorizontal: width * 0.02,
-    backgroundColor: "#FFFAF5", // Đồng nhất màu nền
+    backgroundColor: "#FFFAF5",
   },
   backButton: {
     flex: 1,
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   swiperContainer: {
     height: height * 0.35,
     marginTop: height * 0.02,
-    backgroundColor: "#FFFAF5", // Đảm bảo background đồng bộ
+    backgroundColor: "#FFFAF5",
   },
   wrapper: {
     height: height * 0.35,
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
   infoContainer: {
     width: "100%",
     padding: height * 0.02,
-    backgroundColor: "#FFFAF5", // Đảm bảo background đồng bộ
+    backgroundColor: "#FFFAF5",
   },
   infoContent: {
     flexDirection: "row",
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
   },
   routeContainer: {
     flex: 1,
-    backgroundColor: "#FFFAF5", // Đảm bảo màu nền đồng nhất cho từng tab
+    backgroundColor: "#FFFAF5",
   },
   scrollContainer: {
     flexGrow: 1,
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
   },
   fixedFooter: {
     paddingTop: 10,
-    backgroundColor: "#FFFAF5", // Đồng bộ màu nền với toàn bộ trang
+    backgroundColor: "#FFFAF5",
     justifyContent: "center",
     alignItems: "center",
   },

@@ -14,6 +14,10 @@ import Service from "./src/pages/Services/Service";
 import Activity from "./src/pages/Services/Activity";
 import CatSitterServicePage from "./src/pages/CatSitter/CatSitterServicePage";
 import Register from "./src/pages/Register/Register";
+import BookingPreparation from "./src/pages/Booking/BookingStep1";
+import BookingStep1 from "./src/pages/Booking/BookingStep1";
+import BookingStep2 from "./src/pages/Booking/BookingStep2";
+import SwipeStep from "./src/pages/Booking/BookingSwipeSteps";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,6 +118,21 @@ export function Routes() {
           name="SitterServicePage"
           options={{ headerLeft: null, headerShown: false }}
           component={CatSitterServicePage}
+        />
+        <Stack.Screen
+          name="BookingStep1"
+          options={{ headerLeft: null, headerShown: false }}
+          component={BookingStep1}
+        />
+        <Stack.Screen
+          name="BookingStep2"
+          options={{ headerLeft: null, headerShown: false }}
+          component={BookingStep2}
+        />
+        <Stack.Screen
+          name="SwipeStep"
+          options={{ headerLeft: null, headerShown: false }}
+          component={SwipeStep}
         />
         <Stack.Screen
           name="Register"
