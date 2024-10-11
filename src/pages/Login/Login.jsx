@@ -174,6 +174,8 @@ export default function Login() {
           error?.response?.status === 404 ||
           error?.response?.status === 403
         ) {
+          // role user
+          
           if (data.email === "test@gmail.com" && data.password === "123") {
             const userData = {
               email: "test@gmail.com",
@@ -184,6 +186,19 @@ export default function Login() {
             setLoading(false);
 
             // Điều hướng vào trang chủ
+            navigation.navigate("Homes", { screen: "Home" });
+          }
+          //role cat sitter 
+          else if (data.email === "cat@gmail.com" && data.password === "123") {
+            const sitterData = {
+              email: "catsitter@gmail.com",
+              roles: [{ name: "Cat Sitter" }],
+            };
+      
+            login(sitterData);
+            setLoading(false);
+      
+            // Điều hướng vào trang chủ dành cho Cat Sitter
             navigation.navigate("Homes", { screen: "Home" });
           } else {
             setLoading(false);
