@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     alignSelf: "center",
     marginTop: height * 0.02,
-    right: height * 0.02,
+    right: height * 0.03,
   },
 });
