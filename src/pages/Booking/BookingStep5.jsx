@@ -17,7 +17,7 @@ export default function BookingStep5({ onGoBack }) {
 
   return (
     <GestureRecognizer
-      onSwipeRight={onGoBack} // Swipe phải để quay lại BookingStep1
+      onSwipeRight={onGoBack} // Swipe phải để quay lại
       config={{
         velocityThreshold: 0.3,
         directionalOffsetThreshold: 80,
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   progressFill: {
-    width: "100%", // Fill 40% cho bước 2
+    width: "100%",
     height: "100%",
     backgroundColor: "#902C6C",
   },
