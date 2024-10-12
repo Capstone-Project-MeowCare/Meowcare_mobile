@@ -1,7 +1,23 @@
 import React from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Image, TextInput  } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity,ScrollView, Image, TextInput  } from "react-native";
+import { createStackNavigator } from '@react-navigation/stack';
 
-export default function Service({ roles }) {
+export default function Service({ roles, navigation }) {
+
+
+const Stack = createStackNavigator();
+
+function AppNavigator() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="CatSitterService" component={CatSitterService} />
+      <Stack.Screen name="RequestScreen" component={RequestScreen} />
+      <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <Stack.Screen name="WalletScreen" component={WalletScreen} />
+      <Stack.Screen name="GuideScreen" component={GuideScreen} />
+    </Stack.Navigator>
+  );
+}
   return (
     <View style={styles.container}>
       {/* Nếu role là "user", hiển thị giao diện cho User */}
@@ -50,12 +66,26 @@ export default function Service({ roles }) {
             />
           </View>
             {/* Function Icons */}
-          <View style={styles.sitterFunctions}>
-            <Image source={require("../../../assets/IconRequest.png")} style={styles.icon} />
-            <Image source={require("../../../assets/IconProfile.png")} style={styles.icon} />
-            <Image source={require("../../../assets/IconWallet.png")} style={styles.icon} />
-            <Image source={require("../../../assets/IconGuide.png")} style={styles.icon} />
-          </View>
+           {/* Box Function Icons */}
+          
+      <View style={styles.functionBox}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('RequestScreen')}>
+          <Image source={require("../../../assets/IconRequest.png")} style={styles.icon} />
+          <Text style={styles.iconText}>Nhận yêu cầu</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('ProfileScreen')}>
+          <Image source={require("../../../assets/IconProfile.png")} style={styles.icon} />
+          <Text style={styles.iconText}>Hồ sơ dịch vụ</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('WalletScreen')}>
+          <Image source={require("../../../assets/IconWallet.png")} style={styles.icon} />
+          <Text style={styles.iconText}>Ví tiền</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('GuideScreen')}>
+          <Image source={require("../../../assets/IconGuide.png")} style={styles.icon} />
+          <Text style={styles.iconText}>Hướng dẫn</Text>
+        </TouchableOpacity>
+      </View>
            {/* Search Bar */}
            <View style={styles.searchContainer}>
         <TextInput
@@ -66,10 +96,12 @@ export default function Service({ roles }) {
         <TouchableOpacity style={styles.searchButton}>
           <Image source={require("../../../assets/SearchIcon.png")} style={styles.searchIcon} />
         </TouchableOpacity>
+        
       </View>
         {/* Request Status Tabs */}
         <View style={styles.statusTabs}>
-        <TouchableOpacity style={styles.tabActive}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
+        <TouchableOpacity style={styles.tabActive}> 
           <Text style={styles.tabTextActive}>Tất cả</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tab}>
@@ -81,6 +113,13 @@ export default function Service({ roles }) {
         <TouchableOpacity style={styles.tab}>
           <Text style={styles.tabText}>Đang diễn ra</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.tab}>
+          <Text style={styles.tabText}>Hoàn thành</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tab}>
+          <Text style={styles.tabText}>Đã hủy</Text>
+        </TouchableOpacity>
+      </ScrollView>
       </View>
 
 
@@ -106,6 +145,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  functionBox: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "80%",
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 5,  // Cho Android
+    marginTop: -50,  // Di chuyển box lên gần hình ảnh
+  },
+  iconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  iconText: {
+    fontSize: 10,
+    color: "#000857",
+    fontWeight: "bold",
+  },
   sitterFunctions: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -123,7 +185,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 25,
+    borderRadius: 10,
     paddingHorizontal: 10,
     backgroundColor: "#fff",
   },
@@ -139,36 +201,47 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
   },
+  scrollContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 10,
+  },
   statusTabs: {
     flexDirection: "row",
     justifyContent: "space-around",
     width: "90%",
-    marginVertical: 10,
+    marginVertical: 4,
   },
   tab: {
     paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
     borderRadius: 20,
-    backgroundColor: "#EAEAEA",
+    backgroundColor: "#FFFAF5",
+    borderWidth: 1,
+    borderColor: "#902C6C",
+    marginRight: 10,
   },
   tabActive: {
     paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
     borderRadius: 20,
-    backgroundColor: "#B3396E",
+    backgroundColor: "#902C6C",
+    marginRight: 10,
   },
   tabText: {
-    color: "#666",
+    color: "#902C6C",
     fontSize: 14,
+    fontWeight: "bold",
   },
   tabTextActive: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontSize: 14,
+    fontWeight: "bold",
   },
   imageContainer: {
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
+    
   },
   image: {
     width: 430,
@@ -219,4 +292,5 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 30,
   },
+
 });

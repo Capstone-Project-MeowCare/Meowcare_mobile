@@ -120,6 +120,12 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={BecomeSitter}
         />
+        {/* <Stack.Screen
+          name="CatSitterService"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CatSitterService}
+        /> */}
+       
         <Stack.Screen
           name="SitterServicePage"
           options={{ headerLeft: null, headerShown: false }}
