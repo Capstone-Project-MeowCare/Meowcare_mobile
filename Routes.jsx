@@ -18,6 +18,7 @@ import BookingPreparation from "./src/pages/Booking/BookingStep1";
 import BookingStep1 from "./src/pages/Booking/BookingStep1";
 import BookingStep2 from "./src/pages/Booking/BookingStep2";
 import SwipeStep from "./src/pages/Booking/BookingSwipeSteps";
+import BecomeSitter from "./src/pages/Job/BecomeSitter";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,6 +115,17 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={FindSitterByMap}
         />
+        <Stack.Screen
+          name="BecomeSitter"
+          options={{ headerLeft: null, headerShown: false }}
+          component={BecomeSitter}
+        />
+        {/* <Stack.Screen
+          name="CatSitterService"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CatSitterService}
+        /> */}
+       
         <Stack.Screen
           name="SitterServicePage"
           options={{ headerLeft: null, headerShown: false }}

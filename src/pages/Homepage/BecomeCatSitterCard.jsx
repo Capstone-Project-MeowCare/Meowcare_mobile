@@ -1,10 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, Dimensions, Image } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
-
+import { useNavigation } from "@react-navigation/native";
 const { width } = Dimensions.get("window");
 
 const BecomeCatSitterCard = () => {
+  const navigation = useNavigation();
   return (
     <View style={styles.squareView}>
       <View style={styles.textContainer}>
@@ -15,7 +16,7 @@ const BecomeCatSitterCard = () => {
         </Text>
         <TouchableOpacity>
           <View style={styles.learnMoreButton}>
-            <Text style={styles.learnMoreText}>Bắt đầu</Text>
+            <Text onPress={() => navigation.navigate("Công Việc")} style={styles.learnMoreText}>Bắt đầu</Text>
           </View>
         </TouchableOpacity>
       </View>
