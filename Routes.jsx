@@ -19,6 +19,10 @@ import BookingStep1 from "./src/pages/Booking/BookingStep1";
 import BookingStep2 from "./src/pages/Booking/BookingStep2";
 import SwipeStep from "./src/pages/Booking/BookingSwipeSteps";
 import BecomeSitter from "./src/pages/Job/BecomeSitter";
+import CatSitterService from "./src/pages/Job/CatSitterService";
+import CatSitterProfile from "./src/pages/Job/CatSitterProfile";
+import CatSitterWallet from "./src/pages/Job/CatSitterWallet";
+import CatSitterGuide from "./src/pages/Job/CatSitterGuide";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -79,7 +83,7 @@ function MyBottomNavigationBar() {
       />
       <Tab.Screen
         name="Hoạt Động"
-        options={{ headerShown: false }}
+        options={{ headerShown:false }}
         component={Activity}
       />
       <Tab.Screen
@@ -120,12 +124,26 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={BecomeSitter}
         />
-        {/* <Stack.Screen
+        <Stack.Screen
           name="CatSitterService"
           options={{ headerLeft: null, headerShown: false }}
           component={CatSitterService}
-        /> */}
-       
+        />
+        <Stack.Screen
+          name="CatSitterProfile"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CatSitterProfile}
+        />
+       <Stack.Screen
+          name="CatSitterWallet"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CatSitterWallet}
+        />
+        <Stack.Screen
+          name="CatSitterGuide"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CatSitterGuide}
+        />
         <Stack.Screen
           name="SitterServicePage"
           options={{ headerLeft: null, headerShown: false }}

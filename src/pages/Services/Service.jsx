@@ -1,22 +1,18 @@
 import React from "react";
 import { Text, View, StyleSheet, TouchableOpacity,ScrollView, Image, TextInput  } from "react-native";
 import { createStackNavigator } from '@react-navigation/stack';
+import { useNavigation } from "@react-navigation/native";
 
-export default function Service({ roles, navigation }) {
+export default function Service({ roles }) {
 
 
 const Stack = createStackNavigator();
 
+const navigation = useNavigation();
+
 function AppNavigator() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="CatSitterService" component={CatSitterService} />
-      <Stack.Screen name="RequestScreen" component={RequestScreen} />
-      <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-      <Stack.Screen name="WalletScreen" component={WalletScreen} />
-      <Stack.Screen name="GuideScreen" component={GuideScreen} />
-    </Stack.Navigator>
-  );
+
+
 }
   return (
     <View style={styles.container}>
@@ -69,19 +65,19 @@ function AppNavigator() {
            {/* Box Function Icons */}
           
       <View style={styles.functionBox}>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('RequestScreen')}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterService')}>
           <Image source={require("../../../assets/IconRequest.png")} style={styles.icon} />
           <Text style={styles.iconText}>Nhận yêu cầu</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('ProfileScreen')}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterProfile')}>
           <Image source={require("../../../assets/IconProfile.png")} style={styles.icon} />
           <Text style={styles.iconText}>Hồ sơ dịch vụ</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('WalletScreen')}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterWallet')}>
           <Image source={require("../../../assets/IconWallet.png")} style={styles.icon} />
           <Text style={styles.iconText}>Ví tiền</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('GuideScreen')}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterGuide')}>
           <Image source={require("../../../assets/IconGuide.png")} style={styles.icon} />
           <Text style={styles.iconText}>Hướng dẫn</Text>
         </TouchableOpacity>
