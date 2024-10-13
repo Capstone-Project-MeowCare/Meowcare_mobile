@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  TextInput, // Import TextInput
 } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 
@@ -42,7 +43,30 @@ export default function BookingStep4({ onGoBack }) {
       <View style={styles.separator} />
 
       <View style={styles.mainContent}>
-        <Text style={styles.text}>Nội dung cho bước 4</Text>
+        <Text style={styles.label}>Thông tin liên hệ</Text>
+
+        <View>
+          <TextInput
+            style={styles.input}
+            placeholder="Họ và tên"
+            placeholderTextColor="rgba(0,8,87,0.5)"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Số điện thoại"
+            placeholderTextColor="rgba(0,8,87,0.5)"
+          />
+        </View>
+        <Text style={styles.label}>Lời nhắn</Text>
+        <View>
+          <TextInput
+            style={styles.noteInput}
+            placeholder="Chia sẻ 1 số thông tin về thú cưng của bạn để người chăm sóc hiểu hơn"
+            placeholderTextColor="rgba(0,8,87,0.5)"
+            multiline={true}
+            textAlignVertical="top"
+          />
+        </View>
       </View>
     </GestureRecognizer>
   );
@@ -96,12 +120,43 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    paddingHorizontal: width * 0.05,
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    marginTop: height * 0.05,
   },
-  text: {
-    textAlign: "center",
-    fontSize: 20,
+  label: {
+    fontSize: 18,
     color: "#000857",
+    fontWeight: "bold",
+    marginBottom: height * 0.015,
+    textAlign: "left",
+  },
+
+  input: {
+    width: width * 0.9,
+    height: height * 0.06,
+    borderColor: "rgba(0,0,0,0.6)",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: height * 0.02,
+    fontSize: 16,
+    color: "#000857",
+    fontWeight: "600",
+  },
+  noteInput: {
+    width: width * 0.9,
+    height: height * 0.13,
+    borderColor: "rgba(0,0,0,0.6)",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: height * 0.01,
+    paddingTop: height * 0.01,
+    marginBottom: height * 0.02,
+    fontSize: 16,
+    color: "#000857",
+    fontWeight: "600",
+    textAlignVertical: "top",
   },
 });
