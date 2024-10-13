@@ -1,7 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 const api = axios.create({
-  baseURL: "https://basico.click/meow-care/api/v1/",
+  baseURL:
+    process.env.REACT_APP_API_BASE_URL ||
+    "https://basico.click/meow-care/api/v1/",
 });
 
 api.interceptors.request.use(
@@ -24,7 +26,7 @@ api.interceptors.request.use(
 export const getData = async (endpoint, params = {}, headers = {}) => {
   try {
     const response = await api.get(endpoint, { params, headers });
-    return response; // Trả về toàn bộ phản hồi từ API
+    return response.data; // Trả về toàn bộ phản hồi từ API
   } catch (error) {
     throw error;
   }
