@@ -15,11 +15,12 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import CustomButton from "../../components/CustomButton";
 import CustomToast from "../../components/CustomToast";
 import { useStorage } from "../../hooks/useLocalStorage";
-import { postData } from "../../api/api";
+import { getData, postData } from "../../api/api";
 import { useAuth } from "../../../auth/useAuth";
 import * as yup from "yup";
 import { useForm, FormProvider } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -125,88 +126,69 @@ export default function Login() {
   //     });
   // };
 
-  const handleLogin = (data) => {
+  const handleLogin = async (data) => {
     setLoginError(false);
     setLoginState(false);
     setLoading(true);
     Keyboard.dismiss();
 
-    postData("/auth/generateToken", {
-      email: data.email,
-      password: data.password,
-    })
-      .then((responseData) => {
-        console.log("Full response data:", responseData);
-
-        const accessToken = responseData;
-
-        if (accessToken.startsWith("Bearer ")) {
-          const token = accessToken.replace("Bearer ", "");
-          setToken(token);
-          setSavedEmail(data.email);
-          setSavedPassword(data.password);
-
-          // Lưu thông tin người dùng vào Auth context
-          const userData = {
-            email: data.email,
-            roles: [{ name: "User" }],
-          };
-          login(userData);
-
-          setLoading(false);
-
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              navigation.navigate("Homes", { screen: "Home" });
-              resolve();
-            }, 0);
-          });
-        } else {
-          throw new Error("No valid token found in response");
-        }
-      })
-      .catch((error) => {
-        console.log("Error during login:", error);
-        console.log("Error response:", error?.response?.data);
-
-        if (
-          error?.response?.status === 500 ||
-          error?.response?.status === 404 ||
-          error?.response?.status === 403
-        ) {
-          // role user
-          
-          if (data.email === "test@gmail.com" && data.password === "123") {
-            const userData = {
-              email: "test@gmail.com",
-              roles: [{ name: "User" }],
-            };
-
-            login(userData);
-            setLoading(false);
-
-            // Điều hướng vào trang chủ
-            navigation.navigate("Homes", { screen: "Home" });
-          }
-          //role cat sitter 
-          else if (data.email === "cat@gmail.com" && data.password === "123") {
-            const sitterData = {
-              email: "catsitter@gmail.com",
-              roles: [{ name: "Cat Sitter" }],
-            };
-      
-            login(sitterData);
-            setLoading(false);
-      
-            // Điều hướng vào trang chủ dành cho Cat Sitter
-            navigation.navigate("Homes", { screen: "Home" });
-          } else {
-            setLoading(false);
-          }
-        } else {
-          setLoading(false);
-        }
+    try {
+      // Gọi API để lấy token
+      const responseData = await postData("/auth/generateToken", {
+        email: data.email,
+        password: data.password,
       });
+
+      console.log("Token received:", responseData);
+
+      const token = responseData; // Lưu token từ phản hồi
+      await AsyncStorage.setItem("accessToken", token); // Lưu token vào AsyncStorage
+      setSavedEmail(data.email);
+      setSavedPassword(data.password);
+
+      // Sau khi nhận token, gọi API để lấy thông tin người dùng
+      const userInfo = await getData(
+        "/auth",
+        {},
+        { Authorization: `Bearer ${token}` }
+      );
+
+      const userData = {
+        email: userInfo.email,
+        roles: userInfo.roles, // Gán roles từ response
+      };
+
+      console.log("User data received:", userData);
+      login(userData); // Lưu vào Auth context
+
+      setLoading(false);
+
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          navigation.navigate("Homes", { screen: "Home" });
+          resolve();
+        }, 0);
+      });
+    } catch (error) {
+      console.log("Error during login:", error);
+      console.log("Error response:", error?.response?.data);
+
+      if (error?.response?.status === 403 || error?.response?.status === 401) {
+        CustomToast({
+          text: "Thông tin đăng nhập không chính xác. Vui lòng đăng nhập lại.",
+          position: 300,
+        });
+      } else if (error?.response?.status === 500) {
+        // Xóa token khỏi AsyncStorage nếu lỗi 500
+        await AsyncStorage.removeItem("accessToken");
+        CustomToast({
+          text: "Đã có lỗi xảy ra. Vui lòng thử lại.",
+          position: 190,
+        });
+      }
+
+      setLoading(false);
+    }
   };
 
   return (
