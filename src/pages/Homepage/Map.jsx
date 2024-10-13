@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -8,11 +8,14 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import MapView from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
 import StarRating from "react-native-star-rating-widget";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+
 const { width, height } = Dimensions.get("window");
+
 const catSitterData = [
   {
     id: "1",
@@ -25,6 +28,8 @@ const catSitterData = [
     verified: "Đã cập nhật 1 ngày trước",
     imageSource: require("../../../assets/avatar.png"),
     isLiked: false,
+    latitude: 10.73507,
+    longitude: 106.632935,
   },
   {
     id: "2",
@@ -37,6 +42,8 @@ const catSitterData = [
     verified: "Đã cập nhật 1 ngày trước",
     imageSource: require("../../../assets/avatar.png"),
     isLiked: false,
+    latitude: 10.73707,
+    longitude: 106.634935,
   },
   {
     id: "3",
@@ -49,6 +56,8 @@ const catSitterData = [
     verified: "Đã cập nhật 1 ngày trước",
     imageSource: require("../../../assets/avatar.png"),
     isLiked: false,
+    latitude: 10.73807,
+    longitude: 106.635935,
   },
   {
     id: "4",
@@ -61,19 +70,54 @@ const catSitterData = [
     verified: "Đã cập nhật 1 ngày trước",
     imageSource: require("../../../assets/meoanh.png"),
     isLiked: false,
+    latitude: 10.73907,
+    longitude: 106.636935,
   },
 ];
 
 export default function FindSitterByMap() {
   const [region, setRegion] = useState({
-    latitude: 14.0583,
+    latitude: 14.0583, // Default location in Vietnam
     longitude: 108.2772,
     latitudeDelta: 0.5,
     longitudeDelta: 0.5,
   });
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
   const [catSitters, setCatSitters] = useState(catSitterData);
   const navigation = useNavigation();
   const [isLiked, setIsLiked] = useState(false);
+
+  useEffect(() => {
+    const requestLocationPermission = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      console.log("Permission status:", status);
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+
+      let currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      console.log("Current location:", currentLocation);
+
+      setLocation(currentLocation);
+
+      setRegion({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      });
+    };
+
+    requestLocationPermission();
+  }, []);
+
+  const handleRegionChangeComplete = (newRegion) => {
+    setRegion(newRegion);
+  };
 
   const handleLikePress = (id) => {
     setCatSitters((prevCatSitters) =>
@@ -82,6 +126,14 @@ export default function FindSitterByMap() {
       )
     );
   };
+
+  let text = "Đang lấy vị trí...";
+  if (errorMsg) {
+    text = errorMsg;
+  } else if (location) {
+    text = `Vị trí hiện tại: ${location.coords.latitude}, ${location.coords.longitude}`;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -106,9 +158,27 @@ export default function FindSitterByMap() {
       <MapView
         style={styles.map}
         region={region}
-        showsUserLocation={false}
-        showsMyLocationButton={false}
-      />
+        onRegionChangeComplete={handleRegionChangeComplete}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
+      >
+        {catSitters.map((sitter) => (
+          <Marker
+            key={sitter.id}
+            coordinate={{
+              latitude: sitter.latitude,
+              longitude: sitter.longitude,
+            }}
+            title={sitter.name}
+            description={sitter.description}
+          >
+            <Image
+              source={sitter.imageSource}
+              style={{ width: 40, height: 40, borderRadius: 20 }}
+            />
+          </Marker>
+        ))}
+      </MapView>
 
       <View style={styles.lowerContainer}>
         <ScrollView
@@ -217,7 +287,6 @@ const styles = StyleSheet.create({
   lowerContainer: {
     flex: 1,
     backgroundColor: "#FFFAF5",
-    // paddingHorizontal: width * 0.02,
   },
   scrollContent: {
     paddingVertical: 10,

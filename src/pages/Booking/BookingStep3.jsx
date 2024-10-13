@@ -18,8 +18,20 @@ export default function BookingStep3({ onGoBack }) {
     { id: 2, name: "Kevin", image: require("../../../assets/image74.png") },
   ];
 
-  const [selectedCat, setSelectedCat] = useState(null); // Trạng thái theo dõi con mèo được chọn
+  const [selectedCats, setSelectedCats] = useState([]);
   const [isChecked, setIsChecked] = useState(false);
+
+  const handleSelectCat = (id) => {
+    if (selectedCats.includes(id)) {
+      // Nếu đã chọn thì bỏ chọn
+      setSelectedCats((prevSelected) =>
+        prevSelected.filter((catId) => catId !== id)
+      );
+    } else {
+      // Nếu chưa chọn thì thêm vào danh sách đã chọn
+      setSelectedCats((prevSelected) => [...prevSelected, id]);
+    }
+  };
 
   return (
     <GestureRecognizer
@@ -55,16 +67,18 @@ export default function BookingStep3({ onGoBack }) {
             <TouchableOpacity
               key={cat.id}
               style={styles.catContainer}
-              onPress={() => setSelectedCat(cat.id)} // Xử lý chọn con mèo
+              onPress={() => handleSelectCat(cat.id)} // Xử lý chọn hoặc bỏ chọn con mèo
             >
               <Image source={cat.image} style={styles.catImage} />
 
-              {selectedCat !== cat.id && <View style={styles.overlay} />}
+              {selectedCats.includes(cat.id) ? null : (
+                <View style={styles.overlay} />
+              )}
 
               <View style={styles.catFooter}>
                 <Text style={styles.catName}>{cat.name}</Text>
 
-                {selectedCat === cat.id && (
+                {selectedCats.includes(cat.id) && (
                   <View style={styles.circle}>
                     <Image
                       source={require("../../../assets/Check1.png")}
