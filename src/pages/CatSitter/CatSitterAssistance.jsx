@@ -3,7 +3,6 @@ import { Text, View, StyleSheet, Image, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CatSitterCalendarSetting from "./CatSitterCalendarSetting";
 import { Picker } from "@react-native-picker/picker";
-import { HeadingSubscriber } from "expo-location/build/LocationSubscribers";
 
 const { width, height } = Dimensions.get("window");
 

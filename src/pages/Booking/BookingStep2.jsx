@@ -13,12 +13,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 import moment from "moment";
-import DateTimePickerModal from "react-native-modal-datetime-picker"; // Thư viện datetime picker
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 const { width, height } = Dimensions.get("window");
 
 export default function BookingStep2({ onGoBack }) {
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
@@ -27,31 +28,54 @@ export default function BookingStep2({ onGoBack }) {
 
   // Xử lý chọn ngày từ Calendar
   const onDayPress = (day) => {
-    const selected = moment(day.dateString).format("DD/MM/YYYY");
-    setSelectedDate(selected);
-    setCalendarVisible(false);
+    if (!startDate || (startDate && endDate)) {
+      setStartDate(day.dateString); // Đặt ngày bắt đầu
+      setEndDate(null); // Reset ngày kết thúc khi chọn lại
+    } else if (moment(day.dateString).isAfter(startDate)) {
+      setEndDate(day.dateString); // Đặt ngày kết thúc
+    } else {
+      setStartDate(day.dateString); // Nếu ngày kết thúc nhỏ hơn ngày bắt đầu, đặt lại ngày bắt đầu
+    }
   };
 
-  // Lấy ngày hiện tại
-  const currentDate = moment().format("YYYY-MM-DD");
+  // Đánh dấu khoảng thời gian đã chọn
+  const getMarkedDates = () => {
+    if (!startDate) return {};
 
-  // Xử lý chọn thời gian bắt đầu
+    let markedDates = {
+      [startDate]: {
+        startingDay: true,
+        color: "#902C6C",
+        textColor: "white",
+      },
+    };
+
+    if (endDate) {
+      let currentDate = startDate;
+      while (currentDate <= endDate) {
+        markedDates[currentDate] = {
+          color: "#FFC0CB",
+          textColor: "#902C6C",
+        };
+        currentDate = moment(currentDate).add(1, "day").format("YYYY-MM-DD");
+      }
+      markedDates[endDate] = {
+        endingDay: true,
+        color: "#902C6C",
+        textColor: "white",
+      };
+    }
+
+    return markedDates;
+  };
+
   const handleStartTimeConfirm = (time) => {
     setStartTime(moment(time).format("HH:mm"));
     setStartTimePickerVisible(false);
   };
 
-  // Xử lý chọn thời gian kết thúc
   const handleEndTimeConfirm = (time) => {
-    const selectedEndTime = moment(time).format("HH:mm");
-    if (
-      startTime &&
-      moment(selectedEndTime, "HH:mm").isBefore(moment(startTime, "HH:mm"))
-    ) {
-      alert("Thời gian kết thúc không được nhỏ hơn thời gian bắt đầu.");
-    } else {
-      setEndTime(selectedEndTime);
-    }
+    setEndTime(moment(time).format("HH:mm"));
     setEndTimePickerVisible(false);
   };
 
@@ -95,7 +119,12 @@ export default function BookingStep2({ onGoBack }) {
             style={styles.icon}
           />
           <Text style={styles.containerText}>
-            {selectedDate ? selectedDate : "Chọn ngày"}
+            {startDate
+              ? ` ${moment(startDate).format("DD/MM/YYYY")}  - `
+              : "Chọn ngày bắt đầu dịch vụ"}
+          </Text>
+          <Text style={styles.containerText}>
+            {endDate ? ` ${moment(endDate).format("DD/MM/YYYY")}` : ""}
           </Text>
         </TouchableOpacity>
 
@@ -138,14 +167,10 @@ export default function BookingStep2({ onGoBack }) {
         <View style={styles.modalContainer}>
           <View style={styles.calendarContainer}>
             <Calendar
-              minDate={currentDate}
+              minDate={moment().format("YYYY-MM-DD")}
               onDayPress={onDayPress}
-              markedDates={{
-                [moment(selectedDate, "DD/MM/YYYY").format("YYYY-MM-DD")]: {
-                  selected: true,
-                  selectedColor: "#902C6C",
-                },
-              }}
+              markedDates={getMarkedDates()}
+              markingType={"period"} // Đánh dấu theo khoảng thời gian
               theme={{
                 selectedDayBackgroundColor: "#902C6C",
                 todayTextColor: "#902C6C",

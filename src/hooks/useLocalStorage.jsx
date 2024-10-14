@@ -10,7 +10,11 @@ export const useStorage = (key, initialValue) => {
       try {
         const jsonValue = await AsyncStorage.getItem(key);
         if (jsonValue !== null) {
-          setStoredValue(JSON.parse(jsonValue));
+          try {
+            setStoredValue(JSON.parse(jsonValue)); // Chỉ parse nếu là JSON hợp lệ
+          } catch (error) {
+            setStoredValue(jsonValue); // Nếu không phải JSON, trả về chuỗi thô (ví dụ: JWT)
+          }
         }
       } catch (error) {
         console.log(error);

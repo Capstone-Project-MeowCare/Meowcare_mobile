@@ -133,34 +133,39 @@ export default function Login() {
     Keyboard.dismiss();
 
     try {
-      // Gọi API để lấy token
       const responseData = await postData("/auth/generateToken", {
         email: data.email,
         password: data.password,
       });
 
-      console.log("Token received:", responseData);
+      console.log("Token response:", responseData); // In ra phản hồi từ API
 
-      const token = responseData; // Lưu token từ phản hồi
-      await AsyncStorage.setItem("accessToken", token); // Lưu token vào AsyncStorage
-      setSavedEmail(data.email);
-      setSavedPassword(data.password);
+      // Đảm bảo rằng token là một chuỗi JSON hợp lệ
+      if (typeof responseData !== "string") {
+        throw new Error("Token không phải là chuỗi hợp lệ");
+      }
 
-      // Sau khi nhận token, gọi API để lấy thông tin người dùng
+      const token = responseData;
+      await AsyncStorage.setItem("accessToken", token);
+
       const userInfo = await getData(
         "/auth",
         {},
         { Authorization: `Bearer ${token}` }
       );
 
+      console.log("User info response:", userInfo); // Kiểm tra phản hồi từ API
+
+      if (typeof userInfo !== "object" || !userInfo.email) {
+        throw new Error("Phản hồi người dùng không hợp lệ");
+      }
+
       const userData = {
         email: userInfo.email,
-        roles: userInfo.roles, // Gán roles từ response
+        roles: userInfo.roles,
       };
 
-      console.log("User data received:", userData);
-      login(userData); // Lưu vào Auth context
-
+      login(userData);
       setLoading(false);
 
       return new Promise((resolve) => {
@@ -179,7 +184,6 @@ export default function Login() {
           position: 300,
         });
       } else if (error?.response?.status === 500) {
-        // Xóa token khỏi AsyncStorage nếu lỗi 500
         await AsyncStorage.removeItem("accessToken");
         CustomToast({
           text: "Đã có lỗi xảy ra. Vui lòng thử lại.",
