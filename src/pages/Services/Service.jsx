@@ -1,64 +1,39 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { Text, View, StyleSheet, TouchableOpacity,ScrollView, Image, TextInput  } from "react-native";
 import { createStackNavigator } from '@react-navigation/stack';
+import { useNavigation } from "@react-navigation/native";
 
-export default function Service({ roles, navigation }) {
+export default function Service({ role = "ROLE_SITTER" }) {
+  const Stack = createStackNavigator();
+  const navigation = useNavigation();
+  const [selectedTab, setSelectedTab] = useState("Tất cả");
+  const tabs = ["Tất cả", "Chờ xác nhận", "Đã xác nhận", "Đang diễn ra", "Hoàn thành", "Đã hủy"];
 
 
-const Stack = createStackNavigator();
-
-function AppNavigator() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="CatSitterService" component={CatSitterService} />
-      <Stack.Screen name="RequestScreen" component={RequestScreen} />
-      <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-      <Stack.Screen name="WalletScreen" component={WalletScreen} />
-      <Stack.Screen name="GuideScreen" component={GuideScreen} />
-    </Stack.Navigator>
+  // Component for User View
+  const UserView = () => (
+    <View style={styles.userContainer}>
+      <View style={styles.imageContainer}>
+        <Image
+          source={require("../../../assets/BecomeCatsitter.png")}
+          style={styles.image}
+        />
+      </View>
+      <Text style={styles.title}>Trở thành người chăm sóc mèo tại MeowCare!</Text>
+      <Text style={styles.description}>
+        Bạn yêu thích chăm sóc mèo? Trở thành người chăm sóc mèo tại MeowCare ngay hôm nay để kiếm
+         thêm thu nhập và tận hưởng niềm vui khi làm việc với những chú mèo dễ thương!
+      </Text>
+      <TouchableOpacity style={styles.button}>
+        <Text style={styles.buttonText}>Đăng ký</Text>
+      </TouchableOpacity>
+    </View>
   );
-}
-  return (
-    <View style={styles.container}>
-      {/* Nếu role là "user", hiển thị giao diện cho User */}
-      {roles === "User" ? (
-        <View style={styles.userContainer}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={require("../../../assets/BecomeCatsitter.png")} 
-              style={styles.image}
-            />
-          </View>
-          <Text style={styles.title}>Trở thành người chăm sóc mèo tại MeowCare!</Text>
-          <Text style={styles.description}>
-            Bạn yêu thích chăm sóc mèo? Trở thành người chăm sóc mèo tại MeowCare
-            ngay hôm nay để kiếm thêm thu nhập và tận hưởng niềm vui khi làm việc
-            với những chú mèo dễ thương!
-          </Text>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Đăng ký</Text>
-          </TouchableOpacity>
-        </View>
-      ) : roles === "Cat Sitter" ? (
-        // Nếu role là "Cat Sitter", hiển thị giao diện cho Cat Sitter
-        <View style={styles.catSitterContainer}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={require("../../../assets/BecomeCatsitter.png")} 
-              style={styles.image}
-            />
-          </View>
-          <View style={styles.sitterFunctions}>
-            <Image source={require("../../../assets/IconRequest.png")} style={styles.icon} />
-            <Image source={require("../../../assets/IconProfile.png")} style={styles.icon} />
-            <Image source={require("../../../assets/IconWallet.png")} style={styles.icon} />
-            <Image source={require("../../../assets/IconGuide.png")} style={styles.icon} />
-          </View>
-          <Text style={styles.sitterText}>Hiện vẫn chưa có yêu cầu nào</Text>
-        </View>
-      ) : (
-        // Nếu không có role, có thể hiển thị thông báo lỗi hoặc trang mặc định
-        <View style={styles.catSitterContainer}>
+
+  // Component for Cat Sitter View
+  const CatSitterView = () => (
+    <View style={styles.catSitterContainer}>
           <View style={styles.imageContainer}>
             <Image
               source={require("../../../assets/BecomeCatsitter.png")} 
@@ -69,25 +44,26 @@ function AppNavigator() {
            {/* Box Function Icons */}
           
       <View style={styles.functionBox}>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('RequestScreen')}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterService')}>
           <Image source={require("../../../assets/IconRequest.png")} style={styles.icon} />
           <Text style={styles.iconText}>Nhận yêu cầu</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('ProfileScreen')}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterProfile')}>
           <Image source={require("../../../assets/IconProfile.png")} style={styles.icon} />
           <Text style={styles.iconText}>Hồ sơ dịch vụ</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('WalletScreen')}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterWallet')}>
           <Image source={require("../../../assets/IconWallet.png")} style={styles.icon} />
           <Text style={styles.iconText}>Ví tiền</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('GuideScreen')}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterGuide')}>
           <Image source={require("../../../assets/IconGuide.png")} style={styles.icon} />
           <Text style={styles.iconText}>Hướng dẫn</Text>
         </TouchableOpacity>
       </View>
+
            {/* Search Bar */}
-           <View style={styles.searchContainer}>
+        <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
           placeholder="Tìm kiếm"
@@ -95,37 +71,70 @@ function AppNavigator() {
         />
         <TouchableOpacity style={styles.searchButton}>
           <Image source={require("../../../assets/SearchIcon.png")} style={styles.searchIcon} />
-        </TouchableOpacity>
-        
+        </TouchableOpacity>  
       </View>
+
         {/* Request Status Tabs */}
-        <View style={styles.statusTabs}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
-        <TouchableOpacity style={styles.tabActive}> 
-          <Text style={styles.tabTextActive}>Tất cả</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Chờ xác nhận</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Đã xác nhận</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Đang diễn ra</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Hoàn thành</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Đã hủy</Text>
-        </TouchableOpacity>
+        <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContainer}
+        style={styles.scrollView} // Added style to limit the height
+      >
+        <View style={styles.tabsContainer}>
+          {tabs.map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.tabButton,
+                selectedTab === tab && styles.activeTabButton,
+              ]}
+              onPress={() => setSelectedTab(tab)}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  selectedTab === tab && styles.activeTabText,
+                ]}
+              >
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
+
+        {/* Request*/}
+        <View style={styles.emptyStateContainer}>
+        <Image
+          source={{
+            uri: "https://cdn-icons-png.flaticon.com/512/54/54220.png", // placeholder image link
+          }}
+          style={styles.picture}
+        />
+        <Text style={styles.emptyStateTitle}>Hiện vẫn chưa có hoạt động nào</Text>
+        <Text style={styles.emptyStateSubtitle}>
+          Hoạt động sẽ xuất hiện khi bạn sử dụng các dịch vụ của chúng tôi
+        </Text>
+      </View>
+        </View>
+  );
+
+  if (!role) {
+    return (
+      <View style={styles.catSitterContainer}>
+          <Text>Chưa đăng nhập</Text>
       </View>
 
+      
 
-          <Text style={styles.sitterText}>Hiện vẫn chưa có yêu cầu nào</Text>
-        </View>
-      )}
+    );
+  }
+
+  // Conditional rendering based on role
+  return (
+    <View style={styles.container}>
+      {role === "ROLE_USER" ? <UserView /> : <CatSitterView />}
     </View>
   );
 }
@@ -201,42 +210,37 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
   },
+  scrollView: {
+    maxHeight: 50, // Explicit height limit for the horizontal ScrollView
+  },
   scrollContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
-  statusTabs: {
+  tabsContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    width: "90%",
-    marginVertical: 4,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  tab: {
-    paddingVertical: 10,
+  tabButton: {
+    paddingVertical: 8, // Adjusted for compact look
     paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: "#FFFAF5",
+    marginHorizontal: 5,
+    borderRadius: 25, // Slightly more rounded
     borderWidth: 1,
-    borderColor: "#902C6C",
-    marginRight: 10,
+    borderColor: "#A94B84",
+    backgroundColor: "#FFF",
   },
-  tabActive: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: "#902C6C",
-    marginRight: 10,
+  activeTabButton: {
+    backgroundColor: "#A94B84",
+    borderColor: "#A94B84",
   },
   tabText: {
-    color: "#902C6C",
-    fontSize: 14,
-    fontWeight: "bold",
+    fontSize: 14, // Adjusted font size for the tab text
+    color: "#A94B84",
   },
-  tabTextActive: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
+  activeTabText: {
+    color: "#FFF",
+  },  
   imageContainer: {
     width: "100%",
     justifyContent: "center",
@@ -291,6 +295,26 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#666",
     marginTop: 30,
+  },
+  emptyStateContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  picture: {
+    marginTop: 40,
+    width: 100, // Adjusted size for the image/icon
+    height: 100,  
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#1F1F1F", // Darker title color
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    color: "#7D7D7D",
+    textAlign: "center",
   },
 
 });
