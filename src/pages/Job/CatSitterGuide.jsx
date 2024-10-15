@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-
+import { Ionicons } from '@expo/vector-icons'
 
 export default function CatSitterGuide({navigation}) {
   return (
@@ -18,10 +18,7 @@ export default function CatSitterGuide({navigation}) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Image
-            source={require("../../../assets/BackArrow.png")}
-            style={styles.backArrow}
-          />
+          <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hướng dẫn</Text>
       </View>

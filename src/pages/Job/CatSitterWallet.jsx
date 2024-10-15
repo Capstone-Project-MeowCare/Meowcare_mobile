@@ -23,12 +23,14 @@ export default function CatSitterProfile({ navigation }) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-           <Image
-            source={require("../../../assets/BackArrow.png")}
-            style={styles.backArrow}
-          />
+            <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Ví tiền</Text>
+      
+        <TouchableOpacity style={styles.historyButton} onPress={() => navigation.navigate('HistoryWallet')}>
+          <Ionicons name="time-outline" size={20} color="#000857" />
+          <Text style={styles.historyText}>Lịch sử</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Đường kẻ ngang */}
@@ -45,7 +47,7 @@ export default function CatSitterProfile({ navigation }) {
       {/* Thông tin ví */}
       <View style={styles.walletInfo}>
         <View style={styles.walletHeader}>
-          <Text style={styles.walletLabel}>Tiền trong Túi</Text>
+          <Text style={styles.walletLabel}>Tiền trong Ví</Text>
           <TouchableOpacity onPress={toggleVisibility}>
             <Ionicons
               name={isVisible ? "eye-outline" : "eye-off-outline"} // Thay đổi icon tùy theo trạng thái
@@ -61,11 +63,12 @@ export default function CatSitterProfile({ navigation }) {
 
       {/* Các tùy chọn nạp và rút tiền */}
       <View style={styles.transactionOptions}>
-        <TouchableOpacity style={styles.optionItem}>
+      
+        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('DepositWallet')}>
           <Ionicons name="wallet-outline" size={40} color="#902C6C" />
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionText}>Nạp tiền</Text>
-            <Text style={styles.optionSubText}>Từ ngân hàng vào</Text>
+            <Text style={styles.optionSubText}>Từ ngân hàng vào ví</Text>
           </View>
           <Ionicons
             name="chevron-forward-outline"
@@ -74,7 +77,7 @@ export default function CatSitterProfile({ navigation }) {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionItem}>
+        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('WithdrawWallet')}>
           <Ionicons name="cash-outline" size={40} color="#902C6C" />
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionText}>Rút tiền</Text>
@@ -99,12 +102,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between", // Căn đều các phần tử trong header
     paddingHorizontal: 8,
     paddingVertical: 8,
     height: 50,
     backgroundColor: "#FFF7F0",
   },
- 
+  backButton: {
+    paddingRight: 20,
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -115,6 +121,19 @@ const styles = StyleSheet.create({
   divider: {
     borderBottomColor: "#D3D3D3",
     borderBottomWidth: 1,
+  },
+  historyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F0F0",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+  },
+  historyText: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: "#000857",
   },
   imageContainer: {
     width: "100%",
