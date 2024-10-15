@@ -61,9 +61,9 @@ export default function Login() {
   // Điều hướng khi đã có access token
   useFocusEffect(
     useCallback(() => {
-      if (accessToken && role?.name === "User") {
+      if (accessToken && role?.name === "ROLE_USER") {
         navigation.navigate("Homes", { screen: "Home" });
-      } else if (accessToken && role?.name === "CatSitter") {
+      } else if (accessToken && role?.name === "ROLE_SITTER") {
         navigation.navigate("Homes", { screen: "Home" });
       } else {
         setLoginState(false);

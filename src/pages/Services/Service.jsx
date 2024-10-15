@@ -4,7 +4,7 @@ import { Text, View, StyleSheet, TouchableOpacity,ScrollView, Image, TextInput  
 import { createStackNavigator } from '@react-navigation/stack';
 import { useNavigation } from "@react-navigation/native";
 
-export default function Service({ role }) {
+export default function Service({ role = "ROLE_SITTER" }) {
   const Stack = createStackNavigator();
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
@@ -34,25 +34,6 @@ export default function Service({ role }) {
   // Component for Cat Sitter View
   const CatSitterView = () => (
     <View style={styles.catSitterContainer}>
-      <View style={styles.imageContainer}>
-        <Image
-          source={require("../../../assets/BecomeCatsitter.png")}
-          style={styles.image}
-        />
-      </View>
-      <View style={styles.sitterFunctions}>
-        <Image source={require("../../../assets/IconRequest.png")} style={styles.icon} />
-        <Image source={require("../../../assets/IconProfile.png")} style={styles.icon} />
-        <Image source={require("../../../assets/IconWallet.png")} style={styles.icon} />
-        <Image source={require("../../../assets/IconGuide.png")} style={styles.icon} />
-      </View>
-      <Text style={styles.sitterText}>Hiện vẫn chưa có yêu cầu nào</Text>
-    </View>
-  );
-
-  if (!role) {
-    return (
-      <View style={styles.catSitterContainer}>
           <View style={styles.imageContainer}>
             <Image
               source={require("../../../assets/BecomeCatsitter.png")} 
@@ -137,6 +118,15 @@ export default function Service({ role }) {
         </Text>
       </View>
         </View>
+  );
+
+  if (!role) {
+    return (
+      <View style={styles.catSitterContainer}>
+          <Text>Chưa đăng nhập</Text>
+      </View>
+
+      
 
     );
   }
@@ -144,7 +134,7 @@ export default function Service({ role }) {
   // Conditional rendering based on role
   return (
     <View style={styles.container}>
-      {role.name === "User" ? <UserView /> : <CatSitterView />}
+      {role === "ROLE_USER" ? <UserView /> : <CatSitterView />}
     </View>
   );
 }

@@ -29,6 +29,9 @@ export default function CatSitterGuide({navigation}) {
       <View style={styles.divider} />
 
       {/* Nội dung khác */}
+      <View>
+
+      </View>
     </View>
   );
 }
@@ -41,27 +44,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 8,
+    height: 50,
     backgroundColor: "#FFF7F0", // Màu nền của header (tùy chỉnh theo yêu cầu)
     justifyContent: "space-between", // Để căn đều các phần tử
-  },
-  backButton: {
-    padding: 8,
   },
   backArrow: {
     width: 30,
     height: 30,
-    tintColor: "#000080", // Màu sắc của mũi tên quay lại
+    tintColor: "#000857", // Màu sắc của mũi tên quay lại
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#1F1F1F", // Màu sắc tiêu đề
-    flex: 1,
     textAlign: "center", // Để căn giữa tiêu đề
+    flex: 1,
   },
   divider: {
     borderBottomColor: "#D3D3D3", // Màu của đường kẻ ngang
     borderBottomWidth: 1, // Độ dày của đường kẻ
-    marginTop: -8, // Điều chỉnh vị trí để sát với phần header hơn
+   
   },
 });
