@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -17,49 +17,63 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 const { width, height } = Dimensions.get("window");
 
-export default function BookingStep2({ onGoBack }) {
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+export default function BookingStep2({
+  onGoBack,
+  setIsValid,
+  step2Info,
+  setStep2Info,
+}) {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
-  const [startTime, setStartTime] = useState(null);
-  const [endTime, setEndTime] = useState(null);
 
-  // Xử lý chọn ngày từ Calendar
-  const onDayPress = (day) => {
-    if (!startDate || (startDate && endDate)) {
-      setStartDate(day.dateString); // Đặt ngày bắt đầu
-      setEndDate(null); // Reset ngày kết thúc khi chọn lại
-    } else if (moment(day.dateString).isAfter(startDate)) {
-      setEndDate(day.dateString); // Đặt ngày kết thúc
+  // Kiểm tra xem người dùng đã chọn đủ thông tin chưa
+  const validateForm = () => {
+    if (
+      step2Info.startDate &&
+      step2Info.endDate &&
+      step2Info.startTime &&
+      step2Info.endTime
+    ) {
+      setIsValid(true); // Nếu tất cả các giá trị đều được chọn, form hợp lệ
     } else {
-      setStartDate(day.dateString); // Nếu ngày kết thúc nhỏ hơn ngày bắt đầu, đặt lại ngày bắt đầu
+      setIsValid(false); // Nếu thiếu bất kỳ giá trị nào, form không hợp lệ
     }
   };
 
-  // Đánh dấu khoảng thời gian đã chọn
+  useEffect(() => {
+    validateForm();
+  }, [step2Info]);
+
+  const onDayPress = (day) => {
+    if (!step2Info.startDate || (step2Info.startDate && step2Info.endDate)) {
+      setStep2Info({ ...step2Info, startDate: day.dateString, endDate: null });
+    } else if (moment(day.dateString).isAfter(step2Info.startDate)) {
+      setStep2Info({ ...step2Info, endDate: day.dateString });
+    }
+  };
+
   const getMarkedDates = () => {
-    if (!startDate) return {};
+    if (!step2Info.startDate) return {};
 
     let markedDates = {
-      [startDate]: {
+      [step2Info.startDate]: {
         startingDay: true,
         color: "#902C6C",
         textColor: "white",
       },
     };
 
-    if (endDate) {
-      let currentDate = startDate;
-      while (currentDate <= endDate) {
+    if (step2Info.endDate) {
+      let currentDate = step2Info.startDate;
+      while (currentDate <= step2Info.endDate) {
         markedDates[currentDate] = {
           color: "#FFC0CB",
           textColor: "#902C6C",
         };
         currentDate = moment(currentDate).add(1, "day").format("YYYY-MM-DD");
       }
-      markedDates[endDate] = {
+      markedDates[step2Info.endDate] = {
         endingDay: true,
         color: "#902C6C",
         textColor: "white",
@@ -70,12 +84,12 @@ export default function BookingStep2({ onGoBack }) {
   };
 
   const handleStartTimeConfirm = (time) => {
-    setStartTime(moment(time).format("HH:mm"));
+    setStep2Info({ ...step2Info, startTime: moment(time).format("HH:mm") });
     setStartTimePickerVisible(false);
   };
 
   const handleEndTimeConfirm = (time) => {
-    setEndTime(moment(time).format("HH:mm"));
+    setStep2Info({ ...step2Info, endTime: moment(time).format("HH:mm") });
     setEndTimePickerVisible(false);
   };
 
@@ -119,12 +133,14 @@ export default function BookingStep2({ onGoBack }) {
             style={styles.icon}
           />
           <Text style={styles.containerText}>
-            {startDate
-              ? ` ${moment(startDate).format("DD/MM/YYYY")}  - `
+            {step2Info.startDate
+              ? ` ${moment(step2Info.startDate).format("DD/MM/YYYY")}  - `
               : "Chọn ngày bắt đầu dịch vụ"}
           </Text>
           <Text style={styles.containerText}>
-            {endDate ? ` ${moment(endDate).format("DD/MM/YYYY")}` : ""}
+            {step2Info.endDate
+              ? ` ${moment(step2Info.endDate).format("DD/MM/YYYY")}`
+              : ""}
           </Text>
         </TouchableOpacity>
 
@@ -139,7 +155,7 @@ export default function BookingStep2({ onGoBack }) {
             style={styles.icon}
           />
           <Text style={styles.containerText}>
-            {startTime ? startTime : "Thời gian bắt đầu"}
+            {step2Info.startTime || "Thời gian bắt đầu"}
           </Text>
         </TouchableOpacity>
 
@@ -154,7 +170,7 @@ export default function BookingStep2({ onGoBack }) {
             style={styles.icon}
           />
           <Text style={styles.containerText}>
-            {endTime ? endTime : "Thời gian kết thúc"}
+            {step2Info.endTime || "Thời gian kết thúc"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -170,7 +186,7 @@ export default function BookingStep2({ onGoBack }) {
               minDate={moment().format("YYYY-MM-DD")}
               onDayPress={onDayPress}
               markedDates={getMarkedDates()}
-              markingType={"period"} // Đánh dấu theo khoảng thời gian
+              markingType={"period"}
               theme={{
                 selectedDayBackgroundColor: "#902C6C",
                 todayTextColor: "#902C6C",

@@ -4,24 +4,57 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Dimensions,
 } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 import BookingStep1 from "./BookingStep1";
 import BookingStep2 from "./BookingStep2";
 import BookingStep3 from "./BookingStep3";
-import BookingStep4 from "./BookingStep4"; // Add Step 4
-import BookingStep5 from "./BookingStep5"; // Add Step 5
+import BookingStep4 from "./BookingStep4";
+import BookingStep5 from "./BookingStep5";
 
 const { width, height } = Dimensions.get("window");
 
 export default function SwipeStep({ navigation }) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isValid, setIsValid] = useState(false);
+
+  // State lưu thông tin từ Step 1
+  const [step1Info, setStep1Info] = useState({
+    selectedService: "Gửi thú cưng tại nhà người chăm sóc",
+    selectedFood: "NATURAL CORE Bene Chicken Salmon",
+    isChecked: false,
+    selectedLocation: "Tỉnh/Thành phố",
+    isCustomFoodChecked: false,
+    customFood: "",
+  });
+
+  // State lưu thông tin từ Step 2
+  const [step2Info, setStep2Info] = useState({
+    startDate: null,
+    endDate: null,
+    startTime: null,
+    endTime: null,
+  });
+
+  // State lưu thông tin từ Step 3
+  const [step3Info, setStep3Info] = useState({
+    selectedCats: [],
+    isChecked: false,
+  });
+
+  // State lưu thông tin từ Step 4
+  const [contactInfo, setContactInfo] = useState({
+    name: "",
+    phoneNumber: "",
+    note: "",
+  });
+
+  // State lưu thông tin từ Step 5 (checkbox)
+  const [step5Checked, setStep5Checked] = useState(false);
 
   const onSwipeLeft = () => {
-    if (currentStep < 5) {
-      // Set limit to 5 steps
+    if (currentStep < 5 && isValid) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -35,17 +68,50 @@ export default function SwipeStep({ navigation }) {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <BookingStep1 />;
+        return (
+          <BookingStep1
+            step1Info={step1Info}
+            setStep1Info={setStep1Info}
+            setIsValid={setIsValid}
+          />
+        );
       case 2:
-        return <BookingStep2 onGoBack={() => setCurrentStep(1)} />;
+        return (
+          <BookingStep2
+            step2Info={step2Info}
+            setStep2Info={setStep2Info}
+            setIsValid={setIsValid}
+            onGoBack={() => setCurrentStep(1)}
+          />
+        );
       case 3:
-        return <BookingStep3 onGoBack={() => setCurrentStep(2)} />;
+        return (
+          <BookingStep3
+            step3Info={step3Info}
+            setStep3Info={setStep3Info}
+            setIsValid={setIsValid}
+            onGoBack={() => setCurrentStep(2)}
+          />
+        );
       case 4:
-        return <BookingStep4 onGoBack={() => setCurrentStep(3)} />;
+        return (
+          <BookingStep4
+            onGoBack={() => setCurrentStep(3)}
+            contactInfo={contactInfo}
+            setContactInfo={setContactInfo}
+            setIsValid={setIsValid}
+          />
+        );
       case 5:
-        return <BookingStep5 onGoBack={() => setCurrentStep(4)} />;
+        return (
+          <BookingStep5
+            onGoBack={() => setCurrentStep(4)}
+            step5Checked={step5Checked}
+            setStep5Checked={setStep5Checked}
+          />
+        );
       default:
-        return <BookingStep1 />;
+        return <BookingStep1 setIsValid={setIsValid} />;
     }
   };
 
@@ -63,18 +129,39 @@ export default function SwipeStep({ navigation }) {
       <View style={styles.fixedFooter}>
         {currentStep < 5 && (
           <TouchableOpacity
-            style={styles.nextButton}
-            onPress={() => setCurrentStep(currentStep + 1)}
+            style={[styles.nextButton, !isValid && styles.disabledButton]}
+            onPress={() => {
+              if (isValid) {
+                setCurrentStep(currentStep + 1);
+              }
+            }}
+            disabled={!isValid}
           >
-            <Text style={styles.nextText}>Tiếp tục</Text>
+            <Text
+              style={[styles.nextText, !isValid && styles.disabledNextText]}
+            >
+              Tiếp tục
+            </Text>
           </TouchableOpacity>
         )}
         {currentStep === 5 && (
           <TouchableOpacity
-            style={styles.nextButton}
-            onPress={() => navigation.goBack()}
+            style={[styles.nextButton, !step5Checked && styles.disabledButton]}
+            onPress={() => {
+              if (step5Checked) {
+                navigation.goBack();
+              }
+            }}
+            disabled={!step5Checked}
           >
-            <Text style={styles.nextText}>Hoàn thành</Text>
+            <Text
+              style={[
+                styles.nextText,
+                !step5Checked && styles.disabledNextText,
+              ]}
+            >
+              Hoàn thành
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -105,5 +192,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#902C6C",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  disabledNextText: {
+    color: "rgba(0, 8, 87, 0.5)",
   },
 });
