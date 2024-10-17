@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Text,
   View,
@@ -7,18 +7,40 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  TextInput, // Import TextInput
+  TextInput,
 } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 
 const { width, height } = Dimensions.get("window");
 
-export default function BookingStep4({ onGoBack }) {
+export default function BookingStep4({
+  onGoBack,
+  contactInfo,
+  setContactInfo,
+  setIsValid,
+}) {
   const navigation = useNavigation();
+
+  // Kiểm tra hợp lệ form
+  const validateForm = () => {
+    const phoneRegex = /^[0-9]{10,11}$/; // Kiểm tra số điện thoại hợp lệ
+    if (
+      contactInfo.name.trim() !== "" &&
+      phoneRegex.test(contactInfo.phoneNumber)
+    ) {
+      setIsValid(true);
+    } else {
+      setIsValid(false);
+    }
+  };
+
+  useEffect(() => {
+    validateForm();
+  }, [contactInfo]);
 
   return (
     <GestureRecognizer
-      onSwipeRight={onGoBack} // Swipe phải để quay lại
+      onSwipeRight={onGoBack}
       config={{
         velocityThreshold: 0.3,
         directionalOffsetThreshold: 80,
@@ -50,13 +72,23 @@ export default function BookingStep4({ onGoBack }) {
             style={styles.input}
             placeholder="Họ và tên"
             placeholderTextColor="rgba(0,8,87,0.5)"
+            value={contactInfo.name}
+            onChangeText={(text) =>
+              setContactInfo({ ...contactInfo, name: text })
+            }
           />
           <TextInput
             style={styles.input}
             placeholder="Số điện thoại"
             placeholderTextColor="rgba(0,8,87,0.5)"
+            keyboardType="numeric"
+            value={contactInfo.phoneNumber}
+            onChangeText={(text) =>
+              setContactInfo({ ...contactInfo, phoneNumber: text })
+            }
           />
         </View>
+
         <Text style={styles.label}>Lời nhắn</Text>
         <View>
           <TextInput
@@ -65,6 +97,10 @@ export default function BookingStep4({ onGoBack }) {
             placeholderTextColor="rgba(0,8,87,0.5)"
             multiline={true}
             textAlignVertical="top"
+            value={contactInfo.note}
+            onChangeText={(text) =>
+              setContactInfo({ ...contactInfo, note: text })
+            }
           />
         </View>
       </View>
@@ -132,7 +168,6 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.015,
     textAlign: "left",
   },
-
   input: {
     width: width * 0.9,
     height: height * 0.06,

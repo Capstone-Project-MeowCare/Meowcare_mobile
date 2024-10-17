@@ -1,5 +1,5 @@
 import Checkbox from "expo-checkbox";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -12,26 +12,38 @@ import GestureRecognizer from "react-native-swipe-gestures";
 
 const { width, height } = Dimensions.get("window");
 
-export default function BookingStep3({ onGoBack }) {
+export default function BookingStep3({
+  onGoBack,
+  setIsValid,
+  step3Info,
+  setStep3Info,
+}) {
   const catData = [
     { id: 1, name: "Kitty", image: require("../../../assets/image88.png") },
     { id: 2, name: "Kevin", image: require("../../../assets/image74.png") },
   ];
 
-  const [selectedCats, setSelectedCats] = useState([]);
-  const [isChecked, setIsChecked] = useState(false);
-
   const handleSelectCat = (id) => {
-    if (selectedCats.includes(id)) {
-      // Nếu đã chọn thì bỏ chọn
-      setSelectedCats((prevSelected) =>
-        prevSelected.filter((catId) => catId !== id)
-      );
+    if (step3Info.selectedCats.includes(id)) {
+      setStep3Info({
+        ...step3Info,
+        selectedCats: step3Info.selectedCats.filter((catId) => catId !== id),
+      });
     } else {
-      // Nếu chưa chọn thì thêm vào danh sách đã chọn
-      setSelectedCats((prevSelected) => [...prevSelected, id]);
+      setStep3Info({
+        ...step3Info,
+        selectedCats: [...step3Info.selectedCats, id],
+      });
     }
   };
+
+  useEffect(() => {
+    if (step3Info.selectedCats.length > 0) {
+      setIsValid(true);
+    } else {
+      setIsValid(false);
+    }
+  }, [step3Info.selectedCats, setIsValid]);
 
   return (
     <GestureRecognizer
@@ -67,18 +79,18 @@ export default function BookingStep3({ onGoBack }) {
             <TouchableOpacity
               key={cat.id}
               style={styles.catContainer}
-              onPress={() => handleSelectCat(cat.id)} // Xử lý chọn hoặc bỏ chọn con mèo
+              onPress={() => handleSelectCat(cat.id)}
             >
               <Image source={cat.image} style={styles.catImage} />
 
-              {selectedCats.includes(cat.id) ? null : (
+              {step3Info.selectedCats.includes(cat.id) ? null : (
                 <View style={styles.overlay} />
               )}
 
               <View style={styles.catFooter}>
                 <Text style={styles.catName}>{cat.name}</Text>
 
-                {selectedCats.includes(cat.id) && (
+                {step3Info.selectedCats.includes(cat.id) && (
                   <View style={styles.circle}>
                     <Image
                       source={require("../../../assets/Check1.png")}
@@ -109,8 +121,10 @@ export default function BookingStep3({ onGoBack }) {
         <View style={styles.insuranceContainer}>
           <View style={styles.insuranceRow}>
             <Checkbox
-              value={isChecked}
-              onValueChange={setIsChecked}
+              value={step3Info.isChecked}
+              onValueChange={(value) =>
+                setStep3Info({ ...step3Info, isChecked: value })
+              }
               style={styles.checkbox}
             />
             <Text style={styles.insuranceText}>
@@ -129,7 +143,6 @@ export default function BookingStep3({ onGoBack }) {
     </GestureRecognizer>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
