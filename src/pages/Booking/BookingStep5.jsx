@@ -13,7 +13,11 @@ import GestureRecognizer from "react-native-swipe-gestures";
 import Checkbox from "expo-checkbox";
 const { width, height } = Dimensions.get("window");
 
-export default function BookingStep5({ onGoBack }) {
+export default function BookingStep5({
+  onGoBack,
+  step5Checked,
+  setStep5Checked,
+}) {
   const navigation = useNavigation();
   const [isChecked, setIsChecked] = useState(false);
   return (
@@ -137,8 +141,8 @@ export default function BookingStep5({ onGoBack }) {
           <Text style={styles.label}>Dịch vụ thêm có phí</Text>
           <View style={styles.checkboxContainer}>
             <Checkbox
-              value={isChecked}
-              onValueChange={setIsChecked}
+              value={step5Checked}
+              onValueChange={setStep5Checked}
               style={styles.checkbox}
             />
             <Text style={styles.checkboxLabel}>

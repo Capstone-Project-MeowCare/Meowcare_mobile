@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -14,18 +14,32 @@ import { useNavigation } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
-export default function BookingStep1() {
-  const [selectedService, setSelectedService] = useState(
-    "Gửi thú cưng tại nhà người chăm sóc"
-  );
-  const [selectedFood, setSelectedFood] = useState(
-    "NATURAL CORE Bene Chicken Salmon"
-  );
+export default function BookingStep1({ step1Info, setStep1Info, setIsValid }) {
   const navigation = useNavigation();
-  const [isChecked, setIsChecked] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState("Tỉnh/Thành phố");
-  const [isCustomFoodChecked, setIsCustomFoodChecked] = useState(false);
-  const [customFood, setCustomFood] = useState("");
+  // Kiểm tra tính hợp lệ của form
+  const validateForm = () => {
+    let isValidForm = true;
+
+    // Nếu checkbox "Dịch vụ đưa đón mèo" được chọn nhưng chưa chọn location
+    if (
+      step1Info.isChecked &&
+      step1Info.selectedLocation === "Tỉnh/Thành phố"
+    ) {
+      isValidForm = false;
+    }
+
+    // Nếu checkbox "Thức ăn theo yêu cầu" được chọn nhưng chưa nhập customFood
+    if (step1Info.isCustomFoodChecked && step1Info.customFood.trim() === "") {
+      isValidForm = false;
+    }
+
+    setIsValid(isValidForm);
+  };
+
+  // Gọi validateForm mỗi khi trạng thái thay đổi
+  useEffect(() => {
+    validateForm();
+  }, [step1Info]);
 
   return (
     <View style={styles.container}>
@@ -53,8 +67,10 @@ export default function BookingStep1() {
         <Text style={styles.label}>Chọn dịch vụ</Text>
         <View style={styles.pickerContainer}>
           <Picker
-            selectedValue={selectedService}
-            onValueChange={(itemValue) => setSelectedService(itemValue)}
+            selectedValue={step1Info.selectedService}
+            onValueChange={(itemValue) =>
+              setStep1Info({ ...step1Info, selectedService: itemValue })
+            }
             style={styles.picker}
           >
             <Picker.Item
@@ -75,8 +91,10 @@ export default function BookingStep1() {
         <Text style={styles.label}>Chọn thức ăn cho mèo</Text>
         <View style={styles.pickerContainer}>
           <Picker
-            selectedValue={selectedFood}
-            onValueChange={(itemValue) => setSelectedFood(itemValue)}
+            selectedValue={step1Info.selectedFood}
+            onValueChange={(itemValue) =>
+              setStep1Info({ ...step1Info, selectedFood: itemValue })
+            }
             style={styles.picker}
           >
             <Picker.Item
@@ -99,8 +117,10 @@ export default function BookingStep1() {
         <Text style={styles.label}>Dịch vụ thêm có phí</Text>
         <View style={styles.checkboxContainer}>
           <Checkbox
-            value={isChecked}
-            onValueChange={setIsChecked}
+            value={step1Info.isChecked}
+            onValueChange={(value) =>
+              setStep1Info({ ...step1Info, isChecked: value })
+            }
             style={styles.checkbox}
           />
           <Text style={styles.checkboxLabel}>Dịch vụ đưa đón mèo (1-10km)</Text>
@@ -109,14 +129,16 @@ export default function BookingStep1() {
         <View
           style={[
             styles.pickerContainer,
-            !isChecked && styles.disabledPickerContainer,
+            !step1Info.isChecked && styles.disabledPickerContainer,
           ]}
         >
           <Picker
-            selectedValue={selectedLocation}
-            onValueChange={(itemValue) => setSelectedLocation(itemValue)}
+            selectedValue={step1Info.selectedLocation}
+            onValueChange={(itemValue) =>
+              setStep1Info({ ...step1Info, selectedLocation: itemValue })
+            }
             style={styles.picker}
-            enabled={isChecked}
+            enabled={step1Info.isChecked}
           >
             <Picker.Item
               label="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
@@ -138,15 +160,24 @@ export default function BookingStep1() {
         </View>
 
         <TextInput
-          style={[styles.textInput, !isChecked && styles.disabledTextInput]}
+          style={[
+            styles.textInput,
+            !step1Info.isChecked && styles.disabledTextInput,
+          ]}
           placeholder="Tên đường, Tòa nhà, Số nhà"
-          editable={isChecked}
+          editable={step1Info.isChecked}
+          value={step1Info.customFood}
+          onChangeText={(text) =>
+            setStep1Info({ ...step1Info, customFood: text })
+          }
         />
 
         <View style={styles.checkboxContainer}>
           <Checkbox
-            value={isCustomFoodChecked}
-            onValueChange={setIsCustomFoodChecked}
+            value={step1Info.isCustomFoodChecked}
+            onValueChange={(value) =>
+              setStep1Info({ ...step1Info, isCustomFoodChecked: value })
+            }
             style={styles.checkbox}
           />
           <Text style={styles.checkboxLabel}>Thức ăn theo yêu cầu</Text>
@@ -155,18 +186,19 @@ export default function BookingStep1() {
         <TextInput
           style={[
             styles.textInput,
-            !isCustomFoodChecked && styles.disabledTextInput,
+            !step1Info.isCustomFoodChecked && styles.disabledTextInput,
           ]}
           placeholder="Nhập loại thức ăn cụ thể"
-          editable={isCustomFoodChecked}
-          value={customFood}
-          onChangeText={setCustomFood}
+          editable={step1Info.isCustomFoodChecked}
+          value={step1Info.customFood}
+          onChangeText={(text) =>
+            setStep1Info({ ...step1Info, customFood: text })
+          }
         />
       </View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -268,5 +300,24 @@ const styles = StyleSheet.create({
   },
   disabledTextInput: {
     backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+
+  nextButton: {
+    width: width,
+    height: height * 0.067,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFE3D5",
+  },
+  nextText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#902C6C",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.2)", // Màu nền khi không hợp lệ
+  },
+  disabledNextText: {
+    color: "rgba(0, 8, 87, 0.5)", // Màu chữ khi không hợp lệ
   },
 });
