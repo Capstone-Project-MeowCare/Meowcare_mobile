@@ -4,7 +4,7 @@ import { Text, View, StyleSheet, TouchableOpacity,ScrollView, Image, TextInput  
 import { createStackNavigator } from '@react-navigation/stack';
 import { useNavigation } from "@react-navigation/native";
 
-export default function Service({ role = "ROLE_SITTER" }) {
+export default function Service({ role = "ROLE_USER" }) {
   const Stack = createStackNavigator();
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
