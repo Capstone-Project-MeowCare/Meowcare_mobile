@@ -26,6 +26,7 @@ import CatSitterGuide from "./src/pages/Job/CatSitterGuide";
 import HistoryWallet from "./src/pages/Job/Wallet/HistoryWallet";
 import DepositWallet from "./src/pages/Job/Wallet/DepositWallet";
 import WithdrawWallet from "./src/pages/Job/Wallet/WithdrawWallet";
+import InformationCatSitter from "./src/pages/Job/ProfileCatSitter/InformationCatSitter";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -138,9 +139,9 @@ export function Routes() {
           component={CatSitterProfile}
         />
              <Stack.Screen
-              name="CatSitterProfile"
+              name="InformationCatSitter"
               options={{ headerLeft: null, headerShown: false }}
-              component={CatSitterProfile}
+              component={InformationCatSitter}
               />
        <Stack.Screen
           name="CatSitterWallet"
