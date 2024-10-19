@@ -27,6 +27,9 @@ import HistoryWallet from "./src/pages/Job/Wallet/HistoryWallet";
 import DepositWallet from "./src/pages/Job/Wallet/DepositWallet";
 import WithdrawWallet from "./src/pages/Job/Wallet/WithdrawWallet";
 import InformationCatSitter from "./src/pages/Job/ProfileCatSitter/InformationCatSitter";
+import ServicePayment from "./src/pages/ServicePayment/ServicePayment";
+import ServicePaymentMethod from "./src/pages/ServicePayment/ServicePaymentMethod";
+import ServicePaymentComplete from "./src/pages/ServicePayment/ServicePaymentComplete";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -87,7 +90,7 @@ function MyBottomNavigationBar() {
       />
       <Tab.Screen
         name="Hoạt Động"
-        options={{ headerShown:false }}
+        options={{ headerShown: false }}
         component={Activity}
       />
       <Tab.Screen
@@ -138,31 +141,31 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={CatSitterProfile}
         />
-             <Stack.Screen
-              name="InformationCatSitter"
-              options={{ headerLeft: null, headerShown: false }}
-              component={InformationCatSitter}
-              />
-       <Stack.Screen
+        <Stack.Screen
+          name="InformationCatSitter"
+          options={{ headerLeft: null, headerShown: false }}
+          component={InformationCatSitter}
+        />
+        <Stack.Screen
           name="CatSitterWallet"
           options={{ headerLeft: null, headerShown: false }}
           component={CatSitterWallet}
         />
-              <Stack.Screen
-              name="HistoryWallet"
-              options={{ headerLeft: null, headerShown: false }}
-              component={HistoryWallet}
-              />
-              <Stack.Screen
-              name="DepositWallet"
-              options={{ headerLeft: null, headerShown: false }}
-              component={DepositWallet}
-              />
-              <Stack.Screen
-              name="WithdrawWallet"
-              options={{ headerLeft: null, headerShown: false }}
-              component={WithdrawWallet}
-              />
+        <Stack.Screen
+          name="HistoryWallet"
+          options={{ headerLeft: null, headerShown: false }}
+          component={HistoryWallet}
+        />
+        <Stack.Screen
+          name="DepositWallet"
+          options={{ headerLeft: null, headerShown: false }}
+          component={DepositWallet}
+        />
+        <Stack.Screen
+          name="WithdrawWallet"
+          options={{ headerLeft: null, headerShown: false }}
+          component={WithdrawWallet}
+        />
         <Stack.Screen
           name="CatSitterGuide"
           options={{ headerLeft: null, headerShown: false }}
@@ -187,6 +190,51 @@ export function Routes() {
           name="SwipeStep"
           options={{ headerLeft: null, headerShown: false }}
           component={SwipeStep}
+        />
+        <Stack.Screen
+          name="ServicePayment"
+          options={{ headerLeft: null, headerShown: false }}
+          component={ServicePayment}
+        />
+        <Stack.Screen
+          name="ServicePaymentMethod"
+          component={ServicePaymentMethod}
+          options={{
+            headerShown: false,
+            gestureEnabled: true, // Cho phép vuốt để đóng
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateY: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.height, 0],
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="ServicePaymentComplete"
+          component={ServicePaymentComplete}
+          options={{
+            headerShown: false,
+            gestureEnabled: true, // Cho phép vuốt để đóng
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateY: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.height, 0],
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
         />
         <Stack.Screen
           name="Register"

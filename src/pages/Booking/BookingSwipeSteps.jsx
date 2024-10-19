@@ -149,7 +149,7 @@ export default function SwipeStep({ navigation }) {
             style={[styles.nextButton, !step5Checked && styles.disabledButton]}
             onPress={() => {
               if (step5Checked) {
-                navigation.goBack();
+                navigation.navigate("ServicePayment");
               }
             }}
             disabled={!step5Checked}
