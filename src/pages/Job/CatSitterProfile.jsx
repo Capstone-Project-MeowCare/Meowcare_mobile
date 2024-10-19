@@ -20,10 +20,7 @@ export default function CatSitterProfile({navigation}) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Image
-            source={require("../../../assets/BackArrow.png")}
-            style={styles.backArrow}
-          />
+         <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hồ sơ</Text>
       </View>
@@ -71,7 +68,7 @@ export default function CatSitterProfile({navigation}) {
       </ScrollView>
        {/* Nút Tôi đồng ý */}
        <TouchableOpacity style={styles.agreeButton}>
-          <Text style={styles.agreeText}>Bắt đầu kình doanh dịch vụ</Text>
+          <Text style={styles.agreeText}>Bắt đầu kinh doanh dịch vụ</Text>
         </TouchableOpacity>
     </View>
   );
