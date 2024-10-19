@@ -23,6 +23,9 @@ import CatSitterService from "./src/pages/Job/CatSitterService";
 import CatSitterProfile from "./src/pages/Job/CatSitterProfile";
 import CatSitterWallet from "./src/pages/Job/CatSitterWallet";
 import CatSitterGuide from "./src/pages/Job/CatSitterGuide";
+import ServicePayment from "./src/pages/ServicePayment/ServicePayment";
+import ServicePaymentMethod from "./src/pages/ServicePayment/ServicePaymentMethod";
+import ServicePaymentComplete from "./src/pages/ServicePayment/ServicePaymentComplete";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -83,7 +86,7 @@ function MyBottomNavigationBar() {
       />
       <Tab.Screen
         name="Hoạt Động"
-        options={{ headerShown:false }}
+        options={{ headerShown: false }}
         component={Activity}
       />
       <Tab.Screen
@@ -134,7 +137,7 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={CatSitterProfile}
         />
-       <Stack.Screen
+        <Stack.Screen
           name="CatSitterWallet"
           options={{ headerLeft: null, headerShown: false }}
           component={CatSitterWallet}
@@ -163,6 +166,51 @@ export function Routes() {
           name="SwipeStep"
           options={{ headerLeft: null, headerShown: false }}
           component={SwipeStep}
+        />
+        <Stack.Screen
+          name="ServicePayment"
+          options={{ headerLeft: null, headerShown: false }}
+          component={ServicePayment}
+        />
+        <Stack.Screen
+          name="ServicePaymentMethod"
+          component={ServicePaymentMethod}
+          options={{
+            headerShown: false,
+            gestureEnabled: true, // Cho phép vuốt để đóng
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateY: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.height, 0],
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="ServicePaymentComplete"
+          component={ServicePaymentComplete}
+          options={{
+            headerShown: false,
+            gestureEnabled: true, // Cho phép vuốt để đóng
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateY: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.height, 0],
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
         />
         <Stack.Screen
           name="Register"
