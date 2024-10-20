@@ -15,9 +15,16 @@ const { width, height } = Dimensions.get("window");
 
 export default function ServicePayment() {
   const navigation = useNavigation();
+  const route = useRoute();
+  const {
+    step1Info = {},
+    step2Info = {},
+    step3Info = {},
+    contactInfo = {},
+  } = route.params || {};
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-  const route = useRoute();
+
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
     "Chọn phương thức thanh toán"
   );
@@ -51,11 +58,15 @@ export default function ServicePayment() {
     }
   };
   const handlePayment = () => {
-    setIsLoading(true); // Bắt đầu loading
+    setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      // console.log("Payment successful");
-      navigation.navigate("ServicePaymentComplete");
+      navigation.navigate("ServicePaymentComplete", {
+        step1Info,
+        step2Info,
+        step3Info,
+        contactInfo,
+      });
     }, 3000);
   };
   return (

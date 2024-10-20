@@ -30,6 +30,7 @@ import InformationCatSitter from "./src/pages/Job/ProfileCatSitter/InformationCa
 import ServicePayment from "./src/pages/ServicePayment/ServicePayment";
 import ServicePaymentMethod from "./src/pages/ServicePayment/ServicePaymentMethod";
 import ServicePaymentComplete from "./src/pages/ServicePayment/ServicePaymentComplete";
+import ServicePaymentOrderDetail from "./src/pages/ServicePayment/ServicePaymentOrderDetail";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -235,6 +236,11 @@ export function Routes() {
               },
             }),
           }}
+        />
+        <Stack.Screen
+          name="ServicePaymentOrderDetail"
+          options={{ headerLeft: null, headerShown: false }}
+          component={ServicePaymentOrderDetail}
         />
         <Stack.Screen
           name="Register"
