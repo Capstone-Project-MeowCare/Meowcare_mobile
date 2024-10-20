@@ -27,6 +27,8 @@ import HistoryWallet from "./src/pages/Job/Wallet/HistoryWallet";
 import DepositWallet from "./src/pages/Job/Wallet/DepositWallet";
 import WithdrawWallet from "./src/pages/Job/Wallet/WithdrawWallet";
 import InformationCatSitter from "./src/pages/Job/ProfileCatSitter/InformationCatSitter";
+import RegisterSitterStep1 from "./src/pages/Job/RegisterCatSitter/RegisterSitterStep1";
+import RegisterSitterStep2 from "./src/pages/Job/RegisterCatSitter/RegisterSitterStep2";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -128,6 +130,16 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={BecomeSitter}
         />
+              <Stack.Screen
+              name="RegisterSitterStep1"
+              options={{ headerLeft: null, headerShown: false }}
+              component={RegisterSitterStep1}
+              />
+               <Stack.Screen
+              name="RegisterSitterStep2"
+              options={{ headerLeft: null, headerShown: false }}
+              component={RegisterSitterStep2}
+              />
         <Stack.Screen
           name="CatSitterService"
           options={{ headerLeft: null, headerShown: false }}

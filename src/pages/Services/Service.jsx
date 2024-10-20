@@ -25,7 +25,7 @@ export default function Service({ role = "ROLE_USER" }) {
         Bạn yêu thích chăm sóc mèo? Trở thành người chăm sóc mèo tại MeowCare ngay hôm nay để kiếm
          thêm thu nhập và tận hưởng niềm vui khi làm việc với những chú mèo dễ thương!
       </Text>
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button}  onPress={() => navigation.navigate('RegisterSitterStep1')}>
         <Text style={styles.buttonText}>Đăng ký</Text>
       </TouchableOpacity>
     </View>
