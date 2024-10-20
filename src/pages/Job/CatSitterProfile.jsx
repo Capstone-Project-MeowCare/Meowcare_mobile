@@ -40,7 +40,7 @@ export default function CatSitterProfile({navigation}) {
         </View>
 
         {/* Các mục chọn */}
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('InformationCatSitter')}>
           <Ionicons name="person-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Hồ sơ dịch vụ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
@@ -105,7 +105,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D3D3D3", // Màu của đường kẻ ngang
     borderBottomWidth: 1, // Độ dày của đường kẻ
    
-  }, profileContainer: {
+  }, 
+  profileContainer: {
     alignItems: "center",
     marginVertical: 20,
   },

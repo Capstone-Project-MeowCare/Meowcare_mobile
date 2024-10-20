@@ -19,7 +19,7 @@ export default function InformationCatSitter({navigation}) {
         >
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Lịch sử giao dịch</Text>
+        <Text style={styles.headerTitle}>Hồ sơ dịch vụ</Text>
       
        
       </View>
