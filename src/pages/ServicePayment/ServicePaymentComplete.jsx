@@ -1,4 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import React from "react";
 import {
   Text,
@@ -13,6 +13,14 @@ const { width, height } = Dimensions.get("window");
 
 export default function ServicePaymentComplete() {
   const navigation = useNavigation();
+  const route = useRoute();
+
+  const {
+    step1Info = {},
+    step2Info = {},
+    step3Info = {},
+    contactInfo = {},
+  } = route.params || {};
 
   return (
     <View style={styles.container}>
@@ -36,7 +44,14 @@ export default function ServicePaymentComplete() {
       </TouchableOpacity>
 
       <TouchableOpacity
-      // onPress={() => navigation.navigate("BookingDetails")}
+        onPress={() =>
+          navigation.navigate("ServicePaymentOrderDetail", {
+            step1Info,
+            step2Info,
+            step3Info,
+            contactInfo,
+          })
+        }
       >
         <Text style={styles.viewBookingText}>Xem thông tin đã đặt</Text>
       </TouchableOpacity>

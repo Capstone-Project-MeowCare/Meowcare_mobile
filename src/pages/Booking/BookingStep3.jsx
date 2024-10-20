@@ -23,27 +23,35 @@ export default function BookingStep3({
     { id: 2, name: "Kevin", image: require("../../../assets/image74.png") },
   ];
 
-  const handleSelectCat = (id) => {
-    if (step3Info.selectedCats.includes(id)) {
+  const handleSelectCat = (cat) => {
+    if (
+      step3Info.selectedCats.some((selectedCat) => selectedCat.id === cat.id)
+    ) {
+      // Mèo đã đc chọn -> bỏ chọn
       setStep3Info({
         ...step3Info,
-        selectedCats: step3Info.selectedCats.filter((catId) => catId !== id),
+        selectedCats: step3Info.selectedCats.filter(
+          (selectedCat) => selectedCat.id !== cat.id
+        ),
       });
     } else {
+      // Nếu chưa chọn thì thêm vào list
       setStep3Info({
         ...step3Info,
-        selectedCats: [...step3Info.selectedCats, id],
+        selectedCats: [...step3Info.selectedCats, cat],
       });
     }
   };
 
+  const isCatSelected = (catId) => {
+    return step3Info.selectedCats.some(
+      (selectedCat) => selectedCat.id === catId
+    );
+  };
+
   useEffect(() => {
-    if (step3Info.selectedCats.length > 0) {
-      setIsValid(true);
-    } else {
-      setIsValid(false);
-    }
-  }, [step3Info.selectedCats, setIsValid]);
+    setIsValid(step3Info.selectedCats.length > 0);
+  }, [step3Info.selectedCats]);
 
   return (
     <GestureRecognizer
@@ -79,18 +87,16 @@ export default function BookingStep3({
             <TouchableOpacity
               key={cat.id}
               style={styles.catContainer}
-              onPress={() => handleSelectCat(cat.id)}
+              onPress={() => handleSelectCat(cat)}
             >
               <Image source={cat.image} style={styles.catImage} />
 
-              {step3Info.selectedCats.includes(cat.id) ? null : (
-                <View style={styles.overlay} />
-              )}
+              {!isCatSelected(cat.id) && <View style={styles.overlay} />}
 
               <View style={styles.catFooter}>
                 <Text style={styles.catName}>{cat.name}</Text>
 
-                {step3Info.selectedCats.includes(cat.id) && (
+                {isCatSelected(cat.id) && (
                   <View style={styles.circle}>
                     <Image
                       source={require("../../../assets/Check1.png")}
