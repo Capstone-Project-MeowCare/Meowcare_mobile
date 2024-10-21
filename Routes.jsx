@@ -33,6 +33,11 @@ import ServicePayment from "./src/pages/ServicePayment/ServicePayment";
 import ServicePaymentMethod from "./src/pages/ServicePayment/ServicePaymentMethod";
 import ServicePaymentComplete from "./src/pages/ServicePayment/ServicePaymentComplete";
 import ServicePaymentOrderDetail from "./src/pages/ServicePayment/ServicePaymentOrderDetail";
+import Knowledge from "./src/pages/Job/RegisterCatSitter/Knowledge";
+import DoQuiz from "./src/pages/Job/RegisterCatSitter/DoQuiz";
+import ResultQuiz from "./src/pages/Job/RegisterCatSitter/ResultQuiz";
+import RegisterSitterStep3 from "./src/pages/Job/RegisterCatSitter/RegisterSitterStep3";
+import RegisterSuccess from "./src/pages/Job/RegisterCatSitter/RegisterSuccess";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -143,6 +148,31 @@ export function Routes() {
               name="RegisterSitterStep2"
               options={{ headerLeft: null, headerShown: false }}
               component={RegisterSitterStep2}
+              />
+                    <Stack.Screen
+                    name="Knowledge"
+                    options={{ headerLeft: null, headerShown: false }}
+                    component={Knowledge}
+                    />
+                    <Stack.Screen
+                    name="DoQuiz"
+                    options={{ headerLeft: null, headerShown: false }}
+                    component={DoQuiz}
+                    />
+                    <Stack.Screen
+                    name="ResultQuiz"
+                    options={{ headerLeft: null, headerShown: false }}
+                    component={ResultQuiz}
+                    />
+              <Stack.Screen
+              name="RegisterSitterStep3"
+              options={{ headerLeft: null, headerShown: false }}
+              component={RegisterSitterStep3}
+              />
+              <Stack.Screen
+              name="RegisterSuccess"
+              options={{ headerLeft: null, headerShown: false }}
+              component={RegisterSuccess}
               />
         <Stack.Screen
           name="CatSitterService"
