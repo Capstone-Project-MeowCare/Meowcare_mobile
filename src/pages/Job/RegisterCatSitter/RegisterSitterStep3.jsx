@@ -90,7 +90,8 @@ export default function RegisterSitterStep3({ navigation }) {
         </Text>
         <Text style={styles.sectionText}>
         • Nếu người chăm sóc thú cưng gây ra bất kỳ vấn đề gì ảnh hưởng tiêu cực đến bản thân thú cưng 
-        hoặc các yếu tố bên ngoài (như người, tài sản), người chăm sóc sẽ chịu trách nhiệm phối hợp với chủ sở hữu để giải quyết. Việc này bao gồm đàm phán với chủ thú cưng về các biện pháp xử lý và chi phí liên quan nếu cần thiết.
+        hoặc các yếu tố bên ngoài (như người, tài sản), người chăm sóc sẽ <Text style={styles.boldText}>chịu trách nhiệm phối hợp với chủ sở hữu để giải quyết</Text>.
+         Việc này bao gồm đàm phán với chủ thú cưng về các biện pháp xử lý và chi phí liên quan nếu cần thiết.
         </Text>
         <Text style={styles.sectionTitle}>3. Trách nhiệm của chủ thú cưng</Text>
         <Text style={styles.sectionText}>
@@ -159,9 +160,7 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: "#FFF7F0",
   },
-  backButton: {
-    paddingRight: 16,
-  },
+
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -245,7 +244,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subTitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#000857",
     marginBottom: 10,
     textAlign: "left",
@@ -272,10 +271,12 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     marginRight: 10,
+    marginTop:10,
   },
   label: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#000857",
+    marginTop:10,
   },
   continueButton: {
     backgroundColor: "#FDD7D7",

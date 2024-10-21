@@ -38,6 +38,7 @@ import DoQuiz from "./src/pages/Job/RegisterCatSitter/DoQuiz";
 import ResultQuiz from "./src/pages/Job/RegisterCatSitter/ResultQuiz";
 import RegisterSitterStep3 from "./src/pages/Job/RegisterCatSitter/RegisterSitterStep3";
 import RegisterSuccess from "./src/pages/Job/RegisterCatSitter/RegisterSuccess";
+import LocationCatSitter from "./src/pages/Job/ProfileCatSitter/LocationCatSitter";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -140,39 +141,39 @@ export function Routes() {
           component={BecomeSitter}
         />
               <Stack.Screen
-              name="RegisterSitterStep1"
-              options={{ headerLeft: null, headerShown: false }}
-              component={RegisterSitterStep1}
+                name="RegisterSitterStep1"
+                options={{ headerLeft: null, headerShown: false }}
+                component={RegisterSitterStep1}
               />
                <Stack.Screen
-              name="RegisterSitterStep2"
-              options={{ headerLeft: null, headerShown: false }}
-              component={RegisterSitterStep2}
+                name="RegisterSitterStep2"
+                options={{ headerLeft: null, headerShown: false }}
+                component={RegisterSitterStep2}
               />
                     <Stack.Screen
-                    name="Knowledge"
-                    options={{ headerLeft: null, headerShown: false }}
-                    component={Knowledge}
+                      name="Knowledge"
+                      options={{ headerLeft: null, headerShown: false }}
+                      component={Knowledge}
                     />
                     <Stack.Screen
-                    name="DoQuiz"
-                    options={{ headerLeft: null, headerShown: false }}
-                    component={DoQuiz}
+                      name="DoQuiz"
+                      options={{ headerLeft: null, headerShown: false }}
+                      component={DoQuiz}
                     />
                     <Stack.Screen
-                    name="ResultQuiz"
-                    options={{ headerLeft: null, headerShown: false }}
-                    component={ResultQuiz}
+                      name="Kết quả bài kiểm tra"
+                      options={{ headerLeft: null, headerShown: false }}
+                      component={ResultQuiz}
                     />
               <Stack.Screen
-              name="RegisterSitterStep3"
-              options={{ headerLeft: null, headerShown: false }}
-              component={RegisterSitterStep3}
+                name="RegisterSitterStep3"
+                options={{ headerLeft: null, headerShown: false }}
+                component={RegisterSitterStep3}
               />
               <Stack.Screen
-              name="RegisterSuccess"
-              options={{ headerLeft: null, headerShown: false }}
-              component={RegisterSuccess}
+                name="RegisterSuccess"
+                options={{ headerLeft: null, headerShown: false }}
+                component={RegisterSuccess}
               />
         <Stack.Screen
           name="CatSitterService"
@@ -184,11 +185,16 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={CatSitterProfile}
         />
-        <Stack.Screen
-          name="InformationCatSitter"
-          options={{ headerLeft: null, headerShown: false }}
-          component={InformationCatSitter}
-        />
+              <Stack.Screen
+                name="InformationCatSitter"
+                options={{ headerLeft: null, headerShown: false }}
+                component={InformationCatSitter}
+              />
+              <Stack.Screen
+                name="Vị trí người chăm sóc"
+                options={{ headerLeft: null, headerShown: false }}
+                component={LocationCatSitter}
+              />
         <Stack.Screen
           name="CatSitterWallet"
           options={{ headerLeft: null, headerShown: false }}
