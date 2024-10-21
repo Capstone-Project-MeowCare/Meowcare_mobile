@@ -1,15 +1,30 @@
-
 import React, { useState } from "react";
-import { Text, View, StyleSheet, TouchableOpacity,ScrollView, Image, TextInput  } from "react-native";
-import { createStackNavigator } from '@react-navigation/stack';
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  TextInput,
+} from "react-native";
+import { createStackNavigator } from "@react-navigation/stack";
 import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../../../auth/useAuth"; // Import useAuth hook
 
-export default function Service({ role = "ROLE_USER" }) {
+export default function Service() {
+  const { role } = useAuth();
   const Stack = createStackNavigator();
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
-  const tabs = ["Tất cả", "Chờ xác nhận", "Đã xác nhận", "Đang diễn ra", "Hoàn thành", "Đã hủy"];
-
+  const tabs = [
+    "Tất cả",
+    "Chờ xác nhận",
+    "Đã xác nhận",
+    "Đang diễn ra",
+    "Hoàn thành",
+    "Đã hủy",
+  ];
 
   // Component for User View
   const UserView = () => (
@@ -20,12 +35,18 @@ export default function Service({ role = "ROLE_USER" }) {
           style={styles.image}
         />
       </View>
-      <Text style={styles.title}>Trở thành người chăm sóc mèo tại MeowCare!</Text>
-      <Text style={styles.description}>
-        Bạn yêu thích chăm sóc mèo? Trở thành người chăm sóc mèo tại MeowCare ngay hôm nay để kiếm
-         thêm thu nhập và tận hưởng niềm vui khi làm việc với những chú mèo dễ thương!
+      <Text style={styles.title}>
+        Trở thành người chăm sóc mèo tại MeowCare!
       </Text>
-      <TouchableOpacity style={styles.button}  onPress={() => navigation.navigate('RegisterSitterStep1')}>
+      <Text style={styles.description}>
+        Bạn yêu thích chăm sóc mèo? Trở thành người chăm sóc mèo tại MeowCare
+        ngay hôm nay để kiếm thêm thu nhập và tận hưởng niềm vui khi làm việc
+        với những chú mèo dễ thương!
+      </Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate("RegisterSitterStep1")}
+      >
         <Text style={styles.buttonText}>Đăng ký</Text>
       </TouchableOpacity>
     </View>
@@ -34,52 +55,77 @@ export default function Service({ role = "ROLE_USER" }) {
   // Component for Cat Sitter View
   const CatSitterView = () => (
     <View style={styles.catSitterContainer}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={require("../../../assets/BecomeCatsitter.png")} 
-              style={styles.image}
-            />
-          </View>
-            {/* Function Icons */}
-           {/* Box Function Icons */}
-          
+      <View style={styles.imageContainer}>
+        <Image
+          source={require("../../../assets/BecomeCatsitter.png")}
+          style={styles.image}
+        />
+      </View>
+      {/* Function Icons */}
       <View style={styles.functionBox}>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterService')}>
-          <Image source={require("../../../assets/IconRequest.png")} style={styles.icon} />
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate("CatSitterService")}
+        >
+          <Image
+            source={require("../../../assets/IconRequest.png")}
+            style={styles.icon}
+          />
           <Text style={styles.iconText}>Nhận yêu cầu</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterProfile')}>
-          <Image source={require("../../../assets/IconProfile.png")} style={styles.icon} />
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate("CatSitterProfile")}
+        >
+          <Image
+            source={require("../../../assets/IconProfile.png")}
+            style={styles.icon}
+          />
           <Text style={styles.iconText}>Hồ sơ dịch vụ</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterWallet')}>
-          <Image source={require("../../../assets/IconWallet.png")} style={styles.icon} />
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate("CatSitterWallet")}
+        >
+          <Image
+            source={require("../../../assets/IconWallet.png")}
+            style={styles.icon}
+          />
           <Text style={styles.iconText}>Ví tiền</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('CatSitterGuide')}>
-          <Image source={require("../../../assets/IconGuide.png")} style={styles.icon} />
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => navigation.navigate("CatSitterGuide")}
+        >
+          <Image
+            source={require("../../../assets/IconGuide.png")}
+            style={styles.icon}
+          />
           <Text style={styles.iconText}>Hướng dẫn</Text>
         </TouchableOpacity>
       </View>
 
-           {/* Search Bar */}
-        <View style={styles.searchContainer}>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
           placeholder="Tìm kiếm"
           placeholderTextColor="#888"
         />
         <TouchableOpacity style={styles.searchButton}>
-          <Image source={require("../../../assets/SearchIcon.png")} style={styles.searchIcon} />
-        </TouchableOpacity>  
+          <Image
+            source={require("../../../assets/SearchIcon.png")}
+            style={styles.searchIcon}
+          />
+        </TouchableOpacity>
       </View>
 
-        {/* Request Status Tabs */}
-        <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
+      {/* Request Status Tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
-        style={styles.scrollView} // Added style to limit the height
+        style={styles.scrollView}
       >
         <View style={styles.tabsContainer}>
           {tabs.map((tab) => (
@@ -104,30 +150,30 @@ export default function Service({ role = "ROLE_USER" }) {
         </View>
       </ScrollView>
 
-        {/* Request*/}
-        <View style={styles.emptyStateContainer}>
+      {/* Request */}
+      <View style={styles.emptyStateContainer}>
         <Image
           source={{
             uri: "https://cdn-icons-png.flaticon.com/512/54/54220.png", // placeholder image link
           }}
           style={styles.picture}
         />
-        <Text style={styles.emptyStateTitle}>Hiện vẫn chưa có hoạt động nào</Text>
+        <Text style={styles.emptyStateTitle}>
+          Hiện vẫn chưa có hoạt động nào
+        </Text>
         <Text style={styles.emptyStateSubtitle}>
           Hoạt động sẽ xuất hiện khi bạn sử dụng các dịch vụ của chúng tôi
         </Text>
       </View>
-        </View>
+    </View>
   );
 
+  // Nếu chưa có role, hiển thị thông báo đăng nhập
   if (!role) {
     return (
       <View style={styles.catSitterContainer}>
-          <Text>Chưa đăng nhập</Text>
+        <Text>Chưa đăng nhập</Text>
       </View>
-
-      
-
     );
   }
 
@@ -138,7 +184,6 @@ export default function Service({ role = "ROLE_USER" }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -165,8 +210,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
-    elevation: 5,  // Cho Android
-    marginTop: -50,  // Di chuyển box lên gần hình ảnh
+    elevation: 5, // Cho Android
+    marginTop: -50, // Di chuyển box lên gần hình ảnh
   },
   iconContainer: {
     justifyContent: "center",
@@ -240,12 +285,11 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: "#FFF",
-  },  
+  },
   imageContainer: {
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    
   },
   image: {
     width: 430,
@@ -303,7 +347,7 @@ const styles = StyleSheet.create({
   picture: {
     marginTop: 40,
     width: 100, // Adjusted size for the image/icon
-    height: 100,  
+    height: 100,
   },
   emptyStateTitle: {
     fontSize: 18,
@@ -316,5 +360,4 @@ const styles = StyleSheet.create({
     color: "#7D7D7D",
     textAlign: "center",
   },
-
 });
