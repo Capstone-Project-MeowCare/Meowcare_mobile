@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
+  
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
@@ -64,15 +65,35 @@ export default function RegisterSitterStep2({ navigation }) {
 
       {/* Nội dung chính */}
       <View style={styles.formContainer}>
-        
-      </View>
-      
-     
+      <Text style={styles.infoText}>
+        Bài kiểm tra kiến thức
+      </Text>
+
+  {/* Mô tả bài kiểm tra */}
+  <Text style={styles.descriptionText}>
+    Nhấn nút dưới đây để bắt đầu ngay – mỗi câu hỏi là cơ hội để bạn khám phá thêm những điều thú vị về 
+    loài mèo. Bạn đã sẵn sàng chưa? Cùng thử thách bản thân và xem bạn hiểu mèo đến mức nào!
+  </Text>
+
+  {/* Số lần cho phép và thời gian giới hạn */}
+  <View style={styles.testInfoContainer}>
+    <Text style={styles.testInfoText}>Số lần cho phép: 3</Text>
+    <Text style={styles.testInfoText}>Thời gian giới hạn: 15 phút</Text>
+  </View>
+
+  {/* Nút bắt đầu */}
+  <View style={styles.buttonContainer}>
+    <TouchableOpacity style={styles.iconButton}  onPress={() => navigation.navigate('Knowledge')}>
+      <Ionicons name="book-outline" size={24} color="#000857" />
+      <Text style={styles.iconButtonText}>Kiến thức</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate('DoQuiz')}>
+      <Text style={styles.startButtonText}>Bắt đầu</Text>
+    </TouchableOpacity>
+  </View>
+      </View>   
       </ScrollView>
-      {/* Nút Tiếp tục */}
-      <TouchableOpacity style={styles.continueButton}>
-        <Text style={styles.continueButtonText}>Tiếp tục</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -164,97 +185,60 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
-  },
-  label: {
-    fontSize: 14,
-    color: "#000857",
-    fontWeight: "bold",
-    textAlign: "left",
-  },
-  required: {
-    color: "red", // Màu đỏ cho dấu *
-    fontSize: 16, // Kích thước giống với phần text chính
+    justifyContent: "center", // Căn giữa nội dung
+    alignItems: "center",
+    paddingHorizontal: width * 0.05,
+    marginVertical: 30,
   },
   infoText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000857",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  descriptionText: {
     fontSize: 14,
     color: "#000857",
-    marginBottom: 20,
-    marginVertical: 10,
-    textAlign: "center", // Căn giữa chữ
-    fontWeight: "bold",  // Làm đậm chữ
-  },
-  mainContent: {
-    flex: 1,
-    paddingHorizontal: width * 0.05,
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-  },
-  textInput: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.6)",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: height * 0.03,
-    marginTop: height * 0.014,
-  },
-  pickerContainer: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.6)",
-    borderRadius: 5,
-    marginBottom: height * 0.02,
-    marginTop: height * 0.018,
-  },
-  picker: {
-    height: 50,
-    width: "100%",
-  },
-  uploadContainer: {
-    borderWidth: 1,
-    borderColor: "#902C6C",
-    borderStyle: "dashed",
-    borderRadius: 5,
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 15,
-    width: "100%",
-    marginTop:10,
-  },
-  uploadText: {
-    color: "#902C6C",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 10,
-  },
-  uploadSubText: {
-    color: "#777",
-    fontSize: 12,
     textAlign: "center",
-    marginTop: 5,
+    marginBottom: 20,
   },
-  textArea: {
-    height: 80,
-    borderColor: "#DDD",
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.6)",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: height * 0.03,
-    marginTop: height * 0.014,
-    textAlignVertical: "top", // Đảm bảo nội dung căn trên cùng
-    backgroundColor: "#FFFAF5",
+  testInfoContainer: {
+    marginBottom: 20,
   },
-  continueButton: {
-    backgroundColor: "#FDD7D7",
-    paddingVertical: 15,
+  testInfoText: {
+    fontSize: 14,
+    color: "#000857",
+    textAlign: "center",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    borderRadius: 5,
+    
   },
-  continueButtonText: {
+  iconButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F0F0",
+    padding: 10,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  iconButtonText: {
+    fontSize: 14,
+    color: "#000857",
+    marginLeft: 5,
+  },
+  startButton: {
+    backgroundColor: "#0057FF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  startButtonText: {
     fontSize: 16,
-    color: "#902C6C",
+    color: "#FFF",
     fontWeight: "bold",
   },
 });
