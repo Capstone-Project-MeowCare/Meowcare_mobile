@@ -53,7 +53,7 @@ export default function DoQuiz({ navigation }) {
         },
         {
           text: "Có", // Nút 'Yes'
-          onPress: () => navigation.navigate("ResultQuiz"), // Điều hướng tới trang kết quả khi nhấn 'Yes'
+          onPress: () => navigation.navigate("Kết quả bài kiểm tra"), // Điều hướng tới trang kết quả khi nhấn 'Yes'
         },
       ],
       { cancelable: false }

@@ -52,7 +52,7 @@ export default function CatSitterProfile({navigation}) {
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem}  onPress={() => navigation.navigate('Vị trí người chăm sóc')}>
           <Ionicons name="location-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Địa chỉ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
