@@ -3,7 +3,7 @@ import { Ability, AbilityBuilder } from "@casl/ability";
 export const defineRulesFor = (user) => {
   const { can, rules } = new AbilityBuilder(Ability);
 
-  const userRole = user.roles?.[0]?.name; // Truy cập role chính xác từ mảng roles
+  const userRole = user?.roles?.[0]?.name;
 
   console.log("User role in defineRulesFor:", userRole);
 

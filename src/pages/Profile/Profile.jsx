@@ -31,7 +31,6 @@ export default function Profile() {
   const handleLogout = () => {
     logout()
       .then(() => {
-        console.log("Đã đăng xuất thành công!");
         navigation.navigate("Login");
       })
       .catch((error) => {
@@ -142,7 +141,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: height * 0.015,
     borderRadius: 10,
-    marginBottom: height * 0.015, // Giảm marginBottom để đẩy lên trên
+    marginBottom: height * 0.015,
     elevation: 5,
   },
   avatarImage: {
@@ -160,7 +159,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: width * 0.87,
-    marginTop: height * 0.01, // Đẩy lên trên bằng cách giảm marginTop
+    marginTop: height * 0.01,
   },
   squareContainer: {
     width: width / 4,
