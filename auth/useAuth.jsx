@@ -7,7 +7,7 @@ const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser, removeUser] = useStorage("user", null);
-  const [role, setRole, removeRole] = useStorage("role", null);
+  const [roles, setRoles, removeRoles] = useStorage("roles", []);
   const [accessToken, setAccessToken, removeAccessToken] = useStorage(
     "accessToken",
     null
@@ -25,20 +25,38 @@ export const AuthProvider = ({ children }) => {
     setUser({ ...userData });
 
     if (userData?.roles && userData.roles.length > 0) {
-      setRole(userData.roles[0].name);
-      console.log("Role set:", userData.roles[0].name); // Log role được set
+      setRoles(userData.roles);
+      console.log("Roles set:", userData.roles); // Log các role được set
     }
 
-    setExpoPushToken(expoPushToken || ""); // Đảm bảo expoPushToken không bị undefined
+    setExpoPushToken(expoPushToken || "");
   };
 
   const logout = async () => {
-    console.log("Logging out...");
-    await removeUser();
-    await setUser(null);
-    await removeAccessToken();
-    await removeRole();
-    await removeExpoPushToken();
+    try {
+      if (user) {
+        await removeUser();
+        setUser(null);
+      }
+
+      if (accessToken) {
+        await removeAccessToken();
+      }
+
+      if (roles && Array.isArray(roles) && roles.length > 0) {
+        await removeRoles();
+      } else {
+        console.log("Roles are null or not an array.");
+      }
+
+      if (expoPushToken) {
+        await removeExpoPushToken();
+      }
+
+      console.log("Logged out successfully!");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   return (
@@ -49,7 +67,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         accessToken,
-        role,
+        roles,
         expoPushToken,
       }}
     >

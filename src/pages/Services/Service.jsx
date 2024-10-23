@@ -13,7 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../../auth/useAuth"; // Import useAuth hook
 
 export default function Service() {
-  const { role } = useAuth();
+  const { roles } = useAuth();
   const Stack = createStackNavigator();
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
@@ -25,7 +25,10 @@ export default function Service() {
     "Hoàn thành",
     "Đã hủy",
   ];
-
+  const hasSitterRole =
+    Array.isArray(roles) && roles.some((role) => role.name === "ROLE_SITTER");
+  const hasUserRole =
+    Array.isArray(roles) && roles.some((role) => role.name === "ROLE_USER");
   // Component for User View
   const UserView = () => (
     <View style={styles.userContainer}>
@@ -154,7 +157,7 @@ export default function Service() {
       <View style={styles.emptyStateContainer}>
         <Image
           source={{
-            uri: "https://cdn-icons-png.flaticon.com/512/54/54220.png", // placeholder image link
+            uri: "https://cdn-icons-png.flaticon.com/512/54/54220.png",
           }}
           style={styles.picture}
         />
@@ -168,19 +171,18 @@ export default function Service() {
     </View>
   );
 
-  // Nếu chưa có role, hiển thị thông báo đăng nhập
-  if (!role) {
-    return (
-      <View style={styles.catSitterContainer}>
-        <Text>Chưa đăng nhập</Text>
-      </View>
-    );
+  if (hasSitterRole) {
+    return <CatSitterView />;
   }
 
-  // Conditional rendering based on role
+  if (hasUserRole) {
+    return <UserView />;
+  }
+
+  // Nếu không có roles phù hợp
   return (
     <View style={styles.container}>
-      {role === "ROLE_USER" ? <UserView /> : <CatSitterView />}
+      <Text>Chưa có vai trò hợp lệ</Text>
     </View>
   );
 }
@@ -346,7 +348,7 @@ const styles = StyleSheet.create({
   },
   picture: {
     marginTop: 40,
-    width: 100, // Adjusted size for the image/icon
+    width: 100,
     height: 100,
   },
   emptyStateTitle: {

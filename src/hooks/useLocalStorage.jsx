@@ -38,8 +38,12 @@ export const useStorage = (key, initialValue) => {
 
   const removeStoredValue = async () => {
     try {
-      setStoredValue(null);
-      await AsyncStorage.removeItem(key);
+      if (storedValue !== null) {
+        setStoredValue(null);
+        await AsyncStorage.removeItem(key);
+      } else {
+        console.log("Value is already null or undefined.");
+      }
     } catch (error) {
       console.error("Error removing value from AsyncStorage", error);
     }
