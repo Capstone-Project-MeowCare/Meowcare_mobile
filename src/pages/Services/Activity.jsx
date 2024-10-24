@@ -1,3 +1,4 @@
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
   Text,
@@ -41,13 +42,14 @@ const mockData = [
   },
 ];
 
-const CustomButton = ({ title }) => (
-  <TouchableOpacity style={styles.button}>
+const CustomButton = ({ title, onPress }) => (
+  <TouchableOpacity style={styles.button} onPress={onPress}>
     <Text style={styles.buttonText}>{title}</Text>
   </TouchableOpacity>
 );
 
 export default function Activity() {
+  const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
   const tabs = [
     "Tất cả",
@@ -129,17 +131,26 @@ export default function Activity() {
               </Text>
               <View style={styles.buttonRow}>
                 {item.status === "Đang diễn ra" && (
-                  <CustomButton title="Theo dõi lịch" />
+                  <CustomButton
+                    title="Theo dõi lịch"
+                    onPress={() => navigation.navigate("CareMonitor")}
+                  />
                 )}
                 {item.status === "Chờ xác nhận" && (
                   <>
                     <CustomButton title="Hủy lịch" />
                     <CustomButton title="Cập nhật" />
-                    <CustomButton title="Theo dõi lịch" />
+                    <CustomButton
+                      title="Theo dõi lịch"
+                      onPress={() => navigation.navigate("CareMonitor")}
+                    />
                   </>
                 )}
                 {item.status === "Đã hủy" && (
-                  <CustomButton title="Theo dõi lịch" />
+                  <CustomButton
+                    title="Theo dõi lịch"
+                    onPress={() => navigation.navigate("CareMonitor")}
+                  />
                 )}
               </View>
             </View>
