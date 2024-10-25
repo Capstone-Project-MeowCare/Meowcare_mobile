@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { AntDesign, Entypo, Feather } from "@expo/vector-icons";
 import StarRating from "react-native-star-rating-widget";
+import { ScrollView } from "react-native-gesture-handler";
 
 const { width, height } = Dimensions.get("window");
 
@@ -23,13 +24,13 @@ const taskData = [
   },
   {
     time: "7:00 - 8:00 AM",
-    taskName: "Playing with the cat",
+    taskName: "Playingg with the cat",
     status: "Đang diễn ra",
     statusColor: "#FFC107",
   },
   {
     time: "8:00 - 9:00 AM",
-    taskName: "Grooming the cat",
+    taskName: "Groomingg the cat",
     status: "Chưa bắt đầu",
     statusColor: "#9E9E9E",
   },
@@ -54,25 +55,26 @@ const taskData = [
 ];
 
 export default function CareMonitor({ navigation }) {
-  const [expandedIndex, setExpandedIndex] = useState(null);
+  // Đổi thành mảng để mở collapsible view độc lập
+  const [expandedStates, setExpandedStates] = useState(
+    Array(taskData.length).fill(false)
+  );
 
   const animatedHeights = taskData.map(
     () => useRef(new Animated.Value(height * 0.04)).current
   );
 
   const toggleExpansion = (index) => {
-    const isCurrentlyExpanded = expandedIndex === index;
+    const newExpandedStates = [...expandedStates];
+    newExpandedStates[index] = !newExpandedStates[index];
 
-    animatedHeights.forEach((animHeight, i) => {
-      Animated.timing(animHeight, {
-        toValue:
-          i === index && !isCurrentlyExpanded ? height * 0.1 : height * 0.04,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-    });
+    Animated.timing(animatedHeights[index], {
+      toValue: newExpandedStates[index] ? height * 0.13 : height * 0.04,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
 
-    setExpandedIndex(isCurrentlyExpanded ? null : index);
+    setExpandedStates(newExpandedStates);
   };
 
   return (
@@ -103,37 +105,70 @@ export default function CareMonitor({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {taskData.map((item, index) => (
-        <TouchableOpacity
-          key={index}
-          onPress={() => toggleExpansion(index)}
-          activeOpacity={0.8}
-        >
-          <Animated.View
-            style={[
-              styles.collapsibleView,
-              {
-                height: animatedHeights[index],
-              },
-            ]}
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {taskData.map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => toggleExpansion(index)}
+            activeOpacity={0.8}
           >
-            <View style={styles.row}>
-              <Text style={styles.timeText}>{item.time}</Text>
-              <Text style={[styles.status, { color: item.statusColor }]}>
-                {item.status}
-              </Text>
-              <Entypo
-                name={expandedIndex === index ? "chevron-up" : "chevron-down"}
-                size={24}
-                color="black"
-              />
-            </View>
-            {expandedIndex === index && (
-              <Text style={styles.taskText}>{item.taskName}</Text>
-            )}
-          </Animated.View>
-        </TouchableOpacity>
-      ))}
+            <Animated.View
+              style={[
+                styles.collapsibleView,
+                {
+                  height: animatedHeights[index],
+                },
+              ]}
+            >
+              <View style={styles.row}>
+                <Text style={styles.timeText}>{item.time}</Text>
+                {item.status === "Đang diễn ra" && (
+                  <TouchableOpacity style={styles.requestButton}>
+                    <Text style={styles.requestButtonText}>
+                      Yêu cầu thông tin
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                <View style={styles.statusAndIconContainer}>
+                  <Text style={[styles.status, { color: item.statusColor }]}>
+                    {item.status}
+                  </Text>
+                  <Entypo
+                    name={expandedStates[index] ? "chevron-up" : "chevron-down"}
+                    size={24}
+                    color="black"
+                  />
+                </View>
+              </View>
+              {expandedStates[index] && (
+                <View style={styles.taskRow}>
+                  <Text style={styles.taskText}>{item.taskName}</Text>
+                  {item.status === "Chưa bắt đầu" && (
+                    <TouchableOpacity
+                      style={styles.addServiceButton}
+                      onPress={() => navigation.navigate("AdditionalServices")}
+                    >
+                      <Text style={styles.addServiceButtonText}>
+                        Đặt thêm dịch vụ
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {(item.status === "Hoàn thành" ||
+                    item.status === "Đang diễn ra") && (
+                    <TouchableOpacity style={styles.detailButton}>
+                      <Text style={styles.detailButtonText}>Xem chi tiết</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </Animated.View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
       <View style={styles.footer}>
         <View style={styles.userInfo}>
           <Image
@@ -231,6 +266,10 @@ const styles = StyleSheet.create({
     color: "#000857",
     marginTop: height * 0.02,
   },
+  scrollContainer: {
+    flex: 1,
+    marginBottom: height * 0.25,
+  },
   dateRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -263,15 +302,74 @@ const styles = StyleSheet.create({
     color: "#000857",
     fontWeight: "600",
   },
+  taskRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: height * 0.005,
+  },
   taskText: {
     fontSize: 16,
     color: "#333",
     marginTop: height * 0.01,
   },
   status: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     fontWeight: "bold",
     marginLeft: height * 0.12,
+  },
+  requestButton: {
+    width: width * 0.26,
+    height: height * 0.03,
+    backgroundColor: "#2E67D1",
+    borderRadius: height * 0.01,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: width * 0.009,
+  },
+  requestButtonText: {
+    color: "#FFFFFF",
+    fontSize: width * 0.029,
+    fontWeight: "600",
+  },
+  statusAndIconContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  status: {
+    fontSize: width * 0.035,
+    fontWeight: "bold",
+    marginRight: width * 0.02,
+    flexShrink: 1,
+  },
+  detailButton: {
+    width: width * 0.25,
+    height: height * 0.03,
+    backgroundColor: "#2E67D1",
+    borderRadius: height * 0.1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: height * 0.01,
+  },
+  detailButtonText: {
+    color: "#FFFFFF",
+    fontSize: width * 0.035,
+    fontWeight: "600",
+  },
+  addServiceButton: {
+    width: width * 0.27,
+    height: height * 0.03,
+    backgroundColor: "#2E67D1",
+    borderRadius: height * 0.01,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: height * 0.01,
+    alignSelf: "flex-start", // Căn nút về bên trái dưới `status`
+  },
+  addServiceButtonText: {
+    color: "#FFFFFF",
+    fontSize: width * 0.03,
+    fontWeight: "600",
   },
   footer: {
     position: "absolute",

@@ -40,6 +40,7 @@ import RegisterSitterStep3 from "./src/pages/Job/RegisterCatSitter/RegisterSitte
 import RegisterSuccess from "./src/pages/Job/RegisterCatSitter/RegisterSuccess";
 import LocationCatSitter from "./src/pages/Job/ProfileCatSitter/LocationCatSitter";
 import CareMonitor from "./src/pages/CareMonitor/CareMonitor";
+import AdditionalServices from "./src/pages/Services/AdditionalServices";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -295,6 +296,11 @@ export function Routes() {
           name="CareMonitor"
           options={{ headerLeft: null, headerShown: false }}
           component={CareMonitor}
+        />
+        <Stack.Screen
+          name="AdditionalServices"
+          options={{ headerLeft: null, headerShown: false }}
+          component={AdditionalServices}
         />
         <Stack.Screen
           name="Register"
