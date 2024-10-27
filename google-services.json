@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "818268491134",
+    "project_id": "meowcare-22fd8",
+    "storage_bucket": "meowcare-22fd8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:818268491134:android:f5b38e867e5d3e893eb72f",
+        "android_client_info": {
+          "package_name": "com.meowcare.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7wKUnxFflvf2Ubv4B9ghqStuU6MhQviU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

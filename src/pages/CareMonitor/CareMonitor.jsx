@@ -156,12 +156,19 @@ export default function CareMonitor({ navigation }) {
                       </Text>
                     </TouchableOpacity>
                   )}
-                  {(item.status === "Hoàn thành" ||
-                    item.status === "Đang diễn ra") && (
-                    <TouchableOpacity style={styles.detailButton}>
+                  {item.status === "Hoàn thành" ||
+                  item.status === "Đang diễn ra" ? (
+                    <TouchableOpacity
+                      style={styles.detailButton}
+                      onPress={() =>
+                        navigation.navigate("CareServiceDetails", {
+                          status: item.status,
+                        })
+                      }
+                    >
                       <Text style={styles.detailButtonText}>Xem chi tiết</Text>
                     </TouchableOpacity>
-                  )}
+                  ) : null}
                 </View>
               )}
             </Animated.View>
