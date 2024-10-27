@@ -41,6 +41,7 @@ import RegisterSuccess from "./src/pages/Job/RegisterCatSitter/RegisterSuccess";
 import LocationCatSitter from "./src/pages/Job/ProfileCatSitter/LocationCatSitter";
 import CareMonitor from "./src/pages/CareMonitor/CareMonitor";
 import AdditionalServices from "./src/pages/Services/AdditionalServices";
+import CareServiceDetails from "./src/pages/Services/CareServiceDetails";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -302,6 +303,27 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={AdditionalServices}
         />
+        <Stack.Screen
+          name="CareServiceDetails"
+          component={CareServiceDetails}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+
         <Stack.Screen
           name="Register"
           options={{ headerLeft: null, headerShown: false }}
