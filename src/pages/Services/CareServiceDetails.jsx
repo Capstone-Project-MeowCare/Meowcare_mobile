@@ -54,44 +54,82 @@ export default function CareServiceDetails({ navigation, route }) {
       </View>
       <Text style={styles.dateTitle}>Ngày: 27/09/2024</Text>
       <View style={styles.customView} />
-      <Text style={styles.noteTitle}>Ghi chú từ người chăm sóc:</Text>
-      <TextInput
-        style={[
-          styles.noteInput,
-          { color: noteText ? "rgba(0, 8, 8, 0.87)" : "rgba(0, 0, 0, 0.4)" }, // Kiểm tra nếu người dùng nhập text
-        ]}
-        value={noteText}
-        onChangeText={setNoteText}
-        placeholder="Nhập ghi chú của bạn"
-        placeholderTextColor="rgba(0, 0, 0, 0.4)"
-        multiline
-      />
-      <View style={styles.separator1} />
-      <Text style={styles.noteTitle}>Hình ảnh và video:</Text>
-      <FlatList
-        data={imageData}
-        renderItem={renderImage}
-        keyExtractor={(item) => item.id}
-        numColumns={3}
-        columnWrapperStyle={styles.row}
-      />
-      <View style={styles.ratingContainer}>
-        <Text style={styles.ratingText}>
-          Hãy đánh giá dịch vụ chăm sóc theo khung giờ này
-        </Text>
-        <StarRating
-          rating={rating}
-          onChange={setRating}
-          starSize={40}
-          style={styles.starRating}
-        />
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.buttonText}>Gửi</Text>
-        </TouchableOpacity>
-      </View>
+
+      {status === "Hoàn thành" ? (
+        <>
+          <Text style={styles.noteTitle}>Ghi chú từ người chăm sóc:</Text>
+          <TextInput
+            style={[
+              styles.noteInput,
+              {
+                color: noteText ? "rgba(0, 8, 8, 0.87)" : "rgba(0, 0, 0, 0.4)",
+              },
+            ]}
+            value={noteText}
+            onChangeText={setNoteText}
+            placeholder="Nhập ghi chú của bạn"
+            placeholderTextColor="rgba(0, 0, 0, 0.4)"
+            multiline
+          />
+          <View style={styles.separator1} />
+          <Text style={styles.noteTitle}>Hình ảnh và video:</Text>
+          <FlatList
+            data={imageData}
+            renderItem={renderImage}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            columnWrapperStyle={styles.row}
+          />
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingText}>
+              Hãy đánh giá dịch vụ chăm sóc theo khung giờ này
+            </Text>
+            <StarRating
+              rating={rating}
+              onChange={setRating}
+              starSize={40}
+              style={styles.starRating}
+            />
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.buttonText}>Gửi</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={styles.noteTitle}>Ghi chú từ người chăm sóc:</Text>
+          <TextInput
+            style={[
+              styles.noteInput,
+              {
+                color: noteText ? "rgba(0, 8, 8, 0.87)" : "rgba(0, 0, 0, 0.4)",
+              },
+            ]}
+            value={noteText}
+            onChangeText={setNoteText}
+            placeholder="Nhập ghi chú của bạn"
+            placeholderTextColor="rgba(0, 0, 0, 0.4)"
+            multiline
+          />
+          <View style={styles.separator1} />
+          <Text style={styles.noteTitle}>Hình ảnh và video:</Text>
+          <View style={styles.imageContainer}>
+            <Image
+              source={require("../../../assets/image77.png")}
+              style={styles.notFoundImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.noImageText}>Chưa có ảnh và video</Text>
+          </View>
+          <View style={styles.separatorThin} />
+          <TouchableOpacity style={styles.requestButton}>
+            <Text style={styles.buttonText}>Yêu cầu thông tin</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -239,6 +277,46 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  imageContainer: {
+    alignItems: "center",
+    marginVertical: height * 0.02,
+    top: height * 0.1,
+  },
+  notFoundImage: {
+    width: width * 0.3,
+    height: width * 0.3,
+  },
+  noImageText: {
+    marginTop: height * 0.01,
+    color: "rgba(0, 0, 0, 0.6)",
+    textAlign: "center",
+    fontSize: width * 0.04,
+  },
+  separatorThin: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "rgba(0,0,0,0.25)",
+    top: height * 0.9,
+  },
+  requestButton: {
+    width: width * 0.8,
+    height: height * 0.05,
+    backgroundColor: "#2E67D1",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    position: "absolute",
+    bottom: height * 0.02,
+    alignSelf: "center",
+  },
+
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: width * 0.04,
     fontWeight: "600",
   },
 });
