@@ -315,9 +315,9 @@ const styles = StyleSheet.create({
     color: "#902C6C",
   },
   disabledButton: {
-    backgroundColor: "rgba(0, 0, 0, 0.2)", // Màu nền khi không hợp lệ
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
   },
   disabledNextText: {
-    color: "rgba(0, 8, 87, 0.5)", // Màu chữ khi không hợp lệ
+    color: "rgba(0, 8, 87, 0.5)",
   },
 });

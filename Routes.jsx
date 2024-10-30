@@ -14,7 +14,6 @@ import Service from "./src/pages/Services/Service";
 import Activity from "./src/pages/Services/Activity";
 import CatSitterServicePage from "./src/pages/CatSitter/CatSitterServicePage";
 import Register from "./src/pages/Register/Register";
-import BookingPreparation from "./src/pages/Booking/BookingStep1";
 import BookingStep1 from "./src/pages/Booking/BookingStep1";
 import BookingStep2 from "./src/pages/Booking/BookingStep2";
 import SwipeStep from "./src/pages/Booking/BookingSwipeSteps";
@@ -42,6 +41,8 @@ import LocationCatSitter from "./src/pages/Job/ProfileCatSitter/LocationCatSitte
 import CareMonitor from "./src/pages/CareMonitor/CareMonitor";
 import AdditionalServices from "./src/pages/Services/AdditionalServices";
 import CareServiceDetails from "./src/pages/Services/CareServiceDetails";
+import Pets from "./src/pages/Pets/Pets";
+import CreatePet from "./src/pages/Pets/CreatePet";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -323,7 +324,16 @@ export function Routes() {
             }),
           }}
         />
-
+        <Stack.Screen
+          name="MyPets"
+          options={{ headerLeft: null, headerShown: false }}
+          component={Pets}
+        />
+        <Stack.Screen
+          name="CreatePet"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CreatePet}
+        />
         <Stack.Screen
           name="Register"
           options={{ headerLeft: null, headerShown: false }}
