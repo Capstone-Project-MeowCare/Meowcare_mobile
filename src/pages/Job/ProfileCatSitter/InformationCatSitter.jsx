@@ -8,12 +8,14 @@ import {
   StyleSheet,
   FlatList,
   Alert,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
 export default function InformationCatSitter({navigation}) {
   const [tab, setTab] = useState('edit'); // State to handle tab selection
   const [introduction, setIntroduction] = useState("");
+  
   const [images, setImages] = useState([
     { id: "1", uri: "../../../assets/BecomeCatsitter.png" }, // Thay "image1_url" bằng link ảnh thật
   ]);
@@ -31,6 +33,69 @@ export default function InformationCatSitter({navigation}) {
     Alert.alert("Thông báo", "Thông tin của bạn đã được lưu thành công!");
   };
 
+  const [activities, setActivities] = useState([
+    { id: "1", start: "6:00", end: "9:00", description: "Mô tả hoạt động" },
+  ]);
+
+  const addActivity = () => {
+    const newActivity = {
+      id: (activities.length + 1).toString(),
+      start: "",
+      end: "",
+      description: "",
+    };
+    setActivities([...activities, newActivity]);
+  };
+  
+
+  const updateActivity = (index, field, value) => {
+    const updatedActivities = [...activities];
+    updatedActivities[index][field] = value;
+    setActivities(updatedActivities);
+  };
+
+  const removeActivity = (index) => {
+    const updatedActivities = activities.filter((_, i) => i !== index);
+    setActivities(updatedActivities);
+  };
+
+  const saveActivities = () => {
+    Alert.alert("Lưu thành công", "Thông tin các hoạt động đã được lưu!");
+  };
+
+  const renderActivity = ({ item, index }) => (
+    <View style={styles.activityContainer}>
+      <View style={styles.row}>
+        <TextInput
+          style={styles.input}
+          placeholder="Bắt đầu"
+          value={item.start}
+          onChangeText={(text) => updateActivity(index, "start", text)}
+        />
+        <Text style={styles.separator}>-</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Kết thúc"
+          value={item.end}
+          onChangeText={(text) => updateActivity(index, "end", text)}
+        />
+      </View>
+      
+      <TextInput
+        style={styles.input}
+        placeholder="Mô tả hoạt động"
+        value={item.description}
+        onChangeText={(text) => updateActivity(index, "description", text)}
+      />
+      <View style={styles.actionButtons}>
+        <TouchableOpacity onPress={() => removeActivity(index)} style={styles.actionButton}>
+          <Ionicons name="trash-outline" size={20} color="#FF4D4D" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -43,7 +108,7 @@ export default function InformationCatSitter({navigation}) {
 
           <Text style={styles.headerTitle}>Hồ sơ hẹn hò</Text>
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+        <TouchableOpacity  onPress={handleSave}>
           <Text style={styles.saveText}>Lưu</Text>
         </TouchableOpacity>
       </View>
@@ -68,8 +133,12 @@ export default function InformationCatSitter({navigation}) {
       <View style={styles.divider} />
 
       {/* Main Content */}
+       {/* ------------------------------------------ Setup profile---------------------------------------------------- */}
       {tab === 'edit' ? (
-        <View style={styles.editProfileContainer}>
+        
+        <ScrollView style={styles.editProfileContainer}>
+        {/* Vuốt lên xuống */}
+    
       {/* Section for Photos */}
       <Text style={styles.sectionTitle}>Ảnh và gợi ý</Text>
       <Text style={styles.sectionSubtitle}>
@@ -100,13 +169,32 @@ export default function InformationCatSitter({navigation}) {
         placeholder="Bạn hãy mô tả kinh nghiệm chăm sóc của bản thân nhé..."
       />
       <Text style={styles.characterCount}>{introduction.length} / 500</Text>
-    </View>
+
+      <Text style={styles.sectionTitle}>Thời gian chăm sóc:</Text>
+      <FlatList
+        data={activities}
+        renderItem={renderActivity}
+        keyExtractor={(item) => item.id}
+      />
+      <TouchableOpacity style={styles.addButton} onPress={addActivity}>
+        <Text style={styles.addButtonText}>+ Thêm hoạt động</Text>
+      </TouchableOpacity>
+     
+      <Text style={styles.sectionTitle}>Kỹ năng</Text>
+
+      <Text style={styles.sectionTitle}>Thông tin nơi ở</Text>
+
+      <Text style={styles.sectionTitle}>Thông tin nơi ở</Text>
+   
+    </ScrollView>
 
       ) : (
-        <View style={styles.previewProfileContainer}>
+        
+        <ScrollView style={styles.previewProfileContainer}>
+          {/* ------------------------------------------ Setup profile---------------------------------------------------- */}
           <Text>Xem lại hồ sơ của bạn</Text>
           {/* Code cho phần xem lại hồ sơ */}
-        </View>
+        </ScrollView>
       )}
     </View>
   );
@@ -135,7 +223,7 @@ const styles = StyleSheet.create({
   },
   saveText: {
     fontSize: 16,
-    color: "#000857",
+    color: "#902C6C",
   },
   tabContainer: {
     flexDirection: "row",
@@ -166,9 +254,6 @@ const styles = StyleSheet.create({
   editProfileContainer: {
     padding: 16,
     // Add more styling and components for editing profile
-  },
-  editProfileContainer: {
-    padding: 16,
   },
   sectionTitle: {
     fontSize: 16,
@@ -225,6 +310,64 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#8E8E8E",
     marginTop: 4,
+  },
+ activityContainer: {
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  separator: {
+    marginHorizontal: 8,
+    color: "#999999",
+  },
+  input: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: "#DDDDDD",
+    paddingVertical: 4,
+    fontSize: 14,
+    color: "#333333",
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 8,
+  },
+  actionButton: {
+    marginLeft: 8,
+  },
+  addButton: {
+    backgroundColor: "#007BFF",
+    padding: 12,
+    alignItems: "center",
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  saveButton: {
+    backgroundColor: "#28A745",
+    padding: 12,
+    alignItems: "center",
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 
   previewProfileContainer: {
