@@ -313,7 +313,6 @@ const styles = StyleSheet.create({
     bottom: height * 0.02,
     alignSelf: "center",
   },
-
   buttonText: {
     color: "#FFFFFF",
     fontSize: width * 0.04,

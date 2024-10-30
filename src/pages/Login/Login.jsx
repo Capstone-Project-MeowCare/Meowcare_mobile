@@ -133,30 +133,23 @@ export default function Login() {
     Keyboard.dismiss();
 
     try {
-      const responseData = await postData("/auth/generateToken", {
+      const responseData = await postData("/auth/token", {
         email: data.email,
         password: data.password,
       });
 
-      console.log("Token response:", responseData); // In ra phản hồi từ API
-
-      // Đảm bảo rằng token là một chuỗi JSON hợp lệ
-      if (typeof responseData !== "string") {
-        throw new Error("Token không phải là chuỗi hợp lệ");
+      // Kiểm tra cấu trúc mới
+      if (responseData.status !== 1000 || !responseData.data.token) {
+        throw new Error("Phản hồi API không hợp lệ");
       }
 
-      const token = responseData;
+      const token = responseData.data.token;
       await AsyncStorage.setItem("accessToken", token);
 
-      const userInfo = await getData(
-        "/auth",
-        {},
-        { Authorization: `Bearer ${token}` }
-      );
+      // Lấy thông tin người dùng
+      const userInfo = responseData.data.user;
 
-      console.log("User info response:", userInfo); // Kiểm tra phản hồi từ API
-
-      if (typeof userInfo !== "object" || !userInfo.email) {
+      if (!userInfo || !userInfo.email) {
         throw new Error("Phản hồi người dùng không hợp lệ");
       }
 

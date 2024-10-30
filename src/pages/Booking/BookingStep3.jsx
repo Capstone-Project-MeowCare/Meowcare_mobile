@@ -238,6 +238,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(216, 216, 216, 0.6)",
     borderRadius: 10,
   },
+  newContainerWrapper: {
+    marginTop: height * 0.04,
+    width: width * 0.9,
+  },
   catFooter: {
     width: "100%",
     height: height * 0.07,
@@ -279,10 +283,7 @@ const styles = StyleSheet.create({
     height: 31,
     resizeMode: "contain",
   },
-  newContainerWrapper: {
-    marginTop: height * 0.04,
-    width: width * 0.9,
-  },
+
   addCatText: {
     fontSize: 16,
     fontWeight: "bold",
