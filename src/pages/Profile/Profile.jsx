@@ -48,13 +48,16 @@ export default function Profile() {
           size={width * 0.12}
           source={require("../../../assets/avatar.png")}
           style={styles.avatarImage}
-          theme={{ colors: { primary: "transparent" } }} // Loại bỏ viền màu tím
+          theme={{ colors: { primary: "transparent" } }}
         />
         <Text style={styles.userName}>{userData.name || "Tên"}</Text>
       </View>
 
       <View style={styles.squareContainerWrapper}>
-        <TouchableOpacity style={styles.squareContainer}>
+        <TouchableOpacity
+          style={styles.squareContainer}
+          onPress={() => navigation.navigate("MyPets")}
+        >
           <Image
             source={require("../../../assets/CatFootprint.png")}
             style={styles.squareImage}
