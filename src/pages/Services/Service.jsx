@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Dimensions ,
   TextInput,
 } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -17,6 +18,7 @@ export default function Service() {
   const Stack = createStackNavigator();
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
+  const { width, height } = Dimensions.get("window");
   const tabs = [
     "Tất cả",
     "Chờ xác nhận",
@@ -58,6 +60,7 @@ export default function Service() {
   // Component for Cat Sitter View
   const CatSitterView = () => (
     <View style={styles.catSitterContainer}>
+    
       <View style={styles.imageContainer}>
         <Image
           source={require("../../../assets/BecomeCatsitter.png")}
@@ -154,6 +157,7 @@ export default function Service() {
       </ScrollView>
 
       {/* Request */}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.emptyStateContainer}>
         <Image
           source={{
@@ -168,6 +172,7 @@ export default function Service() {
           Hoạt động sẽ xuất hiện khi bạn sử dụng các dịch vụ của chúng tôi
         </Text>
       </View>
+      </ScrollView>
     </View>
   );
 
@@ -194,12 +199,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   userContainer: {
+
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#FFF7F0",
+    
   },
   catSitterContainer: {
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#FFF7F0",
   },
   functionBox: {
     flexDirection: "row",
@@ -258,7 +267,7 @@ const styles = StyleSheet.create({
     height: 20,
   },
   scrollView: {
-    maxHeight: 50, // Explicit height limit for the horizontal ScrollView
+    maxHeight: 200, // Explicit height limit for the horizontal ScrollView
   },
   scrollContainer: {
     paddingHorizontal: 8,
@@ -345,6 +354,8 @@ const styles = StyleSheet.create({
   emptyStateContainer: {
     justifyContent: "center",
     alignItems: "center",
+    maxHeight:2000,
+    minHeight:350,
   },
   picture: {
     marginTop: 40,
