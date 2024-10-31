@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.02,
   },
   locationGrid: {
-    flexDirection: "column",
+    flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
   },
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.02,
-    marginRight: width * 0.04,
+    width: "100%",
   },
   locationImage: {
     width: width * 0.08,

@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Dimensions ,
+  Dimensions,
   TextInput,
 } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { useNavigation } from "@react-navigation/native";
-import { useAuth } from "../../../auth/useAuth"; // Import useAuth hook
+import { useAuth } from "../../../auth/useAuth";
 
 export default function Service() {
   const { roles } = useAuth();
@@ -28,9 +28,9 @@ export default function Service() {
     "Đã hủy",
   ];
   const hasSitterRole =
-    Array.isArray(roles) && roles.some((role) => role.name === "ROLE_SITTER");
+    Array.isArray(roles) && roles.some((role) => role.roleName === "SITTER");
   const hasUserRole =
-    Array.isArray(roles) && roles.some((role) => role.name === "ROLE_USER");
+    Array.isArray(roles) && roles.some((role) => role.roleName === "USER");
   // Component for User View
   const UserView = () => (
     <View style={styles.userContainer}>
@@ -60,7 +60,6 @@ export default function Service() {
   // Component for Cat Sitter View
   const CatSitterView = () => (
     <View style={styles.catSitterContainer}>
-    
       <View style={styles.imageContainer}>
         <Image
           source={require("../../../assets/BecomeCatsitter.png")}
@@ -158,20 +157,20 @@ export default function Service() {
 
       {/* Request */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.emptyStateContainer}>
-        <Image
-          source={{
-            uri: "https://cdn-icons-png.flaticon.com/512/54/54220.png",
-          }}
-          style={styles.picture}
-        />
-        <Text style={styles.emptyStateTitle}>
-          Hiện vẫn chưa có hoạt động nào
-        </Text>
-        <Text style={styles.emptyStateSubtitle}>
-          Hoạt động sẽ xuất hiện khi bạn sử dụng các dịch vụ của chúng tôi
-        </Text>
-      </View>
+        <View style={styles.emptyStateContainer}>
+          <Image
+            source={{
+              uri: "https://cdn-icons-png.flaticon.com/512/54/54220.png",
+            }}
+            style={styles.picture}
+          />
+          <Text style={styles.emptyStateTitle}>
+            Hiện vẫn chưa có hoạt động nào
+          </Text>
+          <Text style={styles.emptyStateSubtitle}>
+            Hoạt động sẽ xuất hiện khi bạn sử dụng các dịch vụ của chúng tôi
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -199,11 +198,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   userContainer: {
-
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFF7F0",
-    
   },
   catSitterContainer: {
     justifyContent: "center",
@@ -354,8 +351,8 @@ const styles = StyleSheet.create({
   emptyStateContainer: {
     justifyContent: "center",
     alignItems: "center",
-    maxHeight:2000,
-    minHeight:350,
+    maxHeight: 2000,
+    minHeight: 350,
   },
   picture: {
     marginTop: 40,
