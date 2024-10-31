@@ -15,19 +15,6 @@ export default function Profile() {
   const navigation = useNavigation();
   const { logout, user } = useAuth();
 
-  useEffect(() => {
-    if (user && user.id) {
-      getData(`/user/${user?.id}`)
-        .then((response) => {
-          console.log("API Response:", response.data);
-          setUserData(response.data);
-        })
-        .catch((error) => {
-          console.error("Error fetching user data:", error);
-        });
-    }
-  }, [user]);
-
   const handleLogout = () => {
     logout()
       .then(() => {
@@ -50,7 +37,7 @@ export default function Profile() {
           style={styles.avatarImage}
           theme={{ colors: { primary: "transparent" } }}
         />
-        <Text style={styles.userName}>{userData.name || "Tên"}</Text>
+        <Text style={styles.userName}>{user?.fullName || "Tên"}</Text>
       </View>
 
       <View style={styles.squareContainerWrapper}>
