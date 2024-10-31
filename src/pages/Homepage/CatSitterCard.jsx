@@ -23,7 +23,9 @@ const CatSitterCard = ({
   const [isLiked, setIsLiked] = useState(false);
 
   const handleLikePress = () => {
+    disableParentPress(); // Vô hiệu hóa tạm thời sự kiện nhấn của cha
     setIsLiked(!isLiked);
+    setTimeout(enableParentPress, 300);
   };
 
   return (
