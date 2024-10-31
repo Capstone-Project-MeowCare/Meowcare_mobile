@@ -30,13 +30,13 @@ export default function Register() {
 
   // Validation schema using yup
   const registerSchema = yup.object().shape({
-    name: yup.string().trim().required("Họ và tên là bắt buộc"),
+    fullName: yup.string().trim().required("Họ và tên là bắt buộc"),
     email: yup
       .string()
       .trim()
       .required("Email là bắt buộc")
       .email("Email không hợp lệ"),
-    phone: yup
+    phoneNumber: yup
       .string()
       .trim()
       .matches(/^[0-9]+$/, "Số điện thoại không hợp lệ")
@@ -49,10 +49,10 @@ export default function Register() {
   const methods = useForm({
     resolver: yupResolver(registerSchema),
     defaultValues: {
-      name: "",
+      fullName: "",
       email: "",
       password: "",
-      phone: "",
+      phoneNumber: "",
     },
   });
 
@@ -68,11 +68,11 @@ export default function Register() {
     setLoading(true);
     Keyboard.dismiss();
 
-    postData("/auth/registerNewUser", {
+    postData("/users", {
       email: data.email,
       password: data.password,
-      name: data.name,
-      phone: data.phone,
+      fullName: data.fullName,
+      phoneNumber: data.phoneNumber,
     })
       .then((responseData) => {
         CustomToast({ text: "Tạo tài khoản thành công" });
@@ -117,12 +117,12 @@ export default function Register() {
               label="Họ và tên"
               mode="outlined"
               style={styles.textInput}
-              onChangeText={(text) => methods.setValue("name", text)}
+              onChangeText={(text) => methods.setValue("fullName", text)}
               left={<TextInput.Icon icon="account" />}
-              error={!!errors.name}
-              value={methods.watch("name")}
+              error={!!errors.fullName}
+              value={methods.watch("fullName")}
             />
-            {errors.name && (
+            {errors.fullName && (
               <Text style={styles.errorText}>* {errors.name.message}</Text>
             )}
 
@@ -164,13 +164,13 @@ export default function Register() {
                   label="Số điện thoại"
                   mode="outlined"
                   style={styles.halfTextInput}
-                  onChangeText={(text) => methods.setValue("phone", text)}
+                  onChangeText={(text) => methods.setValue("phoneNumber", text)}
                   keyboardType="phone-pad"
                   left={<TextInput.Icon icon="phone" />}
-                  error={!!errors.phone}
-                  value={methods.watch("phone")}
+                  error={!!errors.phoneNumber}
+                  value={methods.watch("phoneNumber")}
                 />
-                {errors.phone && (
+                {errors.phoneNumber && (
                   <Text style={styles.errorText}>* {errors.phone.message}</Text>
                 )}
               </View>
