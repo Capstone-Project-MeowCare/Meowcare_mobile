@@ -58,7 +58,6 @@ export default function Login() {
     formState: { errors },
   } = methods;
 
-  // Điều hướng khi đã có access token
   useFocusEffect(
     useCallback(() => {
       if (accessToken && role?.name === "ROLE_USER") {
