@@ -140,7 +140,6 @@ export default function CatSitterServicePage({ navigation }) {
         ))}
       </View>
 
-      {/* Tab Navigator */}
       <View style={{ height: height * 0.6 }}>
         <Tab.Navigator
           screenOptions={({ route }) => ({

@@ -59,34 +59,27 @@ function FirstRoute({ navigation }) {
   const enableParentPress = () => {
     setParentPressEnabled(true);
   };
+
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#FFFAF5",
-      }}
-    >
-      <View style={styles.catSitterGridContainer}>
-        {catSitterData.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.catSitterItemContainer}
-            onPress={() => navigation.navigate("SitterServicePage")}
-          >
-            <CatSitterCard
-              sitterName={item.sitterName}
-              address={item.address}
-              imageSource={item.imageSource}
-              overlayText={item.overlayText}
-              isVerified={item.isVerified}
-              disableParentPress={disableParentPress}
-              enableParentPress={enableParentPress}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
+    <View style={styles.catSitterGridContainer}>
+      {catSitterData.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.catSitterItemContainer}
+          onPress={() =>
+            parentPressEnabled && navigation.navigate("SitterServicePage")
+          }
+        >
+          <CatSitterCard
+            sitterName={item.sitterName}
+            address={item.address}
+            imageSource={item.imageSource}
+            isVerified={item.isVerified}
+            disableParentPress={disableParentPress}
+            enableParentPress={enableParentPress}
+          />
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }
@@ -232,7 +225,6 @@ export default function Home({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

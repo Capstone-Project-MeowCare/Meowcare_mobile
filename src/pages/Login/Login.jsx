@@ -58,7 +58,6 @@ export default function Login() {
     formState: { errors },
   } = methods;
 
-  // Điều hướng khi đã có access token
   useFocusEffect(
     useCallback(() => {
       if (accessToken && role?.name === "ROLE_USER") {
@@ -138,7 +137,6 @@ export default function Login() {
         password: data.password,
       });
 
-      // Kiểm tra cấu trúc mới
       if (responseData.status !== 1000 || !responseData.data.token) {
         throw new Error("Phản hồi API không hợp lệ");
       }
@@ -154,8 +152,10 @@ export default function Login() {
       }
 
       const userData = {
+        id: userInfo.id,
         email: userInfo.email,
         roles: userInfo.roles,
+        fullName: userInfo.fullName,
       };
 
       login(userData);

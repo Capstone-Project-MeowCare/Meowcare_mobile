@@ -193,7 +193,11 @@ export default function FindSitterByMap() {
             </View>
           </View>
           {catSitters.map((item) => (
-            <View key={item.id} style={styles.infoContainer}>
+            <TouchableOpacity
+              key={item.id}
+              style={styles.infoContainer}
+              onPress={() => navigation.navigate("SitterServicePage")}
+            >
               <Image source={item.imageSource} style={styles.sitterImage} />
               <View style={styles.textContainer}>
                 <View style={styles.headerRow}>
@@ -204,11 +208,9 @@ export default function FindSitterByMap() {
                   <Text style={styles.description}>{item.description}</Text>
                   <Text style={styles.price}>{item.price}</Text>
                 </View>
-
                 <View style={styles.addressRow}>
                   <Text style={styles.address}>{item.address}</Text>
                 </View>
-
                 <View style={styles.ratingContainer}>
                   <StarRating
                     disabled={true}
@@ -241,7 +243,7 @@ export default function FindSitterByMap() {
                   />
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
