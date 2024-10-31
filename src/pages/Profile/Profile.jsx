@@ -15,19 +15,6 @@ export default function Profile() {
   const navigation = useNavigation();
   const { logout, user } = useAuth();
 
-  // useEffect(() => {
-  //   if (user && user.id) {
-  //     getData(`/user/${user?.id}`)
-  //       .then((response) => {
-  //         console.log("API Response:", response.data);
-  //         setUserData(response.data);
-  //       })
-  //       .catch((error) => {
-  //         console.error("Error fetching user data:", error);
-  //       });
-  //   }
-  // }, [user]);
-
   const handleLogout = () => {
     logout()
       .then(() => {
