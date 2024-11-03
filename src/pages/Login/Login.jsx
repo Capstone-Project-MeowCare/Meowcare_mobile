@@ -60,9 +60,9 @@ export default function Login() {
 
   useFocusEffect(
     useCallback(() => {
-      if (accessToken && role?.name === "ROLE_USER") {
+      if (accessToken && role?.name === "USER") {
         navigation.navigate("Homes", { screen: "Home" });
-      } else if (accessToken && role?.name === "ROLE_SITTER") {
+      } else if (accessToken && role?.name === "SITTER") {
         navigation.navigate("Homes", { screen: "Home" });
       } else {
         setLoginState(false);

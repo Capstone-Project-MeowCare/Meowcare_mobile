@@ -22,6 +22,10 @@ export default function ServicePaymentOrderDetail() {
     step3Info = {},
     contactInfo = {},
   } = route.params || {};
+  console.log("Step 1 Info:", step1Info);
+  console.log("Step 2 Info:", step2Info);
+  console.log("Step 3 Info:", step3Info);
+  console.log("Contact Info:", contactInfo);
   const selectedCatNames = (step3Info.selectedCats || [])
     .map((cat) => cat.name) // Truy cập thuộc tính 'name' của object mèo
     .join(", ");
@@ -72,7 +76,6 @@ export default function ServicePaymentOrderDetail() {
         </Text>
       </View>
 
-      {/* Container chứa nút với căn giữa */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.backButton}

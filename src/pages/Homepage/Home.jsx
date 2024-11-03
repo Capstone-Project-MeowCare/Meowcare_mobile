@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -14,7 +14,8 @@ import BecomeCatSitterCard from "./BecomeCatSitterCard";
 import HomeFooter from "./HomeFooter";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { useNavigation } from "@react-navigation/native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
@@ -49,38 +50,59 @@ const catSitterData = [
   },
 ];
 
-function FirstRoute({ navigation }) {
+function FirstRoute() {
+  const navigation = useNavigation();
   const [parentPressEnabled, setParentPressEnabled] = useState(true);
+  const [sitterData, setSitterData] = useState([]);
 
-  const disableParentPress = () => {
-    setParentPressEnabled(false);
-  };
+  useEffect(() => {
+    const fetchSitterData = async () => {
+      try {
+        const response = await getData("/sitter-profiles");
+        const formattedData = response.data.map((item) => ({
+          id: item.id,
+          fullName: item.fullName,
+          location: item.location,
+        }));
+        setSitterData(formattedData);
+      } catch (error) {
+        console.error("Error fetching sitter profiles:", error);
+      }
+    };
 
-  const enableParentPress = () => {
-    setParentPressEnabled(true);
-  };
+    fetchSitterData();
+  }, []);
+
+  const disableParentPress = () => setParentPressEnabled(false);
+  const enableParentPress = () => setParentPressEnabled(true);
 
   return (
-    <View style={styles.catSitterGridContainer}>
-      {catSitterData.map((item) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.catSitterItemContainer}
-          onPress={() =>
-            parentPressEnabled && navigation.navigate("SitterServicePage")
-          }
-        >
-          <CatSitterCard
-            sitterName={item.sitterName}
-            address={item.address}
-            imageSource={item.imageSource}
-            isVerified={item.isVerified}
-            disableParentPress={disableParentPress}
-            enableParentPress={enableParentPress}
-          />
-        </TouchableOpacity>
-      ))}
-    </View>
+    <ScrollView
+      style={styles.fullScreenContainer}
+      contentContainerStyle={styles.contentContainer}
+    >
+      <View style={styles.catSitterGridContainer}>
+        {sitterData.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.catSitterItemContainer}
+            onPress={() =>
+              parentPressEnabled &&
+              navigation.navigate("SitterServicePage", { id: item.id })
+            }
+          >
+            <CatSitterCard
+              sitterName={item.fullName}
+              address={item.location}
+              imageSource={require("../../../assets/catpeople.jpg")}
+              isVerified={true}
+              disableParentPress={disableParentPress}
+              enableParentPress={enableParentPress}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -94,14 +116,11 @@ function SecondRoute() {
   const enableParentPress = () => {
     setParentPressEnabled(true);
   };
+
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#FFFAF5",
-      }}
+    <ScrollView
+      style={styles.fullScreenContainer}
+      contentContainerStyle={styles.contentContainer}
     >
       <View style={styles.catSitterGridContainer}>
         {catSitterData.map((item) => (
@@ -118,7 +137,7 @@ function SecondRoute() {
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -329,16 +348,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: height * 0.01,
   },
+  fullScreenContainer: {
+    flex: 1,
+    backgroundColor: "#FFFAF5",
+  },
   catSitterGridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    paddingHorizontal: -height * 0.001,
-    marginVertical: height * 0.01,
   },
   catSitterItemContainer: {
     width: "48%",
     marginBottom: height * 0.01,
+    flexShrink: 0,
   },
   flatListContentContainer: {
     paddingBottom: height * 0.044,
