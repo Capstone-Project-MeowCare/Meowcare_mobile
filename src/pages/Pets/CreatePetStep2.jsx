@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import {
   Text,
   View,
@@ -14,6 +14,15 @@ import CatBreedData from "../../../src/data/CatBreed.json";
 const { width, height } = Dimensions.get("window");
 
 export default function CreatePetStep2({ onGoBack }) {
+  const [selectedBreed, setSelectedBreed] = useState("");
+  const flatListRef = useRef(null);
+
+  const handleBreedSelect = (breed) => {
+    setSelectedBreed(breed);
+    // Cuộn về đầu danh sách
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.fixedHeader}>
@@ -30,13 +39,17 @@ export default function CreatePetStep2({ onGoBack }) {
       </View>
 
       <FlatList
+        ref={flatListRef}
         data={CatBreedData}
         showsVerticalScrollIndicator={false}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View style={styles.breedContainer}>
+          <TouchableOpacity
+            style={styles.breedContainer}
+            onPress={() => handleBreedSelect(item.breed)}
+          >
             <Text style={styles.breedText}>{item.breed}</Text>
-          </View>
+          </TouchableOpacity>
         )}
         ListHeaderComponent={
           <View style={styles.contentContainer}>
@@ -44,6 +57,8 @@ export default function CreatePetStep2({ onGoBack }) {
             <TextInput
               style={styles.textInput}
               placeholder="Nhập tên giống mèo"
+              value={selectedBreed}
+              onChangeText={setSelectedBreed}
             />
           </View>
         }
@@ -136,7 +151,7 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     height: height * 0.05,
     justifyContent: "center",
-    alignItems: "center",
+    paddingLeft: 15,
     backgroundColor: "#FFFFFF",
     marginVertical: height * 0.002,
     borderRadius: 5,
@@ -144,5 +159,6 @@ const styles = StyleSheet.create({
   breedText: {
     fontSize: 16,
     color: "#333",
+    textAlign: "left",
   },
 });

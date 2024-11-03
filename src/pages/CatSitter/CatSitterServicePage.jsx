@@ -1,5 +1,5 @@
-import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, Dimensions, Image } from "react-native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,6 +8,8 @@ import { createMaterialTopTabNavigator } from "@react-navigation/material-top-ta
 import CatSitterInformation from "./CatSitterInformation";
 import CatSitterReviews from "./CatSitterReviews";
 import CatSitterAssistance from "./CatSitterAssistance";
+import { getData } from "../../api/api";
+import { ActivityIndicator } from "react-native-paper";
 
 const { width, height } = Dimensions.get("window");
 
@@ -22,7 +24,7 @@ const catSitters = [
   },
 ];
 
-function FirstRoute() {
+function FirstRoute({ experience, skill, environment, location }) {
   return (
     <View style={styles.routeContainer}>
       <ScrollView
@@ -30,7 +32,12 @@ function FirstRoute() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.tabContent}>
-          <CatSitterInformation />
+          <CatSitterInformation
+            experience={experience}
+            skill={skill}
+            environment={environment}
+            location={location}
+          />
         </View>
       </ScrollView>
     </View>
@@ -71,6 +78,10 @@ const Tab = createMaterialTopTabNavigator();
 
 export default function CatSitterServicePage({ navigation }) {
   const [isLiked, setIsLiked] = useState(false);
+  const route = useRoute();
+  const [sitterDetails, setSitterDetails] = useState(null);
+  const id = route.params?.id;
+  const [loading, setLoading] = useState(true);
   const images = [
     require("../../../assets/bannerlogo2.png"),
     require("../../../assets/catpeople.jpg"),
@@ -83,6 +94,20 @@ export default function CatSitterServicePage({ navigation }) {
     setIsLiked(!isLiked);
   };
 
+  useEffect(() => {
+    const fetchSitterDetails = async () => {
+      try {
+        const response = await getData(`/sitter-profiles/${id}`);
+        setSitterDetails(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching sitter details:", error);
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchSitterDetails();
+  }, [id]);
   return (
     <ScrollView
       contentContainerStyle={styles.mainScrollContainer}
@@ -128,16 +153,25 @@ export default function CatSitterServicePage({ navigation }) {
       </View>
 
       <View style={styles.infoContainer}>
-        {catSitters.map((item) => (
-          <View key={item.id} style={styles.infoContent}>
-            <Image source={item.imageSource} style={styles.sitterImage} />
+        {sitterDetails ? (
+          <View style={styles.infoContent}>
+            <Image
+              source={
+                sitterDetails.user?.avatar
+                  ? { uri: sitterDetails.user.avatar }
+                  : require("../../../assets/catpeople.jpg")
+              }
+              style={styles.sitterImage}
+            />
             <View style={styles.textContainer}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.description}>{item.description}</Text>
-              <Text style={styles.address}>{item.address}</Text>
+              <Text style={styles.name}>{sitterDetails.user?.fullName}</Text>
+              <Text style={styles.description}>{sitterDetails.bio}</Text>
+              <Text style={styles.address}>{sitterDetails.location}</Text>
             </View>
           </View>
-        ))}
+        ) : (
+          <ActivityIndicator size="large" color="#000857" />
+        )}
       </View>
 
       <View style={{ height: height * 0.6 }}>
@@ -158,7 +192,18 @@ export default function CatSitterServicePage({ navigation }) {
             tabBarStyle: { backgroundColor: "#FFFAF5" },
           })}
         >
-          <Tab.Screen name="Thông tin" component={FirstRoute} />
+          <Tab.Screen
+            name="Thông tin"
+            children={() => (
+              <FirstRoute
+                experience={sitterDetails?.experience}
+                skill={sitterDetails?.skill?.split(",").map((s) => s.trim())}
+                environment={sitterDetails?.environment}
+                location={sitterDetails?.location}
+              />
+            )}
+          />
+
           <Tab.Screen name="Đánh giá" component={SecondRoute} />
           <Tab.Screen name="Dịch vụ" component={ThirdRoute} />
         </Tab.Navigator>

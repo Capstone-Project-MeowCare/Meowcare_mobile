@@ -46,19 +46,25 @@ const locationData = [
     image: require("../../../assets/area.png"),
   },
 ];
-export default function CatSitterInformation({}) {
+export default function CatSitterInformation({
+  experience,
+  skill,
+  environment,
+  location,
+}) {
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>Kinh nghiệm chăm sóc mèo:</Text>
-        <Text style={styles.description}>
+        {/* <Text style={styles.description}>
           Tôi là Tấn, một người rất yêu thích mèo và đã gắn bó với chúng từ khi
           còn nhỏ. Tôi bắt đầu chăm sóc bé mèo đầu tiên của mình từ khi 10 tuổi,
           và từ đó, tình yêu dành cho loài vật đáng yêu này ngày càng lớn dần.
           Với kinh nghiệm và sự tận tâm, tôi luôn mong muốn mang lại sự thoải
           mái và an toàn nhất cho mỗi bé mèo mà tôi chăm sóc....{" "}
           <Text style={styles.readMore}>Đọc thêm</Text>
-        </Text>
+        </Text> */}
+        <Text style={styles.description}>{experience}</Text>
       </View>
 
       <View style={styles.scheduleContainer}>
@@ -76,9 +82,9 @@ export default function CatSitterInformation({}) {
       <View style={styles.skillContainer}>
         <Text style={styles.skillText}>Kỹ năng:</Text>
         <View style={styles.skillsGrid}>
-          {skills.map((skill, index) => (
+          {skill?.map((skillItem, index) => (
             <View key={index} style={styles.skillSquareContainer}>
-              <Text style={styles.skillTextInside}>{skill}</Text>
+              <Text style={styles.skillTextInside}>{skillItem}</Text>
             </View>
           ))}
         </View>
@@ -98,11 +104,7 @@ export default function CatSitterInformation({}) {
         <Text style={styles.trustSafetyTitle}>
           An toàn, tin cậy & môi trường
         </Text>
-        <Text style={styles.safetyDescription}>
-          Hiện tại tôi có một căn hộ nhỏ. Tuy nhiên, tôi có thể chăm sóc chúng
-          tại căn hộ của tôi khi không có lựa chọn nào khác. Tôi có thể đến căn
-          hộ của bạn trong thời gian còn lại.
-        </Text>
+        <Text style={styles.safetyDescription}>{environment}</Text>
         <Text style={styles.safetyDescription}>
           Tôi có gắn camera theo dõi quá trình chăm sóc nếu bạn muốn xem quá
           trình
@@ -117,9 +119,7 @@ export default function CatSitterInformation({}) {
       </View>
       <View style={styles.addressContainer}>
         <Text style={styles.addressTitle}>Vị trí</Text>
-        <Text style={styles.addressText}>
-          Địa chỉ: Linh Xuân, Tp.Thủ Đức, Tp.HCM
-        </Text>
+        <Text style={styles.addressText}>{location}</Text>
         <MapView
           style={styles.map}
           initialRegion={{
