@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef  } from "react";
 import {
   View,
   Text,
@@ -37,30 +37,74 @@ export default function InformationCatSitter({navigation}) {
     { id: "1", start: "6:00", end: "9:00", description: "Mô tả hoạt động" },
   ]);
 
+  const endInputRefs = useRef([]);
+
+  const convertTo24HourFormat = (time) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours + minutes / 60;
+  };
+
+  const formatTime = (timeInHours) => {
+    const hours = Math.floor(timeInHours);
+    const minutes = Math.floor((timeInHours % 1) * 60);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  };
+
+
   const addActivity = () => {
+    const lastActivity = activities[activities.length - 1];
+    const lastEndTime = convertTo24HourFormat(lastActivity.end);
+    const maxEndTime = 21; // 9:00 PM in 24-hour format
+
+    // Check if we've reached the max end time
+    if (lastEndTime >= maxEndTime) {
+      Alert.alert("Không thể thêm hoạt động", "Thời gian hoạt động đã đến giới hạn 21:00.");
+      endInputRefs.current[index].focus(); 
+      return;
+    }
+  
+
+    const newStartTime = lastEndTime;
+    const newEndTime = Math.min(newStartTime + 1, maxEndTime); // Adjust to 1-hour duration
+
     const newActivity = {
       id: (activities.length + 1).toString(),
-      start: "",
-      end: "",
+      start: formatTime(newStartTime),
+      end: formatTime(newEndTime),
       description: "",
     };
     setActivities([...activities, newActivity]);
   };
-  
 
-  const updateActivity = (index, field, value) => {
+  const updateActivity = (index, field, value, shouldValidate = true) => {
     const updatedActivities = [...activities];
-    updatedActivities[index][field] = value;
+  
+    if (field === "end" && shouldValidate) {
+      const start = convertTo24HourFormat(updatedActivities[index].start);
+      const end = convertTo24HourFormat(value);
+      const duration = end - start;
+  
+      if (duration < 1) {
+        // Automatically correct to 1 hour if below minimum
+        Alert.alert("Lỗi", "Thời gian cho mỗi hoạt động phải tối thiểu là 1 giờ. Tự động sửa thành 1 giờ.");
+        updatedActivities[index].end = formatTime(start + 1); // Set end time to 1 hour after start
+      } else if (duration > 3) {
+        // Automatically correct to 3 hours if above maximum
+        Alert.alert("Lỗi", "Thời gian cho mỗi hoạt động không được vượt quá 3 giờ. Tự động sửa thành 3 giờ.");
+        updatedActivities[index].end = formatTime(start + 3); // Set end time to 3 hours after start
+      } else {
+        // If valid, set the end time as entered
+        updatedActivities[index][field] = value;
+      }
+    } else {
+      updatedActivities[index][field] = value;
+    }
+
     setActivities(updatedActivities);
   };
-
   const removeActivity = (index) => {
     const updatedActivities = activities.filter((_, i) => i !== index);
     setActivities(updatedActivities);
-  };
-
-  const saveActivities = () => {
-    Alert.alert("Lưu thành công", "Thông tin các hoạt động đã được lưu!");
   };
 
   const renderActivity = ({ item, index }) => (
@@ -70,16 +114,18 @@ export default function InformationCatSitter({navigation}) {
           style={styles.input}
           placeholder="Bắt đầu"
           value={item.start}
-          onChangeText={(text) => updateActivity(index, "start", text)}
+          editable={false}
         />
         <Text style={styles.separator}>-</Text>
         <TextInput
+         ref={(ref) => (endInputRefs.current[index] = ref)}
           style={styles.input}
           placeholder="Kết thúc"
           value={item.end}
-          onChangeText={(text) => updateActivity(index, "end", text)}
-        />
-      </View>
+          onChangeText={(text) => updateActivity(index, "end", text, false)} // Pass `false` to skip validation during typing
+        onEndEditing={() => updateActivity(index, "end", item.end, true)} // Pass `true` to validate on end editing
+      />
+    </View>
       
       <TextInput
         style={styles.input}
@@ -137,63 +183,68 @@ export default function InformationCatSitter({navigation}) {
       {tab === 'edit' ? (
         
         <ScrollView style={styles.editProfileContainer}>
-        {/* Vuốt lên xuống */}
-    
-      {/* Section for Photos */}
-      <Text style={styles.sectionTitle}>Ảnh và gợi ý</Text>
-      <Text style={styles.sectionSubtitle}>
-        Kéo rồi thả ảnh và gợi ý theo thứ tự mà bạn muốn xuất hiện.
-      </Text>
-      <FlatList
-        data={images}
-        renderItem={renderImage}
-        keyExtractor={(item) => item.id}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.imageList}
-      />
-      <TouchableOpacity style={styles.addButton}>
-        <Text style={styles.addButtonText}>Thêm ảnh hoặc gợi ý</Text>
-      </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Ảnh và gợi ý</Text>
+          <Text style={styles.sectionSubtitle}>
+            Kéo rồi thả ảnh và gợi ý theo thứ tự mà bạn muốn xuất hiện.
+          </Text>
+          <View style={styles.imageListContainer}>
+            <FlatList
+              data={images}
+              renderItem={renderImage}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              scrollEnabled={false} // Disable FlatList scrolling
+            />
+          </View>
+          <TouchableOpacity style={styles.addButton}>
+            <Text style={styles.addButtonText}>Thêm ảnh hoặc gợi ý</Text>
+          </TouchableOpacity>
 
-      {/* Section for Introduction */}
-      <Text style={styles.sectionTitle}>Kinh nghiệm chăm sóc mèo:</Text>
-     
-      <TextInput
-        style={styles.textInput}
-        multiline
-        numberOfLines={4}
-        maxLength={500}
-        value={introduction}
-        onChangeText={(text) => setIntroduction(text)}
-        placeholder="Bạn hãy mô tả kinh nghiệm chăm sóc của bản thân nhé..."
-      />
-      <Text style={styles.characterCount}>{introduction.length} / 500</Text>
+          <Text style={styles.sectionTitle}>Kinh nghiệm chăm sóc mèo:</Text>
+          <TextInput
+            style={styles.textInput}
+            multiline
+            numberOfLines={4}
+            maxLength={500}
+            value={introduction}
+            onChangeText={(text) => setIntroduction(text)}
+            placeholder="Bạn hãy mô tả kinh nghiệm chăm sóc của bản thân nhé..."
+          />
+          <Text style={styles.characterCount}>{introduction.length} / 500</Text>
 
-      <Text style={styles.sectionTitle}>Thời gian chăm sóc:</Text>
-      <FlatList
-        data={activities}
-        renderItem={renderActivity}
-        keyExtractor={(item) => item.id}
-      />
-      <TouchableOpacity style={styles.addButton} onPress={addActivity}>
-        <Text style={styles.addButtonText}>+ Thêm hoạt động</Text>
-      </TouchableOpacity>
-     
-      <Text style={styles.sectionTitle}>Kỹ năng</Text>
+          <Text style={styles.sectionTitle}>Thời gian chăm sóc:</Text>
+          <View>
+            <FlatList
+              data={activities}
+              renderItem={renderActivity}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false} // Disable FlatList scrolling
+            />
+             <TouchableOpacity style={styles.addButtonActivity} onPress={addActivity}>
+            <Text style={styles.addButtonText}>+ Thêm hoạt động</Text>
+            </TouchableOpacity>
+          </View>
+         
 
-      <Text style={styles.sectionTitle}>Thông tin nơi ở</Text>
-
-      <Text style={styles.sectionTitle}>Thông tin nơi ở</Text>
-   
-    </ScrollView>
-
+          <View style= {styles.end}>
+          <Text style={styles.sectionTitle}>An toàn, tin cậy & môi trường</Text>
+          <TextInput
+            style={styles.textInput}
+            multiline
+            numberOfLines={4}
+            maxLength={500}
+            value={introduction}
+            onChangeText={(text) => setIntroduction(text)}
+            placeholder="Bạn hãy mô tả một ít về khu vực bạn đang sinh sống..."
+          />
+          <Text style={styles.characterCount}>{introduction.length} / 500</Text>
+          </View>
+        </ScrollView>
       ) : (
-        
         <ScrollView style={styles.previewProfileContainer}>
-          {/* ------------------------------------------ Setup profile---------------------------------------------------- */}
           <Text>Xem lại hồ sơ của bạn</Text>
-          {/* Code cho phần xem lại hồ sơ */}
+          {/* Add preview content here */}
         </ScrollView>
       )}
     </View>
@@ -353,6 +404,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 8,
   },
+  addButtonActivity: {
+    backgroundColor: "#4CAF50", // Green color similar to the first image
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    borderRadius: 20, // Rounded corners
+    marginVertical: 16,
+    alignSelf: "center", // Center the button
+    flexDirection: "row",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    marginTop:-40,
+  },
   addButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
@@ -368,6 +435,9 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  end:{
+  marginBottom:50,
   },
 
   previewProfileContainer: {
