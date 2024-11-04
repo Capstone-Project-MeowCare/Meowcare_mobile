@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Text,
   View,
@@ -6,11 +6,16 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  FlatList,
 } from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
+const weightData = ["1-5kg", "5-10kg", "10-20kg", "20-40kg", "40+kg"];
+
 export default function CreatePetStep3({ onGoBack }) {
+  const [selectedWeight, setSelectedWeight] = useState(null);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -23,6 +28,32 @@ export default function CreatePetStep3({ onGoBack }) {
         <Text style={styles.label}>Mèo của tôi</Text>
       </View>
       <View style={styles.separator} />
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Mèo của bạn có cân nặng bao nhiêu?</Text>
+
+        <FlatList
+          data={weightData}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.weightOption}
+              onPress={() => setSelectedWeight(item)}
+            >
+              <Text
+                style={[
+                  styles.weightText,
+                  selectedWeight === item && styles.selectedText,
+                ]}
+              >
+                {item}
+              </Text>
+            </TouchableOpacity>
+          )}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          contentContainerStyle={styles.listContainer}
+        />
+      </View>
     </View>
   );
 }
@@ -67,5 +98,51 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#000000",
     marginTop: height * 0.06,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: width * 0.05,
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    marginTop: height * 0.05,
+  },
+  title: {
+    fontSize: 18,
+    color: "#000857",
+    fontWeight: "bold",
+    marginBottom: height * 0.015,
+    textAlign: "left",
+  },
+  listContainer: {
+    alignItems: "center",
+    marginTop: height * 0.02,
+  },
+  columnWrapper: {
+    justifyContent: "space-between",
+    marginBottom: height * 0.015,
+  },
+  weightOption: {
+    width: width * 0.38,
+    height: height * 0.07,
+    backgroundColor: "#FFFAF5",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    marginHorizontal: width * 0.01,
+    marginTop: height * 0.004,
+  },
+  weightText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  selectedText: {
+    color: "rgba(0, 8, 87, 0.6)",
   },
 });

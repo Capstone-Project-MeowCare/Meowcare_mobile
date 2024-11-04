@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Text,
   View,
@@ -6,11 +6,23 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  Modal,
 } from "react-native";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import moment from "moment";
+import { Calendar } from "react-native-calendars";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CreatePetStep5({ onGoBack }) {
+  const [petBirthDate, setPetBirthDate] = useState("");
+  const [isCalendarVisible, setCalendarVisible] = useState(false);
+
+  const onDayPress = (day) => {
+    setPetBirthDate(day.dateString);
+    setCalendarVisible(false);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -23,6 +35,58 @@ export default function CreatePetStep5({ onGoBack }) {
         <Text style={styles.label}>Mèo của tôi</Text>
       </View>
       <View style={styles.separator} />
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Mèo của bạn sinh khi nào? (Tùy chọn)</Text>
+        <TouchableOpacity
+          style={styles.dateContainer}
+          onPress={() => setCalendarVisible(true)}
+        >
+          <Ionicons
+            name="calendar-number-outline"
+            size={24}
+            color="#000857"
+            style={styles.icon}
+          />
+          <Text style={styles.containerText}>
+            {petBirthDate
+              ? ` ${moment(petBirthDate).format("DD/MM/YYYY")}`
+              : "Nhấn để chọn ngày sinh"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <Modal
+        visible={isCalendarVisible}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={onDayPress}
+              markedDates={
+                petBirthDate
+                  ? {
+                      [petBirthDate]: {
+                        selected: true,
+                        selectedColor: "#902C6C",
+                      },
+                    }
+                  : {}
+              }
+              theme={{
+                selectedDayBackgroundColor: "#902C6C",
+                todayTextColor: "#902C6C",
+              }}
+            />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setCalendarVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -67,5 +131,62 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#000000",
     marginTop: height * 0.06,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: width * 0.05,
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    marginTop: height * 0.05,
+  },
+  title: {
+    fontSize: 18,
+    color: "#000857",
+    fontWeight: "bold",
+    marginBottom: height * 0.015,
+    textAlign: "left",
+  },
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    padding: height * 0.01,
+    width: width * 0.8,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  containerText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  calendarContainer: {
+    backgroundColor: "#FFFFFF",
+    width: width * 0.9,
+    borderRadius: 8,
+    padding: height * 0.02,
+  },
+  closeButton: {
+    marginTop: height * 0.01,
+    alignItems: "center",
+    paddingVertical: height * 0.01,
+    backgroundColor: "#FFFAF5",
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: "#000857",
   },
 });
