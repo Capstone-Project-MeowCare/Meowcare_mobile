@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -14,12 +14,31 @@ import { Calendar } from "react-native-calendars";
 
 const { width, height } = Dimensions.get("window");
 
-export default function CreatePetStep5({ onGoBack }) {
-  const [petBirthDate, setPetBirthDate] = useState("");
+export default function CreatePetStep5({
+  onGoBack,
+  step5Info,
+  setStep5Info,
+  setIsValid,
+}) {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
 
+  useEffect(() => {
+    setIsValid(!!step5Info.petBirthDate);
+  }, [step5Info.petBirthDate]);
+
+  const calculateAge = (birthDate) => {
+    const birthMoment = moment(birthDate);
+    const currentMoment = moment();
+    return currentMoment.diff(birthMoment, "years"); // Số năm giữa hiện tại và ngày sinh
+  };
+
   const onDayPress = (day) => {
-    setPetBirthDate(day.dateString);
+    const age = calculateAge(day.dateString);
+    setStep5Info((prev) => ({
+      ...prev,
+      petBirthDate: day.dateString,
+      age: age, // Lưu tuổi vào step5Info
+    }));
     setCalendarVisible(false);
   };
 
@@ -48,8 +67,8 @@ export default function CreatePetStep5({ onGoBack }) {
             style={styles.icon}
           />
           <Text style={styles.containerText}>
-            {petBirthDate
-              ? ` ${moment(petBirthDate).format("DD/MM/YYYY")}`
+            {step5Info.petBirthDate
+              ? ` ${moment(step5Info.petBirthDate).format("DD/MM/YYYY")}`
               : "Nhấn để chọn ngày sinh"}
           </Text>
         </TouchableOpacity>
@@ -64,9 +83,9 @@ export default function CreatePetStep5({ onGoBack }) {
             <Calendar
               onDayPress={onDayPress}
               markedDates={
-                petBirthDate
+                step5Info.petBirthDate
                   ? {
-                      [petBirthDate]: {
+                      [step5Info.petBirthDate]: {
                         selected: true,
                         selectedColor: "#902C6C",
                       },

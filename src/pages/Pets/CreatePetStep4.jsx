@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   Text,
   View,
@@ -6,13 +6,26 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  FlatList,
 } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
 
 const { width, height } = Dimensions.get("window");
 const genderData = ["Đực", "Cái", "Khác"];
-export default function CreatePetStep4({ onGoBack }) {
-  const [selectedWeight, setSelectedWeight] = useState(null);
+
+export default function CreatePetStep4({
+  onGoBack,
+  step4Info,
+  setStep4Info,
+  setIsValid,
+}) {
+  // Cập nhật `isValid` mỗi khi `gender` trong `step4Info` thay đổi
+  useEffect(() => {
+    setIsValid(!!step4Info.gender);
+  }, [step4Info.gender]);
+
+  const handleGenderSelect = (gender) => {
+    setStep4Info((prev) => ({ ...prev, gender }));
+  };
 
   return (
     <View style={styles.container}>
@@ -35,12 +48,12 @@ export default function CreatePetStep4({ onGoBack }) {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.weightOption}
-              onPress={() => setSelectedWeight(item)}
+              onPress={() => handleGenderSelect(item)}
             >
               <Text
                 style={[
                   styles.weightText,
-                  selectedWeight === item && styles.selectedText,
+                  step4Info.gender === item && styles.selectedText,
                 ]}
               >
                 {item}

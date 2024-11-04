@@ -1,5 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -9,12 +8,23 @@ import {
   Image,
   TextInput,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
-export default function CreatePetStep1({}) {
+export default function CreatePetStep1({
+  setIsValid,
+  step1Info,
+  setStep1Info,
+}) {
   const navigation = useNavigation();
-  const [petName, setPetName] = useState("");
+  const [petName, setPetName] = useState(step1Info.petName || "");
+
+  useEffect(() => {
+    // Kiểm tra giá trị petName và cập nhật isValid
+    setIsValid(petName.trim().length > 0);
+    setStep1Info({ ...step1Info, petName });
+  }, [petName]);
 
   return (
     <View style={styles.container}>

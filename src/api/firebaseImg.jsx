@@ -37,26 +37,25 @@ export const firebaseImg = async (image) => {
     return null; // or throw the error for further handling
   }
 };
-export const firebaseImgForPet = async (image) => {
+export const firebaseImgForPet = async (imageUri) => {
   try {
-    if (!image || !image.assets[0]?.uri) {
-      return null; // Handle case where image or URI is missing
+    if (!imageUri) {
+      console.error("Image URI is missing");
+      return null;
     }
 
-    const pathParts = image.assets[0].uri.split("/");
-    const fileName = pathParts[pathParts.length - 1];
-
+    // Tạo tên file dựa trên thời gian hiện tại và một số ngẫu nhiên
+    const fileName = `pet_${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`;
     const imageRef = ref(storage, `petImages/${fileName}`);
 
-    // Fetch and upload in parallel
-    const [blob] = await Promise.all([
-      fetch(image.assets[0].uri).then((res) => res.blob()),
-    ]);
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+
     await uploadBytes(imageRef, blob);
     const imageUrl = await getDownloadURL(imageRef);
     return imageUrl;
   } catch (error) {
     console.error("Error uploading image:", error);
-    return null; // or throw the error for further handling
+    return null;
   }
 };

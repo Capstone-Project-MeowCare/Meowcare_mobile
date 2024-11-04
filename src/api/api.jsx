@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || "http://52.62.80.49/api/",
+  // baseURL: process.env.REACT_APP_API_BASE_URL || "http://52.62.80.49/api/",
+  baseURL: process.env.REACT_APP_API_BASE_URL || "https://meowcare.click/api/",
 });
 
 api.interceptors.request.use(
