@@ -37,3 +37,26 @@ export const firebaseImg = async (image) => {
     return null; // or throw the error for further handling
   }
 };
+export const firebaseImgForPet = async (image) => {
+  try {
+    if (!image || !image.assets[0]?.uri) {
+      return null; // Handle case where image or URI is missing
+    }
+
+    const pathParts = image.assets[0].uri.split("/");
+    const fileName = pathParts[pathParts.length - 1];
+
+    const imageRef = ref(storage, `petImages/${fileName}`);
+
+    // Fetch and upload in parallel
+    const [blob] = await Promise.all([
+      fetch(image.assets[0].uri).then((res) => res.blob()),
+    ]);
+    await uploadBytes(imageRef, blob);
+    const imageUrl = await getDownloadURL(imageRef);
+    return imageUrl;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    return null; // or throw the error for further handling
+  }
+};

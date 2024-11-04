@@ -77,7 +77,7 @@ export default function CreatePet({ navigation }) {
         ) : (
           <TouchableOpacity
             style={styles.nextButton}
-            onPress={() => navigation.navigate("ServicePayment")}
+            onPress={() => navigation.navigate("MyPets")}
           >
             <Text style={styles.nextText}>Hoàn thành</Text>
           </TouchableOpacity>
