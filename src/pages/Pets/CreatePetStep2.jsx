@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Text,
   View,
@@ -13,9 +13,20 @@ import CatBreedData from "../../../src/data/CatBreed.json";
 
 const { width, height } = Dimensions.get("window");
 
-export default function CreatePetStep2({ onGoBack }) {
-  const [selectedBreed, setSelectedBreed] = useState("");
+export default function CreatePetStep2({
+  onGoBack,
+  step2Info,
+  setStep2Info,
+  setIsValid,
+}) {
+  const [selectedBreed, setSelectedBreed] = useState(step2Info.breed || "");
   const flatListRef = useRef(null);
+
+  useEffect(() => {
+    // Cập nhật breed vào step2Info mỗi khi selectedBreed thay đổi
+    setStep2Info({ ...step2Info, breed: selectedBreed });
+    setIsValid(!!selectedBreed);
+  }, [selectedBreed]);
 
   const handleBreedSelect = (breed) => {
     setSelectedBreed(breed);

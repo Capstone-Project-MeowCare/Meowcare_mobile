@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   Text,
   View,
@@ -6,15 +6,26 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
-  FlatList,
+  TextInput,
 } from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
-const weightData = ["1-5kg", "5-10kg", "10-20kg", "20-40kg", "40+kg"];
+export default function CreatePetStep3({
+  onGoBack,
+  step3Info,
+  setStep3Info,
+  setIsValid,
+}) {
+  // Cập nhật trạng thái của isValid mỗi khi weight thay đổi
+  useEffect(() => {
+    setIsValid(!!step3Info.weight);
+  }, [step3Info.weight]);
 
-export default function CreatePetStep3({ onGoBack }) {
-  const [selectedWeight, setSelectedWeight] = useState(null);
+  const handleWeightChange = (text) => {
+    const numericValue = text.replace(/[^0-9]/g, "");
+    setStep3Info((prev) => ({ ...prev, weight: numericValue }));
+  };
 
   return (
     <View style={styles.container}>
@@ -30,29 +41,16 @@ export default function CreatePetStep3({ onGoBack }) {
       <View style={styles.separator} />
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Mèo của bạn có cân nặng bao nhiêu?</Text>
-
-        <FlatList
-          data={weightData}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.weightOption}
-              onPress={() => setSelectedWeight(item)}
-            >
-              <Text
-                style={[
-                  styles.weightText,
-                  selectedWeight === item && styles.selectedText,
-                ]}
-              >
-                {item}
-              </Text>
-            </TouchableOpacity>
-          )}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
-          contentContainerStyle={styles.listContainer}
-        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.textInput}
+            value={step3Info.weight}
+            onChangeText={handleWeightChange}
+            placeholder="Nhập cân nặng mèo của bạn"
+            keyboardType="numeric"
+          />
+          <Text style={styles.unitText}>kg</Text>
+        </View>
       </View>
     </View>
   );
@@ -113,36 +111,27 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.015,
     textAlign: "left",
   },
-  listContainer: {
+  inputContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: height * 0.02,
-  },
-  columnWrapper: {
-    justifyContent: "space-between",
-    marginBottom: height * 0.015,
-  },
-  weightOption: {
-    width: width * 0.38,
-    height: height * 0.07,
-    backgroundColor: "#FFFAF5",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
-    elevation: 4,
+    paddingHorizontal: 10,
+    width: width * 0.8,
+    height: height * 0.05,
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    marginHorizontal: width * 0.01,
-    marginTop: height * 0.004,
   },
-  weightText: {
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  unitText: {
     fontSize: 16,
     color: "#333",
-    textAlign: "center",
     fontWeight: "bold",
-  },
-  selectedText: {
-    color: "rgba(0, 8, 87, 0.6)",
   },
 });

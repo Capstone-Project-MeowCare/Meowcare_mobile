@@ -1,18 +1,16 @@
 [
-    { "id": 1, "condition": "Đã triệt sản" },
-    { "id": 2, "condition": "Đã tiêm phòng" },
-    { "id": 3, "condition": "Thuần chủng" },
-    { "id": 4, "condition": "Thân thiện với chó" },
-    { "id": 5, "condition": "Thân thiện với mèo" },
-    { "id": 6, "condition": "Thân thiện với trẻ em" },
-    { "id": 7, "condition": "Đã gắn vi mạch" },
-    { "id": 8, "condition": "Có lo âu khi ở một mình" },
-    { "id": 9, "condition": "Có xu hướng hung dữ" },
-    { "id": 10, "condition": "Có vấn đề về vệ sinh" },
-    { "id": 11, "condition": "Có bệnh truyền nhiễm" },
-    { "id": 12, "condition": "Có hồ sơ tiêm phòng đầy đủ" },
-    { "id": 13, "condition": "Có hồ sơ y tế đầy đủ" },
-    { "id": 14, "condition": "Không có ve" },
-    { "id": 15, "condition": "Cho phép vệ sinh bộ phận riêng tư" }
-  ]
-  
+  { "id": "e7a1a73e-1c4b-4f6d-a9a6-6789a2c9f9a1", "condition": "Đã triệt sản" },
+  { "id": "4f1d6f78-bd6e-4a58-bc6b-3e46e4e1d5b2", "condition": "Đã tiêm phòng" },
+  { "id": "dc9f7a2e-0f5e-4bfc-9d6a-b1a6d5e2a3f7", "condition": "Thuần chủng" },
+  { "id": "b3c9a4f1-d5f7-4a6c-b7e5-f9c8a7d2b5a4", "condition": "Thân thiện với chó" },
+  { "id": "1a9b5c7d-e3f6-4d5a-9c6f-d2a3b7e8f5d4", "condition": "Thân thiện với mèo" },
+  { "id": "5e7d4f6a-a3c9-4b1d-9d2e-f6b7a4c5e1d3", "condition": "Thân thiện với trẻ em" },
+  { "id": "9b7e6a5d-b2f1-4c6d-a3e7-c5d4f9b8a6d7", "condition": "Đã gắn vi mạch" },
+  { "id": "a6f5d3e4-9c7d-4b2e-a1d9-e6f7a5c3d8b2", "condition": "Có lo âu khi ở một mình" },
+  { "id": "d4e5c6b7-a2f3-4b1d-9a6f-f5d8b7a9c2e3", "condition": "Có xu hướng hung dữ" },
+  { "id": "c9b7e5a6-d4f8-4c3d-9b1a-f7e6d2a3f5d8", "condition": "Có vấn đề về vệ sinh" },
+  { "id": "f6a9c5b8-e7d3-4b2e-a1f4-c9d7b6f5a2e3", "condition": "Có bệnh truyền nhiễm" },
+  { "id": "a7b6c5d8-e9f3-4a1d-b2e5-d9c6f7a3e5f2", "condition": "Có hồ sơ tiêm phòng đầy đủ" },
+  { "id": "34ef589f-bfdf-4ffe-9faf-dff5f4fc2eb5", "condition": "Không có ve" },
+  { "id": "45f06aaf-c0e0-50ff-9fb0-eff6f5fd3fc6", "condition": "Cho phép vệ sinh bộ phận riêng tư" }
+]

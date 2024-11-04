@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import {
   Text,
   View,
@@ -11,17 +11,25 @@ import {
 import MedicalConditionData from "../../../src/data/MedicalCondition.json";
 
 const { width, height } = Dimensions.get("window");
-
-export default function CreatePetStep6({ onGoBack }) {
-  const [selectedConditions, setSelectedConditions] = useState([]);
+export default function CreatePetStep6({ onGoBack, step6Info, setStep6Info }) {
   const flatListRef = useRef(null);
 
   const handleConditionSelect = (condition) => {
-    setSelectedConditions((prev) =>
-      prev.includes(condition)
-        ? prev.filter((item) => item !== condition)
-        : [...prev, condition]
-    );
+    let updatedConditions;
+
+    // Kiểm tra xem `medicalConditions` có chứa `condition` với id cụ thể chưa
+    if (step6Info.medicalConditions.some((item) => item.id === condition.id)) {
+      updatedConditions = step6Info.medicalConditions.filter(
+        (item) => item.id !== condition.id
+      );
+    } else {
+      updatedConditions = [
+        ...step6Info.medicalConditions,
+        { id: condition.id, conditionName: condition.condition },
+      ];
+    }
+
+    setStep6Info((prev) => ({ ...prev, medicalConditions: updatedConditions }));
   };
 
   return (
@@ -47,12 +55,15 @@ export default function CreatePetStep6({ onGoBack }) {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.conditionContainer}
-            onPress={() => handleConditionSelect(item.condition)}
+            onPress={() => handleConditionSelect(item)}
           >
             <Text
               style={[
                 styles.conditionText,
-                selectedConditions.includes(item.condition) &&
+                Array.isArray(step6Info.medicalConditions) &&
+                  step6Info.medicalConditions.some(
+                    (condition) => condition.id === item.id
+                  ) &&
                   styles.selectedConditionText,
               ]}
             >

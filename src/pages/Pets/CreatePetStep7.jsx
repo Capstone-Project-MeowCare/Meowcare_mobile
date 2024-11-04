@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Text,
   View,
@@ -6,16 +6,13 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
-  FlatList,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { firebaseImgForPet } from "../../api/firebaseImg";
 
 const { width, height } = Dimensions.get("window");
 
-export default function CreatePetStep7({ onGoBack }) {
-  const [selectedImages, setSelectedImages] = useState([]);
-
+export default function CreatePetStep7({ onGoBack, step7Info, setStep7Info }) {
   const handleImagePick = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -24,35 +21,40 @@ export default function CreatePetStep7({ onGoBack }) {
         quality: 1,
       });
 
-      console.log("ImagePicker result:", result);
-
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newImage = result.assets[0];
-        // console.log("Selected image:", newImage);
 
-        // Bỏ qua upload để kiểm tra quá trình xử lý ảnh
-        // Bạn có thể bật lại nếu thấy ảnh hợp lệ
-        setSelectedImages((prevImages) => [...prevImages, newImage.uri]);
+        // Upload ảnh lên Firebase Storage
+        const imageUrl = await firebaseImgForPet(newImage.uri);
 
-        // Nếu muốn thử lại upload
-        // const imageUrl = await firebaseImgForPet(newImage);
-        // if (imageUrl) {
-        //   setSelectedImages((prevImages) => [...prevImages, imageUrl]);
-        // }
+        if (imageUrl) {
+          setStep7Info((prev) => ({ ...prev, profilePicture: imageUrl })); // Lưu URL Firebase vào state
+        }
       } else {
         console.log("No image selected or assets not available");
       }
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error picking image:", error);
     }
   };
+  // const handleImagePick = async () => {
+  //   try {
+  //     const result = await ImagePicker.launchImageLibraryAsync({
+  //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //       allowsEditing: false,
+  //       quality: 1,
+  //     });
 
-  const renderImageItem = ({ item }) => (
-    <View style={styles.imageContainer}>
-      <Image source={{ uri: item }} style={styles.image} />
-    </View>
-  );
-
+  //     if (!result.canceled && result.assets && result.assets.length > 0) {
+  //       const newImage = result.assets[0];
+  //       setStep7Info((prev) => ({ ...prev, profilePicture: newImage.uri })); // Lưu URI của ảnh vào state profilePicture
+  //     } else {
+  //       console.log("No image selected or assets not available");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error picking image:", error);
+  //   }
+  // };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -73,24 +75,16 @@ export default function CreatePetStep7({ onGoBack }) {
           cưng sắp đón nhận chúng.
         </Text>
 
-        <FlatList
-          data={[...selectedImages, "addButton"]}
-          renderItem={({ item }) =>
-            item === "addButton" ? (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleImagePick}
-              >
-                <Text style={styles.addButtonText}>+</Text>
-              </TouchableOpacity>
-            ) : (
-              renderImageItem({ item })
-            )
-          }
-          keyExtractor={(item, index) => index.toString()}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
-        />
+        <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
+          {step7Info.profilePicture ? (
+            <Image
+              source={{ uri: step7Info.profilePicture }}
+              style={styles.image}
+            />
+          ) : (
+            <Text style={styles.addButtonText}>+</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -168,24 +162,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 1, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
-    margin: width * 0.01,
+    marginTop: height * 0.02,
+    borderRadius: 8,
   },
   addButtonText: {
     fontSize: height * 0.1,
     color: "#902C6C",
-    marginTop: -height * 0.02,
-  },
-  columnWrapper: {
-    justifyContent: "space-between",
-  },
-  imageContainer: {
-    width: width * 0.38,
-    height: height * 0.18,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 8,
-    margin: width * 0.01,
   },
   image: {
     width: "100%",
