@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -8,52 +8,76 @@ import {
   Image,
   FlatList,
 } from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { putData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 const genderData = ["Đực", "Cái", "Khác"];
 
 export default function CreatePetStep4({
   onGoBack,
-  step4Info,
-  setStep4Info,
-  setIsValid,
+  step4Info = { gender: "" },
+  setStep4Info = () => {},
+  setIsValid = () => {},
 }) {
-  // Cập nhật `isValid` mỗi khi `gender` trong `step4Info` thay đổi
-  useEffect(() => {
-    setIsValid(!!step4Info.gender);
-  }, [step4Info.gender]);
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { gender: initialGender, isUpdating, petId } = route.params || {};
+  const [selectedGender, setSelectedGender] = useState(
+    initialGender || step4Info.gender || ""
+  );
 
-  const handleGenderSelect = (gender) => {
-    setStep4Info((prev) => ({ ...prev, gender }));
+  useEffect(() => {
+    if (isUpdating && initialGender) {
+      setSelectedGender(initialGender);
+    }
+  }, [initialGender, isUpdating]);
+
+  useEffect(() => {
+    setIsValid(!!selectedGender);
+    setStep4Info((prevInfo) => ({ ...prevInfo, gender: selectedGender }));
+  }, [selectedGender]);
+
+  const updateGender = async () => {
+    try {
+      await putData(`/pet-profiles/${petId}`, { gender: selectedGender });
+      navigation.navigate("PetProfile", { petId });
+    } catch (error) {
+      console.error("Error updating gender:", error);
+    }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={isUpdating ? () => navigation.goBack() : onGoBack}
+        >
           <Image
             source={require("../../../assets/BackArrow.png")}
             style={styles.backArrow}
           />
         </TouchableOpacity>
-        <Text style={styles.label}>Mèo của tôi</Text>
+        <Text style={styles.label}>
+          {isUpdating ? "Đổi giới tính" : "Mèo của tôi"}
+        </Text>
       </View>
       <View style={styles.separator} />
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Mèo của bạn có giới tính gì?</Text>
-
         <FlatList
           data={genderData}
           keyExtractor={(item) => item}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.weightOption}
-              onPress={() => handleGenderSelect(item)}
+              style={styles.genderOption}
+              onPress={() => setSelectedGender(item)}
             >
               <Text
                 style={[
-                  styles.weightText,
-                  step4Info.gender === item && styles.selectedText,
+                  styles.genderText,
+                  selectedGender === item && styles.selectedText,
                 ]}
               >
                 {item}
@@ -65,6 +89,28 @@ export default function CreatePetStep4({
           contentContainerStyle={styles.listContainer}
         />
       </View>
+
+      {isUpdating && (
+        <View style={styles.fixedFooter}>
+          <TouchableOpacity
+            style={[
+              styles.nextButton,
+              !selectedGender && styles.disabledButton,
+            ]}
+            onPress={updateGender}
+            disabled={!selectedGender}
+          >
+            <Text
+              style={[
+                styles.nextText,
+                !selectedGender && styles.disabledNextText,
+              ]}
+            >
+              Đổi
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -132,7 +178,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: height * 0.015,
   },
-  weightOption: {
+  genderOption: {
     width: width * 0.38,
     height: height * 0.07,
     backgroundColor: "#FFFAF5",
@@ -147,7 +193,7 @@ const styles = StyleSheet.create({
     marginHorizontal: width * 0.01,
     marginTop: height * 0.004,
   },
-  weightText: {
+  genderText: {
     fontSize: 16,
     color: "#333",
     textAlign: "center",
@@ -155,5 +201,32 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     color: "rgba(0, 8, 87, 0.6)",
+  },
+  fixedFooter: {
+    width: width,
+    height: height * 0.067,
+    backgroundColor: "#FFE3D5",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 0,
+  },
+  nextButton: {
+    width: width,
+    height: height * 0.067,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFE3D5",
+  },
+  nextText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#902C6C",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  disabledNextText: {
+    color: "rgba(0, 8, 87, 0.5)",
   },
 });

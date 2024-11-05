@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -8,35 +8,59 @@ import {
   Image,
   TextInput,
 } from "react-native";
+import { putData } from "../../api/api";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CreatePetStep3({
   onGoBack,
-  step3Info,
-  setStep3Info,
-  setIsValid,
+  step3Info = { weight: "" },
+  setStep3Info = () => {},
+  setIsValid = () => {},
 }) {
-  // Cập nhật trạng thái của isValid mỗi khi weight thay đổi
+  const route = useRoute();
+  const navigation = useNavigation();
+  const {
+    weight: initialWeight,
+    isUpdating,
+    petId,
+    label,
+  } = route.params || {};
+  const [weight, setWeight] = useState(initialWeight || step3Info.weight || "");
+
   useEffect(() => {
-    setIsValid(!!step3Info.weight);
-  }, [step3Info.weight]);
+    setIsValid(!!weight);
+    setStep3Info((prev) => ({ ...prev, weight }));
+  }, [weight]);
 
   const handleWeightChange = (text) => {
     const numericValue = text.replace(/[^0-9]/g, "");
-    setStep3Info((prev) => ({ ...prev, weight: numericValue }));
+    setWeight(numericValue);
+  };
+
+  const updateWeight = async () => {
+    try {
+      await putData(`/pet-profiles/${petId}`, { weight });
+      navigation.navigate("PetProfile", { petId });
+    } catch (error) {
+      console.error("Error updating weight:", error);
+    }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={isUpdating ? () => navigation.goBack() : onGoBack}
+        >
           <Image
             source={require("../../../assets/BackArrow.png")}
             style={styles.backArrow}
           />
         </TouchableOpacity>
-        <Text style={styles.label}>Mèo của tôi</Text>
+        <Text style={styles.label}>{label || "Mèo của tôi"}</Text>
       </View>
       <View style={styles.separator} />
       <View style={styles.contentContainer}>
@@ -44,7 +68,7 @@ export default function CreatePetStep3({
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.textInput}
-            value={step3Info.weight}
+            value={weight}
             onChangeText={handleWeightChange}
             placeholder="Nhập cân nặng mèo của bạn"
             keyboardType="numeric"
@@ -52,10 +76,22 @@ export default function CreatePetStep3({
           <Text style={styles.unitText}>kg</Text>
         </View>
       </View>
+      {isUpdating && (
+        <View style={styles.fixedFooter}>
+          <TouchableOpacity
+            style={[styles.nextButton, !weight && styles.disabledButton]}
+            onPress={updateWeight}
+            disabled={!weight}
+          >
+            <Text style={[styles.nextText, !weight && styles.disabledNextText]}>
+              Đổi
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -133,5 +169,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     fontWeight: "bold",
+  },
+  fixedFooter: {
+    width: width + width * 0.1,
+    height: height * 0.067,
+    backgroundColor: "#FFE3D5",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 0,
+    marginHorizontal: -width * 0.05,
+  },
+  nextButton: {
+    width: width + width * 0.1,
+    height: height * 0.067,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFE3D5",
+  },
+  nextText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#902C6C",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  disabledNextText: {
+    color: "rgba(0, 8, 87, 0.5)",
   },
 });

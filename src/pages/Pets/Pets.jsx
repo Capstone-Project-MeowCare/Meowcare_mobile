@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -6,70 +6,104 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  ScrollView,
 } from "react-native";
+import { useAuth } from "../../../auth/useAuth";
+import { getData } from "../../api/api";
+import { useIsFocused } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
-const catData = [
-  { id: 1, name: "Kitty", image: require("../../../assets/image88.png") },
-  { id: 2, name: "Kitt2y", image: require("../../../assets/image88.png") },
-];
-
 export default function Pets({ navigation }) {
+  const { user } = useAuth();
+  const [catData, setCatData] = useState([]);
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused && user && user.id) {
+      fetchPetProfiles();
+    }
+  }, [isFocused, user]);
+
+  const fetchPetProfiles = async () => {
+    try {
+      const response = await getData(`/pet-profiles/user/${user.id}`);
+      if (response?.data && Array.isArray(response.data)) {
+        setCatData(response.data);
+      } else {
+        setCatData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching pet profiles:", error);
+    }
+  };
+
+  const displayCatData = [...catData, { isAddNewButton: true }];
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Image
-            source={require("../../../assets/BackArrow.png")}
-            style={styles.backArrow}
-          />
-        </TouchableOpacity>
-        <Text style={styles.label}>Mèo của tôi</Text>
-      </View>
-      <View style={styles.separator} />
-
-      <View
-        style={[
-          styles.catContainerRow,
-          catData.length < 2 && styles.singleCatRow,
-        ]}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {catData.map((cat) => (
-          <TouchableOpacity key={cat.id} style={styles.catContainer}>
-            <Image source={cat.image} style={styles.catImage} />
-            <View style={styles.catFooter}>
-              <Text style={styles.catName}>{cat.name}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-
-        <View
-          style={[
-            styles.newContainerWrapper,
-            catData.length === 1 && styles.newContainerSingle,
-          ]}
-        >
+        <View style={styles.header}>
           <TouchableOpacity
-            style={styles.catContainer}
-            onPress={() => navigation.navigate("CreatePet")}
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
             <Image
-              source={require("../../../assets/image89.png")}
-              style={styles.catImage}
+              source={require("../../../assets/BackArrow.png")}
+              style={styles.backArrow}
             />
-            <View style={styles.catFooter1}>
-              <Text style={styles.addCatText}>Thêm thú cưng</Text>
-              <Text style={styles.addCatHintText}>
-                Nhấn vào đây để thêm thú cưng
-              </Text>
-            </View>
           </TouchableOpacity>
+          <Text style={styles.label}>Mèo của tôi</Text>
         </View>
-      </View>
+        <View style={styles.separator} />
+
+        <View style={styles.catContainerRow}>
+          {displayCatData.map((cat, index) =>
+            cat.isAddNewButton ? (
+              <TouchableOpacity
+                key="add-new"
+                style={styles.catContainer}
+                onPress={() => navigation.navigate("CreatePet")}
+              >
+                <Image
+                  source={require("../../../assets/image89.png")}
+                  style={styles.catImage}
+                />
+                <View style={styles.catFooter1}>
+                  <Text style={styles.addCatText}>Thêm thú cưng</Text>
+                  <Text style={styles.addCatHintText}>
+                    Nhấn vào đây để thêm thú cưng
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                key={cat.id}
+                style={styles.catContainer}
+                onPress={() =>
+                  navigation.navigate("PetProfile", { petId: cat.id })
+                }
+              >
+                <Image
+                  source={{
+                    uri:
+                      cat.profilePicture ||
+                      "../../../assets/defaultCatImage.png",
+                  }}
+                  style={styles.catImage}
+                />
+                <View style={styles.catFooter}>
+                  <Text style={styles.catName}>{cat.petName}</Text>
+                  <Text style={styles.catBreed}>{cat.breed}</Text>
+                </View>
+              </TouchableOpacity>
+            )
+          )}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -105,26 +139,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#000000",
     flex: 1,
-    bottom: height * 0.01,
   },
   separator: {
-    position: "absolute",
-    left: 0,
-    right: 0,
     height: 1,
     backgroundColor: "#000000",
-    marginTop: height * 0.06,
+    marginVertical: height * 0.02,
+  },
+  scrollContent: {
+    paddingBottom: height * 0.05,
   },
   catContainerRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    width: width * 0.9,
-    marginTop: height * 0.05,
-  },
-  singleCatRow: {
-    justifyContent: "flex-start",
-    alignItems: "center",
     width: width * 0.9,
   },
   catContainer: {
@@ -138,6 +165,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     justifyContent: "flex-end",
+    marginBottom: height * 0.02,
   },
   catImage: {
     width: "100%",
@@ -152,7 +180,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderBottomLeftRadius: height * 0.01,
     borderBottomRightRadius: height * 0.01,
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: height * 0.01,
@@ -173,17 +201,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#000857",
   },
-  newContainerWrapper: {
-    marginTop: height * 0.04,
-    width: width * 0.9,
+  catBreed: {
+    fontSize: 12,
+    color: "#000857",
+    textAlign: "center",
+    marginTop: height * 0.001,
   },
-  newContainerSingle: {
-    marginTop: 0,
-    width: width * 0.4,
-    alignSelf: "flex-end",
-    marginLeft: width * 0.1,
-  },
-
   addCatText: {
     fontSize: 16,
     fontWeight: "bold",
@@ -194,6 +217,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#000857",
     textAlign: "center",
-    marginTop: height * 0.001,
   },
 });

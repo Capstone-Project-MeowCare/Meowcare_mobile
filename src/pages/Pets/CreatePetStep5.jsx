@@ -11,47 +11,87 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import moment from "moment";
 import { Calendar } from "react-native-calendars";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { putData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CreatePetStep5({
   onGoBack,
-  step5Info,
-  setStep5Info,
-  setIsValid,
+  step5Info = { petBirthDate: "", age: "" },
+  setStep5Info = () => {},
+  setIsValid = () => {},
 }) {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const {
+    petBirthDate: initialBirthDate,
+    age: initialAge,
+    isUpdating,
+    petId,
+  } = route.params || {};
+  const [petBirthDate, setPetBirthDate] = useState(
+    initialBirthDate || step5Info.petBirthDate || ""
+  );
+  const [age, setAge] = useState(initialAge || step5Info.age || "");
   const [isCalendarVisible, setCalendarVisible] = useState(false);
 
   useEffect(() => {
-    setIsValid(!!step5Info.petBirthDate);
-  }, [step5Info.petBirthDate]);
+    if (isUpdating && initialBirthDate) {
+      setPetBirthDate(initialBirthDate);
+      setAge(calculateAge(initialBirthDate));
+    }
+  }, [initialBirthDate, isUpdating]);
+
+  useEffect(() => {
+    setIsValid(!!petBirthDate);
+    setStep5Info((prev) => ({
+      ...prev,
+      petBirthDate,
+      age,
+    }));
+  }, [petBirthDate, age]);
 
   const calculateAge = (birthDate) => {
     const birthMoment = moment(birthDate);
     const currentMoment = moment();
-    return currentMoment.diff(birthMoment, "years"); // Số năm giữa hiện tại và ngày sinh
+    return currentMoment.diff(birthMoment, "years");
   };
 
   const onDayPress = (day) => {
-    const age = calculateAge(day.dateString);
-    setStep5Info((prev) => ({
-      ...prev,
-      petBirthDate: day.dateString,
-      age: age, // Lưu tuổi vào step5Info
-    }));
+    const calculatedAge = calculateAge(day.dateString);
+    setPetBirthDate(day.dateString);
+    setAge(calculatedAge);
     setCalendarVisible(false);
+  };
+
+  const updateBirthDate = async () => {
+    try {
+      await putData(`/pet-profiles/${petId}`, {
+        petBirthDate,
+        age,
+      });
+      navigation.navigate("PetProfile", { petId });
+    } catch (error) {
+      console.error("Error updating birth date:", error);
+    }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={isUpdating ? () => navigation.goBack() : onGoBack}
+        >
           <Image
             source={require("../../../assets/BackArrow.png")}
             style={styles.backArrow}
           />
         </TouchableOpacity>
-        <Text style={styles.label}>Mèo của tôi</Text>
+        <Text style={styles.label}>
+          {isUpdating ? "Đổi ngày sinh" : "Mèo của tôi"}
+        </Text>
       </View>
       <View style={styles.separator} />
       <View style={styles.contentContainer}>
@@ -67,8 +107,8 @@ export default function CreatePetStep5({
             style={styles.icon}
           />
           <Text style={styles.containerText}>
-            {step5Info.petBirthDate
-              ? ` ${moment(step5Info.petBirthDate).format("DD/MM/YYYY")}`
+            {petBirthDate
+              ? `${moment(petBirthDate).format("DD/MM/YYYY")}`
               : "Nhấn để chọn ngày sinh"}
           </Text>
         </TouchableOpacity>
@@ -82,10 +122,11 @@ export default function CreatePetStep5({
           <View style={styles.calendarContainer}>
             <Calendar
               onDayPress={onDayPress}
+              maxDate={moment().format("YYYY-MM-DD")}
               markedDates={
-                step5Info.petBirthDate
+                petBirthDate
                   ? {
-                      [step5Info.petBirthDate]: {
+                      [petBirthDate]: {
                         selected: true,
                         selectedColor: "#902C6C",
                       },
@@ -106,6 +147,24 @@ export default function CreatePetStep5({
           </View>
         </View>
       </Modal>
+      {isUpdating && (
+        <View style={styles.fixedFooter}>
+          <TouchableOpacity
+            style={[styles.nextButton, !petBirthDate && styles.disabledButton]}
+            onPress={updateBirthDate}
+            disabled={!petBirthDate}
+          >
+            <Text
+              style={[
+                styles.nextText,
+                !petBirthDate && styles.disabledNextText,
+              ]}
+            >
+              Đổi
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -207,5 +266,33 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 16,
     color: "#000857",
+  },
+  fixedFooter: {
+    width: width + width * 0.1,
+    height: height * 0.067,
+    backgroundColor: "#FFE3D5",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 0,
+    marginHorizontal: -width * 0.05,
+  },
+  nextButton: {
+    width: width + width * 0.1,
+    height: height * 0.067,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFE3D5",
+  },
+  nextText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#902C6C",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  disabledNextText: {
+    color: "rgba(0, 8, 87, 0.5)",
   },
 });

@@ -68,6 +68,8 @@ export default function Register() {
     setLoading(true);
     Keyboard.dismiss();
 
+    console.log("Register data:", data);
+
     postData("/users", {
       email: data.email,
       password: data.password,
@@ -79,7 +81,6 @@ export default function Register() {
 
         setLoading(false);
 
-        // Chờ setToken hoàn thành trước khi điều hướng
         return new Promise((resolve) => {
           setTimeout(() => {
             navigation.navigate("Login");
@@ -88,8 +89,9 @@ export default function Register() {
         });
       })
       .catch((error) => {
-        console.log("Error during registration:", error);
-        console.log("Error response:", error?.response?.data);
+        console.error("Error during registration:", error);
+        console.error("Error response:", error?.response?.data); // Log thêm phản hồi lỗi
+
         CustomToast({
           text: "Đã có lỗi xảy ra. Vui lòng thử lại.",
           position: 190,

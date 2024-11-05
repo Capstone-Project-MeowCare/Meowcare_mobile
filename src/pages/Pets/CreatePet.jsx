@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -15,10 +15,13 @@ import CreatePetStep4 from "./CreatePetStep4";
 import CreatePetStep5 from "./CreatePetStep5";
 import CreatePetStep6 from "./CreatePetStep6";
 import CreatePetStep7 from "./CreatePetStep7";
+import { useRoute } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CreatePet({ navigation }) {
+  const route = useRoute();
+  const { isUpdating, petId } = route.params || {};
   const [currentStep, setCurrentStep] = useState(1);
   const [isValid, setIsValid] = useState(false);
 
@@ -46,9 +49,66 @@ export default function CreatePet({ navigation }) {
   const [step7Info, setStep7Info] = useState({
     profilePicture: "",
   });
+  useEffect(() => {
+    const fetchPetData = async () => {
+      if (isUpdating && petId) {
+        try {
+          const response = await getData(`/pet-profiles/${petId}`);
+          if (response && response.data) {
+            const petData = response.data;
+            setStep1Info({
+              petName: petData.petName,
+            });
+            setStep2Info({ breed: petData.breed });
+            setStep3Info({ weight: String(petData.weight) });
+            setStep4Info({ gender: petData.gender });
+            setStep5Info({ age: String(petData.age) });
+            setStep6Info({
+              description: petData.description,
+              medicalConditions: petData.medicalConditions || [],
+            });
+            setStep7Info({ profilePicture: petData.profilePicture });
+          }
+        } catch (error) {
+          console.error("Error fetching pet details for update:", error);
+        }
+      }
+    };
 
-  // Hàm gọi API tạo pet
-  const createPetProfile = async () => {
+    fetchPetData();
+  }, [isUpdating, petId]);
+
+  // const createPetProfile = async () => {
+  //   const petProfileData = {
+  //     petName: step1Info.petName,
+  //     species: step1Info.species,
+  //     breed: step2Info.breed,
+  //     weight: parseInt(step3Info.weight),
+  //     gender: step4Info.gender,
+  //     age: parseInt(step5Info.age),
+  //     description: step6Info.description,
+  //     medicalConditions: step6Info.medicalConditions.map(
+  //       ({ id, conditionName }) => ({
+  //         id,
+  //         conditionName,
+  //       })
+  //     ),
+  //     profilePicture: step7Info.profilePicture,
+  //   };
+
+  //   try {
+  //     const response = await postData("/pet-profiles", petProfileData);
+  //     if (response) {
+  //       console.log("Pet profile created successfully", response);
+  //       navigation.navigate("MyPets");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error creating pet profile:", error);
+  //     console.log("Response status:", error.response?.status);
+  //     console.log("Response data:", error.response?.data);
+  //   }
+  // };
+  const submitPetProfile = async () => {
     const petProfileData = {
       petName: step1Info.petName,
       species: step1Info.species,
@@ -67,15 +127,20 @@ export default function CreatePet({ navigation }) {
     };
 
     try {
-      const response = await postData("/pet-profiles", petProfileData);
-      if (response) {
-        console.log("Pet profile created successfully", response);
-        navigation.navigate("MyPets"); // Chuyển hướng về MyPets
+      if (isUpdating) {
+        await putData(`/pet-profiles/${petId}`, petProfileData);
+        navigation.navigate("PetProfile", { petId });
+      } else {
+        await postData("/pet-profiles", petProfileData);
+        navigation.navigate("MyPets");
       }
     } catch (error) {
-      console.error("Error creating pet profile:", error);
-      console.log("Response status:", error.response?.status);
-      console.log("Response data:", error.response?.data);
+      console.error(
+        isUpdating
+          ? "Error updating pet profile:"
+          : "Error creating pet profile:",
+        error
+      );
     }
   };
 
@@ -164,54 +229,24 @@ export default function CreatePet({ navigation }) {
     <GestureRecognizer
       onSwipeLeft={onSwipeLeft}
       onSwipeRight={onSwipeRight}
-      config={{
-        velocityThreshold: 0.3,
-        directionalOffsetThreshold: 80,
-      }}
       style={styles.container}
     >
       {renderStep()}
 
       <View style={styles.fixedFooter}>
-        {currentStep < 7 ? (
-          <TouchableOpacity
-            style={[styles.nextButton, !isValid && styles.disabledButton]}
-            onPress={() => {
-              if (isValid) {
-                setCurrentStep(currentStep + 1);
-              }
-            }}
-            disabled={!isValid}
-          >
-            <Text
-              style={[styles.nextText, !isValid && styles.disabledNextText]}
-            >
-              Tiếp tục
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.nextButton,
-              !step7Info.profilePicture && styles.disabledButton,
-            ]}
-            onPress={() => {
-              if (step7Info.profilePicture) {
-                createPetProfile(); // Gọi hàm tạo hồ sơ pet khi nhấn "Hoàn thành"
-              }
-            }}
-            disabled={!step7Info.profilePicture}
-          >
-            <Text
-              style={[
-                styles.nextText,
-                !step7Info.profilePicture && styles.disabledNextText,
-              ]}
-            >
-              Hoàn thành
-            </Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[styles.nextButton, !isValid && styles.disabledButton]}
+          onPress={() =>
+            currentStep === 7
+              ? submitPetProfile()
+              : setCurrentStep(currentStep + 1)
+          }
+          disabled={!isValid}
+        >
+          <Text style={styles.nextText}>
+            {currentStep === 7 ? "Hoàn thành" : "Tiếp tục"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </GestureRecognizer>
   );
