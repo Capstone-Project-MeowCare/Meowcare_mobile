@@ -8,37 +8,57 @@ import {
   Image,
   TextInput,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { putData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CreatePetStep1({
-  setIsValid,
-  step1Info,
-  setStep1Info,
+  setIsValid = () => {},
+  step1Info = { petName: "" },
+  setStep1Info = () => {},
 }) {
   const navigation = useNavigation();
-  const [petName, setPetName] = useState(step1Info.petName || "");
+  const route = useRoute();
+  const { petId, petName: initialPetName, isUpdating } = route.params || {};
+  const [petName, setPetName] = useState(initialPetName || "");
 
   useEffect(() => {
-    // Kiểm tra giá trị petName và cập nhật isValid
     setIsValid(petName.trim().length > 0);
-    setStep1Info({ ...step1Info, petName });
+    setStep1Info((prevInfo) => ({ ...prevInfo, petName }));
   }, [petName]);
+
+  const updatePetName = async () => {
+    try {
+      console.log("Updating pet name with data:", { petName });
+      const response = await putData(`/pet-profiles/${petId}`, { petName });
+      console.log("Update response:", response);
+      navigation.navigate("PetProfile", { petId });
+    } catch (error) {
+      console.error("Error updating pet name:", error);
+      if (error.response) {
+        console.log("Error response data:", error.response.data);
+        console.log("Error response status:", error.response.status);
+        console.log("Error response headers:", error.response.headers);
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate("MyPets")}
+          onPress={() => navigation.goBack()}
         >
           <Image
             source={require("../../../assets/BackArrow.png")}
             style={styles.backArrow}
           />
         </TouchableOpacity>
-        <Text style={styles.label}>Mèo của tôi</Text>
+        <Text style={styles.label}>
+          {isUpdating ? "Đổi tên mèo" : "Mèo của tôi"}
+        </Text>
       </View>
       <View style={styles.separator} />
       <View style={styles.contentContainer}>
@@ -50,6 +70,27 @@ export default function CreatePetStep1({
           placeholder="Nhập tên mèo của bạn"
         />
       </View>
+      {isUpdating && (
+        <View style={styles.fixedFooter}>
+          <TouchableOpacity
+            style={[
+              styles.nextButton,
+              !petName.trim() && styles.disabledButton,
+            ]}
+            onPress={updatePetName}
+            disabled={!petName.trim()}
+          >
+            <Text
+              style={[
+                styles.nextText,
+                !petName.trim() && styles.disabledNextText,
+              ]}
+            >
+              Đổi
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -121,5 +162,33 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+  },
+  fixedFooter: {
+    width: width + width * 0.1, // Tăng chiều rộng để bù cho margin
+    height: height * 0.067,
+    backgroundColor: "#FFE3D5",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 0,
+    marginHorizontal: -width * 0.05,
+  },
+  nextButton: {
+    width: width + width * 0.1,
+    height: height * 0.067,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFE3D5",
+  },
+  nextText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#902C6C",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  disabledNextText: {
+    color: "rgba(0, 8, 87, 0.5)",
   },
 });

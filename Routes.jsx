@@ -43,6 +43,13 @@ import AdditionalServices from "./src/pages/Services/AdditionalServices";
 import CareServiceDetails from "./src/pages/Services/CareServiceDetails";
 import Pets from "./src/pages/Pets/Pets";
 import CreatePet from "./src/pages/Pets/CreatePet";
+import PetProfile from "./src/pages/Profile/PetProfile";
+import CreatePetStep1 from "./src/pages/Pets/CreatePetStep1";
+import CreatePetStep2 from "./src/pages/Pets/CreatePetStep2";
+import CreatePetStep3 from "./src/pages/Pets/CreatePetStep3";
+import CreatePetStep4 from "./src/pages/Pets/CreatePetStep4";
+import CreatePetStep5 from "./src/pages/Pets/CreatePetStep5";
+import CreatePetStep7 from "./src/pages/Pets/CreatePetStep7";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -333,6 +340,146 @@ export function Routes() {
           name="CreatePet"
           options={{ headerLeft: null, headerShown: false }}
           component={CreatePet}
+        />
+        <Stack.Screen
+          name="CreatePetStep1"
+          component={CreatePetStep1}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="CreatePetStep2"
+          component={CreatePetStep2}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="CreatePetStep3"
+          component={CreatePetStep3}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="CreatePetStep4"
+          component={CreatePetStep4}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="CreatePetStep5"
+          component={CreatePetStep5}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="CreatePetStep7"
+          component={CreatePetStep7}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="PetProfile"
+          component={PetProfile}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
         />
         <Stack.Screen
           name="Register"

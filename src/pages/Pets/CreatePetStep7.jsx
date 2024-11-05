@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -9,10 +9,33 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { firebaseImgForPet } from "../../api/firebaseImg";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { putData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
-export default function CreatePetStep7({ onGoBack, step7Info, setStep7Info }) {
+export default function CreatePetStep7({
+  onGoBack,
+  step7Info = { profilePicture: "" },
+  setStep7Info = () => {},
+}) {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const {
+    profilePicture: initialProfilePicture,
+    isUpdating,
+    petId,
+  } = route.params || {};
+  const [profilePicture, setProfilePicture] = useState(
+    initialProfilePicture || step7Info.profilePicture || ""
+  );
+
+  useEffect(() => {
+    if (isUpdating && initialProfilePicture) {
+      setProfilePicture(initialProfilePicture);
+    }
+  }, [initialProfilePicture, isUpdating]);
+
   const handleImagePick = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -23,12 +46,11 @@ export default function CreatePetStep7({ onGoBack, step7Info, setStep7Info }) {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newImage = result.assets[0];
-
-        // Upload ảnh lên Firebase Storage
         const imageUrl = await firebaseImgForPet(newImage.uri);
 
         if (imageUrl) {
-          setStep7Info((prev) => ({ ...prev, profilePicture: imageUrl })); // Lưu URL Firebase vào state
+          setProfilePicture(imageUrl);
+          setStep7Info((prev) => ({ ...prev, profilePicture: imageUrl }));
         }
       } else {
         console.log("No image selected or assets not available");
@@ -37,28 +59,23 @@ export default function CreatePetStep7({ onGoBack, step7Info, setStep7Info }) {
       console.error("Error picking image:", error);
     }
   };
-  // const handleImagePick = async () => {
-  //   try {
-  //     const result = await ImagePicker.launchImageLibraryAsync({
-  //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //       allowsEditing: false,
-  //       quality: 1,
-  //     });
 
-  //     if (!result.canceled && result.assets && result.assets.length > 0) {
-  //       const newImage = result.assets[0];
-  //       setStep7Info((prev) => ({ ...prev, profilePicture: newImage.uri })); // Lưu URI của ảnh vào state profilePicture
-  //     } else {
-  //       console.log("No image selected or assets not available");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error picking image:", error);
-  //   }
-  // };
+  const updateProfilePicture = async () => {
+    try {
+      await putData(`/pet-profiles/${petId}`, { profilePicture });
+      navigation.navigate("PetProfile", { petId });
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={isUpdating ? () => navigation.goBack() : onGoBack}
+        >
           <Image
             source={require("../../../assets/BackArrow.png")}
             style={styles.backArrow}
@@ -76,16 +93,35 @@ export default function CreatePetStep7({ onGoBack, step7Info, setStep7Info }) {
         </Text>
 
         <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
-          {step7Info.profilePicture ? (
-            <Image
-              source={{ uri: step7Info.profilePicture }}
-              style={styles.image}
-            />
+          {profilePicture ? (
+            <Image source={{ uri: profilePicture }} style={styles.image} />
           ) : (
             <Text style={styles.addButtonText}>+</Text>
           )}
         </TouchableOpacity>
       </View>
+
+      {isUpdating && (
+        <View style={styles.fixedFooter}>
+          <TouchableOpacity
+            style={[
+              styles.nextButton,
+              !profilePicture && styles.disabledButton,
+            ]}
+            onPress={updateProfilePicture}
+            disabled={!profilePicture}
+          >
+            <Text
+              style={[
+                styles.nextText,
+                !profilePicture && styles.disabledNextText,
+              ]}
+            >
+              Đổi
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -174,5 +210,32 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: "contain",
     borderRadius: 8,
+  },
+  fixedFooter: {
+    width: width,
+    height: height * 0.067,
+    backgroundColor: "#FFE3D5",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 0,
+  },
+  nextButton: {
+    width: width,
+    height: height * 0.067,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFE3D5",
+  },
+  nextText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#902C6C",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  disabledNextText: {
+    color: "rgba(0, 8, 87, 0.5)",
   },
 });

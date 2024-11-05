@@ -10,41 +10,55 @@ import {
   TextInput,
 } from "react-native";
 import CatBreedData from "../../../src/data/CatBreed.json";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { putData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CreatePetStep2({
   onGoBack,
-  step2Info,
-  setStep2Info,
-  setIsValid,
+  step2Info = { breed: "" },
+  setStep2Info = () => {},
+  setIsValid = () => {},
 }) {
-  const [selectedBreed, setSelectedBreed] = useState(step2Info.breed || "");
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { breed: initialBreed, isUpdating, petId } = route.params || {};
+  const [selectedBreed, setSelectedBreed] = useState(
+    initialBreed || step2Info.breed || ""
+  );
   const flatListRef = useRef(null);
 
   useEffect(() => {
-    // Cập nhật breed vào step2Info mỗi khi selectedBreed thay đổi
-    setStep2Info({ ...step2Info, breed: selectedBreed });
+    setStep2Info((prevInfo) => ({ ...prevInfo, breed: selectedBreed }));
     setIsValid(!!selectedBreed);
   }, [selectedBreed]);
 
-  const handleBreedSelect = (breed) => {
-    setSelectedBreed(breed);
-    // Cuộn về đầu danh sách
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  const updateBreed = async () => {
+    try {
+      await putData(`/pet-profiles/${petId}`, { breed: selectedBreed });
+      navigation.navigate("PetProfile", { petId });
+    } catch (error) {
+      console.error("Error updating breed:", error);
+    }
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.fixedHeader}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={isUpdating ? () => navigation.goBack() : onGoBack}
+          >
             <Image
               source={require("../../../assets/BackArrow.png")}
               style={styles.backArrow}
             />
           </TouchableOpacity>
-          <Text style={styles.label}>Mèo của tôi</Text>
+
+          <Text style={styles.label}>
+            {isUpdating ? "Đổi giống mèo" : "Mèo của tôi"}
+          </Text>
         </View>
         <View style={styles.separator} />
       </View>
@@ -57,7 +71,7 @@ export default function CreatePetStep2({
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.breedContainer}
-            onPress={() => handleBreedSelect(item.breed)}
+            onPress={() => setSelectedBreed(item.breed)}
           >
             <Text style={styles.breedText}>{item.breed}</Text>
           </TouchableOpacity>
@@ -75,6 +89,25 @@ export default function CreatePetStep2({
         }
         contentContainerStyle={styles.listContainer}
       />
+
+      {isUpdating && (
+        <View style={styles.fixedFooter}>
+          <TouchableOpacity
+            style={[styles.nextButton, !selectedBreed && styles.disabledButton]}
+            onPress={updateBreed}
+            disabled={!selectedBreed}
+          >
+            <Text
+              style={[
+                styles.nextText,
+                !selectedBreed && styles.disabledNextText,
+              ]}
+            >
+              Đổi
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -176,5 +209,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     textAlign: "left",
+  },
+  fixedFooter: {
+    width: width + width * 0.1, // Tăng chiều rộng để bù cho margin
+    height: height * 0.067,
+    backgroundColor: "#FFE3D5",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 0,
+    marginHorizontal: -width * 0.05,
+  },
+  nextButton: {
+    width: width + width * 0.1,
+    height: height * 0.067,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFE3D5",
+  },
+
+  nextText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#902C6C",
+  },
+  disabledButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  disabledNextText: {
+    color: "rgba(0, 8, 87, 0.5)",
   },
 });
