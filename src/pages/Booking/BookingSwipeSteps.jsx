@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -12,16 +12,23 @@ import BookingStep2 from "./BookingStep2";
 import BookingStep3 from "./BookingStep3";
 import BookingStep4 from "./BookingStep4";
 import BookingStep5 from "./BookingStep5";
+import { useRoute } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
 export default function SwipeStep({ navigation }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isValid, setIsValid] = useState(false);
+  const route = useRoute();
+  const sitterId = route.params?.sitterId;
+  useEffect(() => {
+    console.log("SwipeStep received sitterId:", sitterId);
+  }, [sitterId]);
 
   // State lưu thông tin từ Step 1
   const [step1Info, setStep1Info] = useState({
     selectedService: "Gửi thú cưng tại nhà người chăm sóc",
+    selectedServiceId: "",
     selectedFood: "NATURAL CORE Bene Chicken Salmon",
     isChecked: false,
     selectedLocation: "Tỉnh/Thành phố",
@@ -154,6 +161,7 @@ export default function SwipeStep({ navigation }) {
                   step2Info,
                   step3Info,
                   contactInfo,
+                  sitterId,
                 });
               }
             }}

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Entypo, FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { postData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
@@ -21,17 +22,19 @@ export default function ServicePayment() {
     step2Info = {},
     step3Info = {},
     contactInfo = {},
+    sitterId,
   } = route.params || {};
+
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
     "Chọn phương thức thanh toán"
   );
   const [selectedIcon, setSelectedIcon] = useState(null);
+
   useEffect(() => {
     if (route.params?.paymentMethod) {
-      setSelectedPaymentMethod(route.params.paymentMethod); // Cập nhật phương thức thanh toán
+      setSelectedPaymentMethod(route.params.paymentMethod);
       setSelectedIcon(route.params.icon);
     }
   }, [route.params?.paymentMethod, route.params?.icon]);
@@ -57,18 +60,65 @@ export default function ServicePayment() {
         return null;
     }
   };
-  const handlePayment = () => {
+
+  const handlePayment = async () => {
     setIsLoading(true);
-    setTimeout(() => {
+
+    const payload = {
+      bookingDetails: step3Info.selectedCats.map((cat) => ({
+        quantity: 1,
+        petProfileId: cat.id,
+        serviceId: step1Info.selectedServiceId,
+      })),
+      sitterId,
+      time: new Date().toISOString(),
+      startDate: new Date(step2Info.startDate).toISOString(),
+      endDate: new Date(step2Info.endDate).toISOString(),
+      numberOfPet: step3Info.selectedCats.length,
+      name: contactInfo.name,
+      phoneNumber: contactInfo.phoneNumber,
+      address: step1Info.selectedLocation,
+      note: contactInfo.note,
+    };
+
+    console.log("Payload for booking order:", payload);
+
+    try {
+      const response = await postData("/booking-orders/with-details", payload);
+      console.log("Response data:", response.data);
+      if (response.status === 1000) {
+        navigation.navigate("ServicePaymentComplete", {
+          bookingId: response.data.id,
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting booking order:", error);
+
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Status:", error.response.status);
+        console.error("Headers:", error.response.headers);
+        console.error("Payload details: ");
+        console.error("Sitter ID:", sitterId);
+        console.error("Time:", payload.time);
+        console.error("Start Date:", payload.startDate);
+        console.error("End Date:", payload.endDate);
+        console.error("Number of Pets:", payload.numberOfPet);
+        console.error("Name:", payload.name);
+        console.error("Phone Number:", payload.phoneNumber);
+        console.error("Address:", payload.address);
+        console.error("Note:", payload.note);
+        console.error("Booking Details:", payload.bookingDetails);
+      } else if (error.request) {
+        console.error("Request data:", error.request);
+      } else {
+        console.error("Error message:", error.message);
+      }
+    } finally {
       setIsLoading(false);
-      navigation.navigate("ServicePaymentComplete", {
-        step1Info,
-        step2Info,
-        step3Info,
-        contactInfo,
-      });
-    }, 3000);
+    }
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
