@@ -19,14 +19,16 @@ export default function Header() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" />
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerContainer}>
+      <SafeAreaView style={styles.safeArea} >
+        <View style={styles.headerContainer} >
+        <TouchableOpacity onPress={() => navigation.navigate("Trang Chủ")}>
           <Image
             source={require("../../../assets/meowcarelogo.png")}
             style={styles.logo}
           />
+           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate("Notification")}>
+          <TouchableOpacity onPress={() => navigation.navigate("Thông báo")}>
             <FontAwesome
               name="envelope"
               size={width * 0.06}

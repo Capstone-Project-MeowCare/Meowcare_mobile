@@ -54,6 +54,7 @@ import SetupService from "./src/pages/Job/ProfileCatSitter/SetupService";
 import SetupShedule from "./src/pages/Job/ProfileCatSitter/SetupShedule";
 import SetupLocation from "./src/pages/Job/ProfileCatSitter/SetupLocation";
 import SetupProfile from "./src/pages/Job/ProfileCatSitter/SetupProfile";
+import Notification from "./src/pages/Login/Notification";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -149,6 +150,11 @@ export function Routes() {
           name="Map"
           options={{ headerLeft: null, headerShown: false }}
           component={FindSitterByMap}
+        />
+         <Stack.Screen
+          name="Thông báo"
+          options={{ headerLeft: null, headerShown: false }}
+          component={Notification}
         />
         <Stack.Screen
           name="BecomeSitter"
