@@ -9,16 +9,32 @@ import {
   Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Calendar } from "react-native-calendars";
+import { Calendar, LocaleConfig } from "react-native-calendars";
+
+// Set Vietnamese localization
+LocaleConfig.locales['vi'] = {
+  monthNames: [
+    'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 
+    'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+  ],
+  monthNamesShort: [
+    'Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 
+    'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12'
+  ],
+  dayNames: ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'],
+  dayNamesShort: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+  today: 'Hôm nay'
+};
+LocaleConfig.defaultLocale = 'vi';
 
 const daysOfWeek = [
-  { id: "sun", name: "Sun" },
-  { id: "mon", name: "Mon" },
-  { id: "tue", name: "Tue" },
-  { id: "wed", name: "Wed" },
-  { id: "thu", name: "Thu" },
-  { id: "fri", name: "Fri" },
-  { id: "sat", name: "Sat" },
+  { id: "mon", name: "T2" },
+  { id: "tue", name: "T3" },
+  { id: "wed", name: "T4" },
+  { id: "thu", name: "T5" },
+  { id: "fri", name: "T6" },
+  { id: "sat", name: "T7" },
+  { id: "sun", name: "CN" },
 ];
 
 export default function SetupSchedule({ navigation }) {
@@ -63,7 +79,6 @@ export default function SetupSchedule({ navigation }) {
 
   const saveSchedule = () => {
     Alert.alert("Thông báo", "Lịch làm việc của bạn đã được lưu thành công!");
-    // Save logic goes here
   };
 
   const renderDaySelection = (service, selectedDays) => (
@@ -104,7 +119,6 @@ export default function SetupSchedule({ navigation }) {
       <View style={styles.divider} />
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Service Selection */}
         <Text style={styles.sectionTitle}>Chọn dịch vụ bạn cung cấp</Text>
         <View style={styles.serviceOption}>
           <Text style={styles.optionLabel}>Gủi thú cưng (Boarding)</Text>
@@ -121,7 +135,6 @@ export default function SetupSchedule({ navigation }) {
           />
         </View>
 
-        {/* Boarding Availability */}
         {isBoardingSelected && (
           <>
             <Text style={styles.sectionTitle}>Gủi thú cưng (Boarding)</Text>
@@ -136,7 +149,6 @@ export default function SetupSchedule({ navigation }) {
           </>
         )}
 
-        {/* Home Visit Availability */}
         {isHomeVisitSelected && (
           <>
             <Text style={styles.sectionTitle}>Trông tại nhà (House Sitting)</Text>
@@ -151,7 +163,6 @@ export default function SetupSchedule({ navigation }) {
           </>
         )}
 
-        {/* Save Button */}
         <TouchableOpacity style={styles.saveButton} onPress={saveSchedule}>
           <Text style={styles.saveButtonText}>Lưu Lịch Làm Việc</Text>
         </TouchableOpacity>

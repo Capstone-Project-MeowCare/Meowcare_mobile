@@ -111,7 +111,7 @@ export default function SetupService({ navigation }) {
 
         {/* At Home Care Service */}
         <View style={styles.serviceOption}>
-          <Text style={styles.optionLabel}>Chăm sóc thú cưng tại nhà</Text>
+          <Text style={styles.optionLabel}>Gủi thú cưng (Boarding)</Text>
           <Switch value={atHomeCare} onValueChange={(value) => setAtHomeCare(value)} />
         </View>
         {atHomeCare && (
@@ -148,7 +148,7 @@ export default function SetupService({ navigation }) {
 
         {/* Boarding Care Service */}
         <View style={styles.serviceOption}>
-          <Text style={styles.optionLabel}>Gửi thú cưng đến nhà chăm sóc</Text>
+          <Text style={styles.optionLabel}>Trông tại nhà (House Sitting)</Text>
           <Switch value={boardingCare} onValueChange={(value) => setBoardingCare(value)} />
         </View>
         {boardingCare && (

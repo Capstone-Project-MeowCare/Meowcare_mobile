@@ -7,6 +7,7 @@ import { getData } from "../../api/api";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import Feather from "react-native-vector-icons/Feather";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const { width, height } = Dimensions.get("window");
 
@@ -41,33 +42,24 @@ export default function Profile() {
       </View>
 
       <View style={styles.squareContainerWrapper}>
-        <TouchableOpacity
-          style={styles.squareContainer}
-          onPress={() => navigation.navigate("MyPets")}
-        >
-          <Image
-            source={require("../../../assets/CatFootprint.png")}
-            style={styles.squareImage}
-          />
-          <Text style={styles.squareText}>Mèo của tôi</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.squareContainer}
+        onPress={() => navigation.navigate("MyPets")}
+      >
+        <Ionicons name="paw-outline" size={30} color="#902C6C" />
+        <Text style={styles.squareText}>Mèo của tôi</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity style={styles.squareContainer}>
-          <Image
-            source={require("../../../assets/MoneyBag.png")}
-            style={styles.squareImage}
-          />
-          <Text style={styles.squareText}>Số dư</Text>
-        </TouchableOpacity>
+      <TouchableOpacity style={styles.squareContainer}>
+        <Ionicons name="wallet-outline" size={30} color="#902C6C" />
+        <Text style={styles.squareText}>Số dư</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity style={styles.squareContainer}>
-          <Image
-            source={require("../../../assets/Favorite.png")}
-            style={styles.squareImage}
-          />
-          <Text style={styles.squareText}>Yêu thích</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.squareContainer}>
+        <Ionicons name="heart-outline" size={30} color="#902C6C" />
+        <Text style={styles.squareText}>Yêu thích</Text>
+      </TouchableOpacity>
+    </View>
 
       <View style={{ margin: height * 0.009 }} />
 
@@ -75,7 +67,7 @@ export default function Profile() {
         <AntDesign
           name="profile"
           size={24}
-          color="#FF7A00"
+          color="#902C6C"
           style={styles.icon}
         />
         <Text style={styles.emptyText}>Chỉnh sửa hồ sơ</Text>
@@ -85,7 +77,7 @@ export default function Profile() {
         <AntDesign
           name="creditcard"
           size={24}
-          color="#FF7A00"
+          color="#902C6C"
           style={styles.icon}
         />
         <Text style={styles.emptyText}>Cài đặt thanh toán</Text>
@@ -95,7 +87,7 @@ export default function Profile() {
         <Feather
           name="help-circle"
           size={24}
-          color="#FF7A00"
+          color="#902C6C"
           style={styles.icon}
         />
         <Text style={styles.emptyText}>Trợ giúp</Text>
@@ -105,7 +97,7 @@ export default function Profile() {
         icon="logout"
         mode="contained"
         onPress={handleLogout}
-        style={{ marginTop: height * 0.026 }}
+        style={{ backgroundColor: "#FF0000" }}
       >
         Đăng xuất
       </Button>
@@ -148,25 +140,22 @@ const styles = StyleSheet.create({
   squareContainerWrapper: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: width * 0.87,
-    marginTop: height * 0.01,
+    backgroundColor: "#FFFAF5",
   },
   squareContainer: {
-    width: width / 4,
-    height: height * 0.09,
-    backgroundColor: "rgba(221,228,236,0.3)",
     alignItems: "center",
     justifyContent: "center",
+    width: 100,
+    height: 100,
+    backgroundColor: "#F8F8F8",
     borderRadius: 10,
-  },
-  squareImage: {
-    width: width * 0.09,
-    height: height * 0.04,
-    marginBottom: height * 0.01,
+    marginHorizontal: 10,
   },
   squareText: {
-    fontSize: height * 0.016,
-    color: "#000",
+    marginTop: 8,
+    fontSize: 14,
+    color: "#902C6C",
+    fontWeight: "bold",
   },
   emptyContainer: {
     flexDirection: "row",
