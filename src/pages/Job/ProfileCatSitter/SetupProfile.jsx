@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
-export default function InformationCatSitter({navigation}) {
+export default function SetupProfile({navigation}) {
   const [tab, setTab] = useState('edit'); // State to handle tab selection
   const [introduction, setIntroduction] = useState("");
   
