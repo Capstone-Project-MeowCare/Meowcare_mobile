@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -9,38 +9,9 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-
+import { useAuth } from "../../../auth/useAuth";
+import { getData } from "../../api/api";
 const { width, height } = Dimensions.get("window");
-
-const mockData = [
-  {
-    id: 1,
-    serviceName: "Gửi thú cưng",
-    sitterName: "Nguyễn Hoài Phúc",
-    catName: "Mèo Kitkat",
-    time: "8:00, 27/10/2024 - 15:00, 29/10/2024",
-    status: "Đang diễn ra",
-    statusColor: "#FFC107",
-  },
-  {
-    id: 2,
-    serviceName: "Trông thú cưng",
-    sitterName: "Nguyễn Phương Đại",
-    catName: "Kitty",
-    time: "9:00, 25/10/2024 - 12:00, 26/10/2024",
-    status: "Chờ xác nhận",
-    statusColor: "#9E9E9E",
-  },
-  {
-    id: 3,
-    serviceName: "Trông tại nhà",
-    sitterName: "ABC",
-    catName: "Orange ",
-    time: "10:00, 20/10/2024 - 16:00, 22/10/2024",
-    status: "Đã hủy",
-    statusColor: "#FF4343",
-  },
-];
 
 const CustomButton = ({ title, onPress }) => (
   <TouchableOpacity style={styles.button} onPress={onPress}>
@@ -50,7 +21,10 @@ const CustomButton = ({ title, onPress }) => (
 
 export default function Activity() {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
+  const [bookingData, setBookingData] = useState([]);
+
   const tabs = [
     "Tất cả",
     "Chờ xác nhận",
@@ -60,11 +34,63 @@ export default function Activity() {
     "Đã hủy",
   ];
 
-  // Lọc status data theo tab đã chọn
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchBookings = async () => {
+      try {
+        const endpoint = `/booking-orders/user?id=${user.id}`;
+        console.log("API Endpoint:", endpoint);
+
+        const response = await getData(endpoint);
+        if (response?.data) {
+          const formattedData = response.data.map((booking) => ({
+            id: booking.id,
+            serviceName:
+              booking.bookingDetailWithPetAndServices[0]?.service?.serviceName,
+            sitterName: booking.sitter?.fullName,
+            catName: booking.bookingDetailWithPetAndServices[0]?.pet?.petName,
+            time: `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`,
+            status: getStatusLabel(booking.status),
+            statusColor: getStatusColor(getStatusLabel(booking.status)),
+          }));
+          setBookingData(formattedData);
+        }
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      }
+    };
+    fetchBookings();
+  }, [user?.id]);
+
+  // Map numeric status values to text labels
+  const getStatusLabel = (status) => {
+    const statusMapping = {
+      0: "Chờ xác nhận",
+      1: "Đã xác nhận",
+      2: "Đang diễn ra",
+      3: "Hoàn thành",
+      4: "Đã hủy",
+    };
+    return statusMapping[status] || "Không xác định";
+  };
+
+  // Get color based on the status label
+  const getStatusColor = (statusLabel) => {
+    const colorMapping = {
+      "Chờ xác nhận": "#9E9E9E",
+      "Đã xác nhận": "#4CAF50",
+      "Đang diễn ra": "#FFC107",
+      "Hoàn thành": "#4CAF50",
+      "Đã hủy": "#FF4343",
+    };
+    return colorMapping[statusLabel] || "#000000";
+  };
+
   const filteredData =
     selectedTab === "Tất cả"
-      ? mockData
-      : mockData.filter((item) => item.status === selectedTab);
+      ? bookingData
+      : bookingData.filter((item) => item.status === selectedTab);
 
   return (
     <ScrollView
@@ -140,10 +166,6 @@ export default function Activity() {
                   <>
                     <CustomButton title="Hủy lịch" />
                     <CustomButton title="Cập nhật" />
-                    <CustomButton
-                      title="Theo dõi lịch"
-                      onPress={() => navigation.navigate("CareMonitor")}
-                    />
                   </>
                 )}
                 {item.status === "Đã hủy" && (

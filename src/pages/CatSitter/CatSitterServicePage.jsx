@@ -81,6 +81,7 @@ export default function CatSitterServicePage({ navigation }) {
   const route = useRoute();
   const [sitterDetails, setSitterDetails] = useState(null);
   const id = route.params?.id;
+
   const [loading, setLoading] = useState(true);
   const images = [
     require("../../../assets/bannerlogo2.png"),
@@ -105,9 +106,10 @@ export default function CatSitterServicePage({ navigation }) {
         setLoading(false);
       }
     };
-
+    console.log("Received sitterId:", id);
     if (id) fetchSitterDetails();
   }, [id]);
+
   return (
     <ScrollView
       contentContainerStyle={styles.mainScrollContainer}
@@ -211,7 +213,11 @@ export default function CatSitterServicePage({ navigation }) {
       <View style={styles.fixedFooter}>
         <TouchableOpacity
           style={styles.bookingButton}
-          onPress={() => navigation.navigate("SwipeStep")}
+          onPress={() =>
+            navigation.navigate("SwipeStep", {
+              sitterId: sitterDetails?.user.id,
+            })
+          }
         >
           <Text style={styles.bookingText}>Đặt Lịch</Text>
         </TouchableOpacity>

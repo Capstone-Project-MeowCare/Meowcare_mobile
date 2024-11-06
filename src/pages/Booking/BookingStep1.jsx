@@ -11,32 +11,61 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import Checkbox from "expo-checkbox";
 import { useNavigation } from "@react-navigation/native";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
 export default function BookingStep1({ step1Info, setStep1Info, setIsValid }) {
   const navigation = useNavigation();
-  // Kiểm tra tính hợp lệ của form
+  const [serviceOptions, setServiceOptions] = useState([
+    { id: "", name: "---Vui lòng chọn dịch vụ---" },
+  ]);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await getData("/services");
+        if (response?.data) {
+          const servicesInVietnamese = response.data.map((service) => ({
+            id: service.id,
+            name: translateServiceName(service.serviceName),
+          }));
+          setServiceOptions([
+            { id: "", name: "---Vui lòng chọn dịch vụ---" },
+            ...servicesInVietnamese,
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching services:", error);
+      }
+    };
+    fetchServices();
+  }, []);
+
+  const translateServiceName = (serviceName) => {
+    const translations = {
+      "Basic Feeding": "Cho ăn cơ bản",
+      "Standard Grooming": "Chải lông tiêu chuẩn",
+      "Play Session": "Giờ chơi",
+      "Health Check-up": "Kiểm tra sức khỏe",
+      "Training Basics": "Huấn luyện cơ bản",
+    };
+    return translations[serviceName] || serviceName;
+  };
+
   const validateForm = () => {
     let isValidForm = true;
-
-    // Nếu checkbox "Dịch vụ đưa đón mèo" được chọn nhưng chưa chọn location
     if (
-      step1Info.isChecked &&
-      step1Info.selectedLocation === "Tỉnh/Thành phố"
+      step1Info.selectedServiceId === "" ||
+      (step1Info.isChecked &&
+        step1Info.selectedLocation === "Tỉnh/Thành phố") ||
+      (step1Info.isCustomFoodChecked && step1Info.customFood.trim() === "")
     ) {
       isValidForm = false;
     }
-
-    // Nếu checkbox "Thức ăn theo yêu cầu" được chọn nhưng chưa nhập customFood
-    if (step1Info.isCustomFoodChecked && step1Info.customFood.trim() === "") {
-      isValidForm = false;
-    }
-
     setIsValid(isValidForm);
   };
 
-  // Gọi validateForm mỗi khi trạng thái thay đổi
   useEffect(() => {
     validateForm();
   }, [step1Info]);
@@ -67,27 +96,28 @@ export default function BookingStep1({ step1Info, setStep1Info, setIsValid }) {
         <Text style={styles.label}>Chọn dịch vụ</Text>
         <View style={styles.pickerContainer}>
           <Picker
-            selectedValue={step1Info.selectedService}
-            onValueChange={(itemValue) =>
-              setStep1Info({ ...step1Info, selectedService: itemValue })
-            }
+            selectedValue={step1Info.selectedServiceId}
+            onValueChange={(itemValue) => {
+              const selectedService = serviceOptions.find(
+                (service) => service.id === itemValue
+              );
+              setStep1Info({
+                ...step1Info,
+                selectedService: selectedService?.name || "",
+                selectedServiceId: itemValue,
+              });
+            }}
             style={styles.picker}
           >
-            <Picker.Item
-              label="Gửi thú cưng tại nhà người chăm sóc"
-              value="Gửi thú cưng tại nhà người chăm sóc"
-            />
-            <Picker.Item
-              label="Trông thú cưng tại nhà người chăm sóc"
-              value="Trông thú cưng tại nhà người chăm sóc"
-            />
-            <Picker.Item
-              label="Trông thú cưng tại nhà bạn"
-              value="Trông thú cưng tại nhà bạn"
-            />
+            {serviceOptions.map((service) => (
+              <Picker.Item
+                key={service.id}
+                label={service.name}
+                value={service.id}
+              />
+            ))}
           </Picker>
         </View>
-
         <Text style={styles.label}>Chọn thức ăn cho mèo</Text>
         <View style={styles.pickerContainer}>
           <Picker

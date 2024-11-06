@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  ScrollView,
 } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
+import { getData } from "../../api/api";
+import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -18,16 +21,28 @@ export default function BookingStep3({
   step3Info,
   setStep3Info,
 }) {
-  const catData = [
-    { id: 1, name: "Kitty", image: require("../../../assets/image88.png") },
-    { id: 2, name: "Kevin", image: require("../../../assets/image74.png") },
-  ];
+  const { user } = useAuth();
+  const [catData, setCatData] = useState([]);
+
+  useEffect(() => {
+    const fetchCatData = async () => {
+      try {
+        const response = await getData(`/pet-profiles/user/${user.id}`);
+        if (response?.data) {
+          setCatData(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching cat data:", error);
+      }
+    };
+
+    fetchCatData();
+  }, [user.id]);
 
   const handleSelectCat = (cat) => {
     if (
       step3Info.selectedCats.some((selectedCat) => selectedCat.id === cat.id)
     ) {
-      // Mèo đã đc chọn -> bỏ chọn
       setStep3Info({
         ...step3Info,
         selectedCats: step3Info.selectedCats.filter(
@@ -35,7 +50,6 @@ export default function BookingStep3({
         ),
       });
     } else {
-      // Nếu chưa chọn thì thêm vào list
       setStep3Info({
         ...step3Info,
         selectedCats: [...step3Info.selectedCats, cat],
@@ -79,7 +93,10 @@ export default function BookingStep3({
 
       <View style={styles.separator} />
 
-      <View style={styles.mainContent}>
+      <ScrollView
+        contentContainerStyle={styles.mainContent}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.label}>Chọn bé mèo của bạn</Text>
 
         <View style={styles.catContainerRow}>
@@ -89,12 +106,18 @@ export default function BookingStep3({
               style={styles.catContainer}
               onPress={() => handleSelectCat(cat)}
             >
-              <Image source={cat.image} style={styles.catImage} />
+              <Image
+                source={{
+                  uri:
+                    cat.profilePicture || "../../../assets/defaultCatImage.png",
+                }}
+                style={styles.catImage}
+              />
 
               {!isCatSelected(cat.id) && <View style={styles.overlay} />}
 
               <View style={styles.catFooter}>
-                <Text style={styles.catName}>{cat.name}</Text>
+                <Text style={styles.catName}>{cat.petName}</Text>
 
                 {isCatSelected(cat.id) && (
                   <View style={styles.circle}>
@@ -140,15 +163,15 @@ export default function BookingStep3({
           </View>
           <Text style={styles.insuranceDescription}>
             Bảo vệ thú cưng được bảo hiểm khỏi thiệt hại do sự cố bất ngờ, sự cố
-            liên quan đến thú cưng có giá trị cao (ví dụ: bệnh tật, mất mát,
-            thiệt hại)
+            liên quan đến thú cưng có giá trị cao
           </Text>
           <Text style={styles.learnMoreText}>Tìm hiểu thêm</Text>
         </View>
-      </View>
+      </ScrollView>
     </GestureRecognizer>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -190,17 +213,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#902C6C",
   },
   separator: {
-    width: width,
+    width: "100%",
     height: 1,
     backgroundColor: "#000000",
-    marginTop: height * 0.013,
+    marginVertical: height * 0.02,
   },
   mainContent: {
-    flex: 1,
     paddingHorizontal: width * 0.05,
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-    marginTop: height * 0.05,
+    paddingBottom: height * 0.05,
   },
   label: {
     fontSize: 18,
@@ -211,8 +231,9 @@ const styles = StyleSheet.create({
   },
   catContainerRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    width: width * 0.9,
+    marginBottom: height * 0.02,
   },
   catContainer: {
     width: width * 0.4,
@@ -225,6 +246,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     justifyContent: "flex-end",
+    marginBottom: height * 0.02,
   },
   catImage: {
     width: "100%",
@@ -241,6 +263,7 @@ const styles = StyleSheet.create({
   newContainerWrapper: {
     marginTop: height * 0.04,
     width: width * 0.9,
+    alignSelf: "center",
   },
   catFooter: {
     width: "100%",
@@ -268,7 +291,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#000857",
-    marginLeft: height * 0.06,
+    marginLeft: height * 0.02,
   },
   circle: {
     width: 31,
@@ -283,13 +306,11 @@ const styles = StyleSheet.create({
     height: 31,
     resizeMode: "contain",
   },
-
   addCatText: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#000857",
     textAlign: "center",
-    marginLeft: height * 0.007,
   },
   addCatHintText: {
     fontSize: 12,
@@ -303,7 +324,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 227, 213, 0.5)",
     borderRadius: 10,
     padding: height * 0.02,
-    marginTop: height * 0.03,
+    alignSelf: "center",
   },
   insuranceRow: {
     flexDirection: "row",
