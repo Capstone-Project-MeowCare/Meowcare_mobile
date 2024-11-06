@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#FFFAF5",
     flex: 1,
-    paddingTop: height * 0.06,
+    paddingTop: height * 0.03,
   },
   avatarContainer: {
     width: width * 0.87,
