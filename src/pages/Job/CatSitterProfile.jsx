@@ -40,25 +40,25 @@ export default function CatSitterProfile({navigation}) {
         </View>
 
         {/* Các mục chọn */}
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('InformationCatSitter')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('SetupProfile')}>
           <Ionicons name="person-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Hồ sơ dịch vụ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem}  onPress={() => navigation.navigate('SetupService')}>
           <Ionicons name="briefcase-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Dịch vụ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}  onPress={() => navigation.navigate('Vị trí người chăm sóc')}>
+        <TouchableOpacity style={styles.menuItem}  onPress={() => navigation.navigate('SetupLocation')}>
           <Ionicons name="location-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Địa chỉ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem}  onPress={() => navigation.navigate('SetupShedule')}>
           <Ionicons name="calendar-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Lịch làm việc</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />

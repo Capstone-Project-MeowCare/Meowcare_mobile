@@ -25,7 +25,7 @@ import CatSitterGuide from "./src/pages/Job/CatSitterGuide";
 import HistoryWallet from "./src/pages/Job/Wallet/HistoryWallet";
 import DepositWallet from "./src/pages/Job/Wallet/DepositWallet";
 import WithdrawWallet from "./src/pages/Job/Wallet/WithdrawWallet";
-import InformationCatSitter from "./src/pages/Job/ProfileCatSitter/InformationCatSitter";
+import InformationCatSitter from "./src/pages/Job/ProfileCatSitter/SetupProfile";
 import RegisterSitterStep1 from "./src/pages/Job/RegisterCatSitter/RegisterSitterStep1";
 import RegisterSitterStep2 from "./src/pages/Job/RegisterCatSitter/RegisterSitterStep2";
 import ServicePayment from "./src/pages/ServicePayment/ServicePayment";
@@ -37,7 +37,7 @@ import DoQuiz from "./src/pages/Job/RegisterCatSitter/DoQuiz";
 import ResultQuiz from "./src/pages/Job/RegisterCatSitter/ResultQuiz";
 import RegisterSitterStep3 from "./src/pages/Job/RegisterCatSitter/RegisterSitterStep3";
 import RegisterSuccess from "./src/pages/Job/RegisterCatSitter/RegisterSuccess";
-import LocationCatSitter from "./src/pages/Job/ProfileCatSitter/LocationCatSitter";
+import LocationCatSitter from "./src/pages/Job/ProfileCatSitter/SetupLocation";
 import CareMonitor from "./src/pages/CareMonitor/CareMonitor";
 import AdditionalServices from "./src/pages/Services/AdditionalServices";
 import CareServiceDetails from "./src/pages/Services/CareServiceDetails";
@@ -50,6 +50,10 @@ import CreatePetStep3 from "./src/pages/Pets/CreatePetStep3";
 import CreatePetStep4 from "./src/pages/Pets/CreatePetStep4";
 import CreatePetStep5 from "./src/pages/Pets/CreatePetStep5";
 import CreatePetStep7 from "./src/pages/Pets/CreatePetStep7";
+import SetupService from "./src/pages/Job/ProfileCatSitter/SetupService";
+import SetupShedule from "./src/pages/Job/ProfileCatSitter/SetupShedule";
+import SetupLocation from "./src/pages/Job/ProfileCatSitter/SetupLocation";
+import SetupProfile from "./src/pages/Job/ProfileCatSitter/SetupProfile";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -197,14 +201,24 @@ export function Routes() {
           component={CatSitterProfile}
         />
         <Stack.Screen
-          name="InformationCatSitter"
+          name="SetupProfile"
           options={{ headerLeft: null, headerShown: false }}
-          component={InformationCatSitter}
+          component={SetupProfile}
+        />
+         <Stack.Screen
+          name="SetupService"
+          options={{ headerLeft: null, headerShown: false }}
+          component={SetupService}
         />
         <Stack.Screen
-          name="Vị trí người chăm sóc"
+          name="SetupLocation"
           options={{ headerLeft: null, headerShown: false }}
-          component={LocationCatSitter}
+          component={SetupLocation}
+        />
+        <Stack.Screen
+          name="SetupShedule"
+          options={{ headerLeft: null, headerShown: false }}
+          component={SetupShedule}
         />
         <Stack.Screen
           name="CatSitterWallet"
