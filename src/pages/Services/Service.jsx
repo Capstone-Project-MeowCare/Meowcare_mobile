@@ -51,8 +51,7 @@ export default function Service() {
         )
       : bookingData.filter(
           (item) =>
-            (item.status === "Đang diễn ra" || item.status === "Đã hủy") &&
-            item.status === selectedTab
+            item.status === "Đang diễn ra" && item.status === selectedTab
         );
 
   const hasSitterRole =
@@ -63,51 +62,33 @@ export default function Service() {
   const fetchBookings = async () => {
     if (!user?.id) return;
     try {
-      const endpoint = `/booking-orders/sitter?id=${user?.id}`;
-      const response = await getData(endpoint);
-
-      if (response && response.data && Array.isArray(response.data)) {
-        const formattedData = response.data.map((booking) => {
-          const userName = booking.user?.fullName || "Unknown User";
-          const time = booking.startDate
-            ? `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(
-                booking.endDate * 1000
-              ).toLocaleString()}`
-            : "Unknown Time";
-
-          const catName =
+      const response = await getData(`/booking-orders/sitter?id=${user.id}`);
+      if (response?.data && Array.isArray(response.data)) {
+        const formattedData = response.data.map((booking) => ({
+          id: booking.id,
+          userName: booking.user?.fullName || "Unknown User",
+          time: booking.startDate
+            ? `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`
+            : "Unknown Time",
+          catName:
             booking.bookingDetailWithPetAndServices
               .map((detail) => detail.pet?.petName)
               .filter(Boolean)
-              .join(", ") || "Unknown Pet";
-
-          const serviceName =
-            Array.isArray(booking.bookingDetailWithPetAndServices) &&
-            booking.bookingDetailWithPetAndServices.length > 0
-              ? translateServiceName(
-                  booking.bookingDetailWithPetAndServices[0].service
-                    ?.serviceName
-                ) || "Unknown Service"
-              : "Unknown Service";
-
-          return {
-            id: booking.id,
-            userName,
-            time,
-            status: getStatusLabel(booking.status),
-            statusColor: getStatusColor(getStatusLabel(booking.status)),
-            catName,
-            serviceName,
-          };
-        });
+              .join(", ") || "Unknown Pet",
+          serviceName: translateServiceName(
+            booking.bookingDetailWithPetAndServices[0]?.service?.serviceName ||
+              "Unknown Service"
+          ),
+          status: getStatusLabel(booking.status),
+          statusColor: getStatusColor(getStatusLabel(booking.status)),
+        }));
         setBookingData(formattedData);
+        console.log("log test service:", formattedData);
       } else {
-        console.warn("API response data is empty or not an array");
         setBookingData([]);
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      setBookingData([]);
     }
   };
 
@@ -116,6 +97,7 @@ export default function Service() {
       fetchBookings();
     }, [user?.id])
   );
+
   const getStatusLabel = (status) => {
     const statusMapping = {
       0: "Chờ xác nhận",

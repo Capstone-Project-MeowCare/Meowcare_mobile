@@ -95,20 +95,20 @@ export default function ServicePayment() {
       console.error("Error submitting booking order:", error);
 
       if (error.response) {
-        console.error("Response data:", error.response.data);
-        console.error("Status:", error.response.status);
-        console.error("Headers:", error.response.headers);
-        console.error("Payload details: ");
-        console.error("Sitter ID:", sitterId);
-        console.error("Time:", payload.time);
-        console.error("Start Date:", payload.startDate);
-        console.error("End Date:", payload.endDate);
-        console.error("Number of Pets:", payload.numberOfPet);
-        console.error("Name:", payload.name);
-        console.error("Phone Number:", payload.phoneNumber);
-        console.error("Address:", payload.address);
-        console.error("Note:", payload.note);
-        console.error("Booking Details:", payload.bookingDetails);
+        // console.error("Response data:", error.response.data);
+        // console.error("Status:", error.response.status);
+        // console.error("Headers:", error.response.headers);
+        // console.error("Payload details: ");
+        // console.error("Sitter ID:", sitterId);
+        // console.error("Time:", payload.time);
+        // console.error("Start Date:", payload.startDate);
+        // console.error("End Date:", payload.endDate);
+        // console.error("Number of Pets:", payload.numberOfPet);
+        // console.error("Name:", payload.name);
+        // console.error("Phone Number:", payload.phoneNumber);
+        // console.error("Address:", payload.address);
+        // console.error("Note:", payload.note);
+        // console.error("Booking Details:", payload.bookingDetails);
       } else if (error.request) {
         console.error("Request data:", error.request);
       } else {

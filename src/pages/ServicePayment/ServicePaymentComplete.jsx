@@ -20,6 +20,7 @@ export default function ServicePaymentComplete() {
     step2Info = {},
     step3Info = {},
     contactInfo = {},
+    bookingId,
   } = route.params || {};
 
   return (
@@ -46,10 +47,11 @@ export default function ServicePaymentComplete() {
       <TouchableOpacity
         onPress={() =>
           navigation.navigate("ServicePaymentOrderDetail", {
-            step1Info,
-            step2Info,
-            step3Info,
-            contactInfo,
+            bookingId,
+            // step1Info,
+            // step2Info,
+            // step3Info,
+            // contactInfo,
           })
         }
       >
