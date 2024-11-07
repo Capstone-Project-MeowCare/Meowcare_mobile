@@ -8,6 +8,7 @@ import {
   Image,
   Dimensions,
   ScrollView,
+  ActivityIndicator, // Import ActivityIndicator
 } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 import { getData } from "../../api/api";
@@ -23,6 +24,7 @@ export default function BookingStep3({
 }) {
   const { user } = useAuth();
   const [catData, setCatData] = useState([]);
+  const [loading, setLoading] = useState(true); // State to track loading
 
   useEffect(() => {
     const fetchCatData = async () => {
@@ -33,6 +35,8 @@ export default function BookingStep3({
         }
       } catch (error) {
         console.error("Error fetching cat data:", error);
+      } finally {
+        setLoading(false); // Set loading to false after data is fetched
       }
     };
 
@@ -93,81 +97,91 @@ export default function BookingStep3({
 
       <View style={styles.separator} />
 
-      <ScrollView
-        contentContainerStyle={styles.mainContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.label}>Chọn bé mèo của bạn</Text>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#902C6C" />
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.mainContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.label}>Chọn bé mèo của bạn</Text>
 
-        <View style={styles.catContainerRow}>
-          {catData.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={styles.catContainer}
-              onPress={() => handleSelectCat(cat)}
-            >
-              <Image
-                source={{
-                  uri:
-                    cat.profilePicture || "../../../assets/defaultCatImage.png",
-                }}
-                style={styles.catImage}
-              />
+          <View style={styles.catContainerRow}>
+            {catData.map((cat) => (
+              <TouchableOpacity
+                key={cat.id}
+                style={styles.catContainer}
+                onPress={() => handleSelectCat(cat)}
+              >
+                <Image
+                  source={{
+                    uri: cat.profilePicture,
+                  }}
+                  style={styles.catImage}
+                />
 
-              {!isCatSelected(cat.id) && <View style={styles.overlay} />}
-
-              <View style={styles.catFooter}>
-                <Text style={styles.catName}>{cat.petName}</Text>
+                {!isCatSelected(cat.id) && <View style={styles.overlay} />}
 
                 {isCatSelected(cat.id) && (
-                  <View style={styles.circle}>
-                    <Image
-                      source={require("../../../assets/Check1.png")}
-                      style={styles.checkImage}
-                    />
+                  <View style={styles.checkMarkContainer}>
+                    <View style={styles.circle}>
+                      <Image
+                        source={require("../../../assets/Check1.png")}
+                        style={styles.checkImage}
+                      />
+                    </View>
                   </View>
                 )}
+
+                <View style={styles.catFooter}>
+                  <View style={styles.catTextContainer}>
+                    <Text style={styles.catName}>{cat.petName}</Text>
+                    <Text style={styles.catBreed}>{cat.breed}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.newContainerWrapper}>
+            <TouchableOpacity style={styles.catContainer}>
+              <Image
+                source={require("../../../assets/image89.png")}
+                style={styles.catImage}
+              />
+              <View style={styles.catFooter1}>
+                <Text style={styles.addCatText}>Thêm thú cưng</Text>
+                <Text style={styles.addCatHintText}>
+                  Nhấn vào đây để thêm thú cưng
+                </Text>
               </View>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.newContainerWrapper}>
-          <TouchableOpacity style={styles.catContainer}>
-            <Image
-              source={require("../../../assets/image89.png")}
-              style={styles.catImage}
-            />
-            <View style={styles.catFooter1}>
-              <Text style={styles.addCatText}>Thêm thú cưng</Text>
-              <Text style={styles.addCatHintText}>
-                Nhấn vào đây để thêm thú cưng
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.insuranceContainer}>
-          <View style={styles.insuranceRow}>
-            <Checkbox
-              value={step3Info.isChecked}
-              onValueChange={(value) =>
-                setStep3Info({ ...step3Info, isChecked: value })
-              }
-              style={styles.checkbox}
-            />
-            <Text style={styles.insuranceText}>
-              Bảo hiểm Thiệt hại Thú cưng
-            </Text>
-            <Text style={styles.insurancePrice}>5.000đ x 1</Text>
           </View>
-          <Text style={styles.insuranceDescription}>
-            Bảo vệ thú cưng được bảo hiểm khỏi thiệt hại do sự cố bất ngờ, sự cố
-            liên quan đến thú cưng có giá trị cao
-          </Text>
-          <Text style={styles.learnMoreText}>Tìm hiểu thêm</Text>
-        </View>
-      </ScrollView>
+
+          <View style={styles.insuranceContainer}>
+            <View style={styles.insuranceRow}>
+              <Checkbox
+                value={step3Info.isChecked}
+                onValueChange={(value) =>
+                  setStep3Info({ ...step3Info, isChecked: value })
+                }
+                style={styles.checkbox}
+              />
+              <Text style={styles.insuranceText}>
+                Bảo hiểm Thiệt hại Thú cưng
+              </Text>
+              <Text style={styles.insurancePrice}>5.000đ x 1</Text>
+            </View>
+            <Text style={styles.insuranceDescription}>
+              Bảo vệ thú cưng được bảo hiểm khỏi thiệt hại do sự cố bất ngờ, sự
+              cố liên quan đến thú cưng có giá trị cao
+            </Text>
+            <Text style={styles.learnMoreText}>Tìm hiểu thêm</Text>
+          </View>
+        </ScrollView>
+      )}
     </GestureRecognizer>
   );
 }
@@ -218,6 +232,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
     marginVertical: height * 0.02,
   },
+  loadingContainer: {
+    // Style for ActivityIndicator container
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   mainContent: {
     paddingHorizontal: width * 0.05,
     paddingBottom: height * 0.05,
@@ -247,6 +267,12 @@ const styles = StyleSheet.create({
     elevation: 5,
     justifyContent: "flex-end",
     marginBottom: height * 0.02,
+    position: "relative",
+  },
+  checkMarkContainer: {
+    position: "absolute",
+    top: height * 0.13,
+    right: height * 0.006,
   },
   catImage: {
     width: "100%",
@@ -287,11 +313,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: height * 0.01,
   },
+  catTextContainer: {
+    flexDirection: "column",
+    alignItems: "center",
+  },
   catName: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#000857",
-    marginLeft: height * 0.02,
+    marginLeft: height * 0.01,
+  },
+  catBreed: {
+    fontSize: 13,
+    color: "#555",
+    textAlign: "center",
+    marginTop: height * 0.002,
+    color: "#000857",
   },
   circle: {
     width: 31,

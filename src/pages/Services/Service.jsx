@@ -10,9 +10,9 @@ import {
   TextInput,
 } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../../auth/useAuth";
-import { getData, putData } from "../../api/api";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 const CustomButton = ({ title, onPress }) => (
@@ -20,6 +20,16 @@ const CustomButton = ({ title, onPress }) => (
     <Text style={styles.buttonText}>{title}</Text>
   </TouchableOpacity>
 );
+const translateServiceName = (serviceName) => {
+  const serviceTranslations = {
+    "Basic Feeding": "Cho ăn cơ bản",
+    "Standard Grooming": "Chải lông tiêu chuẩn",
+    "Play Session": "Giờ chơi",
+    "Health Check-up": "Kiểm tra sức khỏe",
+    "Training Basics": "Huấn luyện cơ bản",
+  };
+  return serviceTranslations[serviceName] || serviceName;
+};
 export default function Service() {
   const { roles, user } = useAuth();
   const Stack = createStackNavigator();
@@ -36,70 +46,76 @@ export default function Service() {
   ];
   const filteredData =
     selectedTab === "Tất cả"
-      ? bookingData
-      : bookingData.filter((item) => item.status === selectedTab);
+      ? bookingData.filter(
+          (item) => item.status === "Đang diễn ra" || item.status === "Đã hủy"
+        )
+      : bookingData.filter(
+          (item) =>
+            (item.status === "Đang diễn ra" || item.status === "Đã hủy") &&
+            item.status === selectedTab
+        );
+
   const hasSitterRole =
     Array.isArray(roles) && roles.some((role) => role.roleName === "SITTER");
   const hasUserRole =
     Array.isArray(roles) && roles.some((role) => role.roleName === "USER");
 
-  useEffect(() => {
+  const fetchBookings = async () => {
     if (!user?.id) return;
-    const fetchBookings = async () => {
-      try {
-        const endpoint = `/booking-orders/sitter?id=${user?.id}`;
-        // console.log("API Endpoint:", endpoint);
+    try {
+      const endpoint = `/booking-orders/sitter?id=${user?.id}`;
+      const response = await getData(endpoint);
 
-        const response = await getData(endpoint);
-        // console.log("API Response:", response);
+      if (response && response.data && Array.isArray(response.data)) {
+        const formattedData = response.data.map((booking) => {
+          const userName = booking.user?.fullName || "Unknown User";
+          const time = booking.startDate
+            ? `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(
+                booking.endDate * 1000
+              ).toLocaleString()}`
+            : "Unknown Time";
 
-        if (response && response.data && Array.isArray(response.data)) {
-          const formattedData = response.data.map((booking) => {
-            const userName = booking.user?.fullName || "Unknown User";
-            const time = booking.startDate
-              ? `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`
-              : "Unknown Time";
+          const catName =
+            booking.bookingDetailWithPetAndServices
+              .map((detail) => detail.pet?.petName)
+              .filter(Boolean)
+              .join(", ") || "Unknown Pet";
 
-            const catName =
-              Array.isArray(booking.bookingDetailWithPetAndServices) &&
-              booking.bookingDetailWithPetAndServices.length > 0
-                ? booking.bookingDetailWithPetAndServices[0].pet?.petName ||
-                  "Unknown Pet"
-                : "Unknown Pet";
-            // console.log("Cat Name:", catName);
-            const serviceName =
-              Array.isArray(booking.bookingDetailWithPetAndServices) &&
-              booking.bookingDetailWithPetAndServices.length > 0
-                ? booking.bookingDetailWithPetAndServices[0].service
-                    ?.serviceName || "Unknown Service"
-                : "Unknown Service";
-            // console.log("Original status:", booking.status);
+          const serviceName =
+            Array.isArray(booking.bookingDetailWithPetAndServices) &&
+            booking.bookingDetailWithPetAndServices.length > 0
+              ? translateServiceName(
+                  booking.bookingDetailWithPetAndServices[0].service
+                    ?.serviceName
+                ) || "Unknown Service"
+              : "Unknown Service";
 
-            const formattedStatus = getStatusLabel(booking.status);
-            // console.log("Formatted status:", formattedStatus);
-            return {
-              id: booking.id,
-              userName,
-              time,
-              status: getStatusLabel(booking.status),
-              statusColor: getStatusColor(getStatusLabel(booking.status)),
-              catName,
-              serviceName,
-            };
-          });
-          setBookingData(formattedData);
-        } else {
-          console.warn("API response data is empty or not an array");
-          setBookingData([]); // Đảm bảo `bookingData` là mảng rỗng nếu không có dữ liệu hợp lệ
-        }
-      } catch (error) {
-        console.error("Error fetching bookings1111:", error);
-        setBookingData([]); // Đảm bảo luôn có dữ liệu là mảng
+          return {
+            id: booking.id,
+            userName,
+            time,
+            status: getStatusLabel(booking.status),
+            statusColor: getStatusColor(getStatusLabel(booking.status)),
+            catName,
+            serviceName,
+          };
+        });
+        setBookingData(formattedData);
+      } else {
+        console.warn("API response data is empty or not an array");
+        setBookingData([]);
       }
-    };
-    fetchBookings();
-  }, [user?.id]);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      setBookingData([]);
+    }
+  };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchBookings();
+    }, [user?.id])
+  );
   const getStatusLabel = (status) => {
     const statusMapping = {
       0: "Chờ xác nhận",
@@ -120,41 +136,6 @@ export default function Service() {
       "Đã hủy": "#FF4343",
     };
     return colorMapping[statusLabel] || "#000000";
-  };
-  const handleStatusUpdate = async (id, action) => {
-    try {
-      const endpoint = `/booking-orders/${id}`;
-      const updatedStatus = action === "accept" ? 1 : 4;
-
-      const dataToSend = {
-        sitterId: user.id,
-        status: updatedStatus,
-        address: "1",
-        name: "1",
-        phoneNumber: "123456789",
-        time: new Date().toISOString(),
-        startDate: new Date().toISOString(),
-        endDate: new Date().toISOString(),
-        note: "Update status",
-      };
-
-      console.log("Data to Send:", dataToSend);
-
-      const response = await putData(endpoint, dataToSend);
-
-      console.log("Response from API:", response);
-
-      setBookingData((prevData) =>
-        prevData.map((item) =>
-          item.id === id
-            ? { ...item, status: getStatusLabel(updatedStatus) }
-            : item
-        )
-      );
-    } catch (error) {
-      console.error("Error updating booking status:", error);
-      console.log("Error details:", error.response?.data || error.message);
-    }
   };
 
   // Component for User View
@@ -289,40 +270,31 @@ export default function Service() {
                   <Text style={styles.serviceName}>
                     Người đặt: {item.userName}
                   </Text>
+                  {item.status !== "Chờ xác nhận" && (
+                    <Text
+                      style={[
+                        styles.status,
+                        { color: item.statusColor, alignSelf: "flex-end" },
+                      ]}
+                    >
+                      {item.status}
+                    </Text>
+                  )}
                 </View>
                 <Text style={styles.time}>{item.time}</Text>
 
-                {Array.isArray(item.bookingDetails) &&
-                item.bookingDetails.length > 0 ? (
-                  item.bookingDetails.map((detail, index) => (
-                    <View key={index}></View>
-                  ))
-                ) : (
-                  <View>
-                    <Text style={styles.label}>
-                      Dịch vụ: {item.serviceName}
-                    </Text>
-                    <Text style={styles.label}>
-                      Mèo của người đặt: {item.catName}
-                    </Text>
-                    {item.status === "Chờ xác nhận" ? (
-                      <View style={styles.buttonRow}>
-                        <CustomButton
-                          title="Chấp nhận"
-                          onPress={() => handleStatusUpdate(item.id, "accept")}
-                        />
-                        <CustomButton
-                          title="Từ chối"
-                          onPress={() => handleStatusUpdate(item.id, "reject")}
-                        />
-                      </View>
-                    ) : (
-                      <Text
-                        style={[styles.status, { color: item.statusColor }]}
-                      >
-                        {item.status}
-                      </Text>
-                    )}
+                <Text style={styles.label}>Dịch vụ: {item.serviceName}</Text>
+                <Text style={styles.label}>
+                  Mèo của người đặt: {item.catName}
+                </Text>
+
+                {item.status === "Đang diễn ra" && (
+                  <View style={styles.buttonRow}>
+                    <CustomButton
+                      title="Theo dõi lịch"
+                      onPress={() => navigation.navigate("CareMonitor")}
+                    />
+                    <CustomButton title="Hủy lịch" />
                   </View>
                 )}
               </View>
@@ -362,7 +334,6 @@ export default function Service() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
