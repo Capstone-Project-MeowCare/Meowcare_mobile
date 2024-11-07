@@ -18,6 +18,16 @@ const CustomButton = ({ title, onPress }) => (
     <Text style={styles.buttonText}>{title}</Text>
   </TouchableOpacity>
 );
+const translateServiceName = (serviceName) => {
+  const serviceTranslations = {
+    "Basic Feeding": "Cho ăn cơ bản",
+    "Standard Grooming": "Chải lông tiêu chuẩn",
+    "Play Session": "Giờ chơi",
+    "Health Check-up": "Kiểm tra sức khỏe",
+    "Training Basics": "Huấn luyện cơ bản",
+  };
+  return serviceTranslations[serviceName] || serviceName;
+};
 
 export default function Activity() {
   const navigation = useNavigation();
@@ -44,26 +54,30 @@ export default function Activity() {
 
         const response = await getData(endpoint);
         if (response?.data) {
-          const formattedData = response.data.map((booking) => ({
+          const bookingData = response.data.map((booking) => ({
             id: booking.id,
-            serviceName:
-              booking.bookingDetailWithPetAndServices[0]?.service?.serviceName,
-            sitterName: booking.sitter?.fullName,
-            catName: booking.bookingDetailWithPetAndServices[0]?.pet?.petName,
+            serviceName: translateServiceName(
+              booking.bookingDetailWithPetAndServices[0]?.service?.serviceName
+            ),
+            catName: booking.bookingDetailWithPetAndServices
+              .map((detail) => detail.pet?.petName)
+              .filter(Boolean)
+              .join(", "),
+
             time: `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`,
             status: getStatusLabel(booking.status),
             statusColor: getStatusColor(getStatusLabel(booking.status)),
           }));
-          setBookingData(formattedData);
+          setBookingData(bookingData);
         }
       } catch (error) {
         console.error("Error fetching bookings:", error);
       }
     };
+
     fetchBookings();
   }, [user?.id]);
 
-  // Map numeric status values to text labels
   const getStatusLabel = (status) => {
     const statusMapping = {
       0: "Chờ xác nhận",
