@@ -44,7 +44,6 @@ export default function CatSitterService({ navigation }) {
     "Đã hủy",
   ];
 
-  // Fetch bookings
   useEffect(() => {
     if (!user?.id) return;
     const fetchBookings = async () => {
@@ -117,7 +116,7 @@ export default function CatSitterService({ navigation }) {
   const handleStatusUpdate = async (id, action) => {
     try {
       const endpoint = `/booking-orders/${id}`;
-      const updatedStatus = action === "accept" ? 3 : 4;
+      const updatedStatus = action === "accept" ? 2 : 4;
 
       const dataToSend = {
         sitterId: user.id,
@@ -133,15 +132,14 @@ export default function CatSitterService({ navigation }) {
 
       const response = await putData(endpoint, dataToSend);
 
-      setBookingData(
-        (prevData) =>
-          prevData
-            .map((item) =>
-              item.id === id
-                ? { ...item, status: getStatusLabel(updatedStatus) }
-                : item
-            )
-            .filter((item) => item.status !== "Đã hủy") // Lọc các mục có trạng thái "Đã hủy"
+      setBookingData((prevData) =>
+        prevData
+          .map((item) =>
+            item.id === id
+              ? { ...item, status: getStatusLabel(updatedStatus) }
+              : item
+          )
+          .filter((item) => item.status !== "Đã hủy")
       );
     } catch (error) {
       console.error("Error updating booking status:", error);

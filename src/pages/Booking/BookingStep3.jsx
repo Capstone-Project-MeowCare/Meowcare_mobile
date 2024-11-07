@@ -321,7 +321,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#000857",
-    marginLeft: height * 0.01,
+    textAlign: "center",
+    marginLeft: height * 0.03,
   },
   catBreed: {
     fontSize: 13,
@@ -329,6 +330,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: height * 0.002,
     color: "#000857",
+    marginLeft: height * 0.03,
   },
   circle: {
     width: 31,

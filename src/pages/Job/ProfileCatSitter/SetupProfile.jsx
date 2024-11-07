@@ -1,4 +1,4 @@
-import React, { useState, useRef  } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,12 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 
-export default function SetupProfile({navigation}) {
-  const [tab, setTab] = useState('edit'); // State to handle tab selection
+export default function SetupProfile({ navigation }) {
+  const [tab, setTab] = useState("edit"); // State to handle tab selection
   const [introduction, setIntroduction] = useState("");
-  
+
   const [images, setImages] = useState([
     { id: "1", uri: "../../../assets/BecomeCatsitter.png" }, // Thay "image1_url" bằng link ảnh thật
   ]);
@@ -47,9 +47,8 @@ export default function SetupProfile({navigation}) {
   const formatTime = (timeInHours) => {
     const hours = Math.floor(timeInHours);
     const minutes = Math.floor((timeInHours % 1) * 60);
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
   };
-
 
   const addActivity = () => {
     const lastActivity = activities[activities.length - 1];
@@ -58,11 +57,13 @@ export default function SetupProfile({navigation}) {
 
     // Check if we've reached the max end time
     if (lastEndTime >= maxEndTime) {
-      Alert.alert("Không thể thêm hoạt động", "Thời gian hoạt động đã đến giới hạn 21:00.");
-      endInputRefs.current[index].focus(); 
+      Alert.alert(
+        "Không thể thêm hoạt động",
+        "Thời gian hoạt động đã đến giới hạn 21:00."
+      );
+      endInputRefs.current[index].focus();
       return;
     }
-  
 
     const newStartTime = lastEndTime;
     const newEndTime = Math.min(newStartTime + 1, maxEndTime); // Adjust to 1-hour duration
@@ -78,19 +79,25 @@ export default function SetupProfile({navigation}) {
 
   const updateActivity = (index, field, value, shouldValidate = true) => {
     const updatedActivities = [...activities];
-  
+
     if (field === "end" && shouldValidate) {
       const start = convertTo24HourFormat(updatedActivities[index].start);
       const end = convertTo24HourFormat(value);
       const duration = end - start;
-  
+
       if (duration < 1) {
         // Automatically correct to 1 hour if below minimum
-        Alert.alert("Lỗi", "Thời gian cho mỗi hoạt động phải tối thiểu là 1 giờ. Tự động sửa thành 1 giờ.");
+        Alert.alert(
+          "Lỗi",
+          "Thời gian cho mỗi hoạt động phải tối thiểu là 1 giờ. Tự động sửa thành 1 giờ."
+        );
         updatedActivities[index].end = formatTime(start + 1); // Set end time to 1 hour after start
       } else if (duration > 3) {
         // Automatically correct to 3 hours if above maximum
-        Alert.alert("Lỗi", "Thời gian cho mỗi hoạt động không được vượt quá 3 giờ. Tự động sửa thành 3 giờ.");
+        Alert.alert(
+          "Lỗi",
+          "Thời gian cho mỗi hoạt động không được vượt quá 3 giờ. Tự động sửa thành 3 giờ."
+        );
         updatedActivities[index].end = formatTime(start + 3); // Set end time to 3 hours after start
       } else {
         // If valid, set the end time as entered
@@ -118,15 +125,15 @@ export default function SetupProfile({navigation}) {
         />
         <Text style={styles.separator}>-</Text>
         <TextInput
-         ref={(ref) => (endInputRefs.current[index] = ref)}
+          ref={(ref) => (endInputRefs.current[index] = ref)}
           style={styles.input}
           placeholder="Kết thúc"
           value={item.end}
           onChangeText={(text) => updateActivity(index, "end", text, false)} // Pass `false` to skip validation during typing
-        onEndEditing={() => updateActivity(index, "end", item.end, true)} // Pass `true` to validate on end editing
-      />
-    </View>
-      
+          onEndEditing={() => updateActivity(index, "end", item.end, true)} // Pass `true` to validate on end editing
+        />
+      </View>
+
       <TextInput
         style={styles.input}
         placeholder="Mô tả hoạt động"
@@ -134,13 +141,15 @@ export default function SetupProfile({navigation}) {
         onChangeText={(text) => updateActivity(index, "description", text)}
       />
       <View style={styles.actionButtons}>
-        <TouchableOpacity onPress={() => removeActivity(index)} style={styles.actionButton}>
+        <TouchableOpacity
+          onPress={() => removeActivity(index)}
+          style={styles.actionButton}
+        >
           <Ionicons name="trash-outline" size={20} color="#FF4D4D" />
         </TouchableOpacity>
       </View>
     </View>
   );
-
 
   return (
     <View style={styles.container}>
@@ -152,26 +161,34 @@ export default function SetupProfile({navigation}) {
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Hồ sơ hẹn hò</Text>
+        <Text style={styles.headerTitle}>Hồ sơ hoạt động</Text>
 
-        <TouchableOpacity  onPress={handleSave}>
+        <TouchableOpacity onPress={handleSave}>
           <Text style={styles.saveText}>Lưu</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.divider} />
       {/* Tabs for switching between Edit Profile and Preview Profile */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tabButton, tab === 'edit' && styles.activeTab]} 
-          onPress={() => setTab('edit')}
+        <TouchableOpacity
+          style={[styles.tabButton, tab === "edit" && styles.activeTab]}
+          onPress={() => setTab("edit")}
         >
-          <Text style={[styles.tabText, tab === 'edit' && styles.activeTabText]}>Chỉnh sửa hồ sơ</Text>
+          <Text
+            style={[styles.tabText, tab === "edit" && styles.activeTabText]}
+          >
+            Chỉnh sửa hồ sơ
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tabButton, tab === 'preview' && styles.activeTab]} 
-          onPress={() => setTab('preview')}
+        <TouchableOpacity
+          style={[styles.tabButton, tab === "preview" && styles.activeTab]}
+          onPress={() => setTab("preview")}
         >
-          <Text style={[styles.tabText, tab === 'preview' && styles.activeTabText]}>Xem lại hồ sơ</Text>
+          <Text
+            style={[styles.tabText, tab === "preview" && styles.activeTabText]}
+          >
+            Xem lại hồ sơ
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -179,9 +196,8 @@ export default function SetupProfile({navigation}) {
       <View style={styles.divider} />
 
       {/* Main Content */}
-       {/* ------------------------------------------ Setup profile---------------------------------------------------- */}
-      {tab === 'edit' ? (
-        
+      {/* ------------------------------------------ Setup profile---------------------------------------------------- */}
+      {tab === "edit" ? (
         <ScrollView style={styles.editProfileContainer}>
           <Text style={styles.sectionTitle}>Ảnh và gợi ý</Text>
           <Text style={styles.sectionSubtitle}>
@@ -200,7 +216,16 @@ export default function SetupProfile({navigation}) {
           <TouchableOpacity style={styles.addButton}>
             <Text style={styles.addButtonText}>Thêm ảnh hoặc gợi ý</Text>
           </TouchableOpacity>
-
+          <Text style={styles.sectionTitle}>Tiểu sử của bản thân:</Text>
+          <TextInput
+            style={styles.textInput}
+            multiline
+            numberOfLines={4}
+            maxLength={500}
+            value={introduction}
+            onChangeText={(text) => setIntroduction(text)}
+            placeholder="Bạn hãy mô tả tiểu sử của bản thân nhé..."
+          />
           <Text style={styles.sectionTitle}>Kinh nghiệm chăm sóc mèo:</Text>
           <TextInput
             style={styles.textInput}
@@ -221,24 +246,30 @@ export default function SetupProfile({navigation}) {
               keyExtractor={(item) => item.id}
               scrollEnabled={false} // Disable FlatList scrolling
             />
-             <TouchableOpacity style={styles.addButtonActivity} onPress={addActivity}>
-            <Text style={styles.addButtonText}>+ Thêm hoạt động</Text>
+            <TouchableOpacity
+              style={styles.addButtonActivity}
+              onPress={addActivity}
+            >
+              <Text style={styles.addButtonText}>+ Thêm hoạt động</Text>
             </TouchableOpacity>
           </View>
-         
 
-          <View style= {styles.end}>
-          <Text style={styles.sectionTitle}>An toàn, tin cậy & môi trường</Text>
-          <TextInput
-            style={styles.textInput}
-            multiline
-            numberOfLines={4}
-            maxLength={500}
-            value={introduction}
-            onChangeText={(text) => setIntroduction(text)}
-            placeholder="Bạn hãy mô tả một ít về khu vực bạn đang sinh sống..."
-          />
-          <Text style={styles.characterCount}>{introduction.length} / 500</Text>
+          <View style={styles.end}>
+            <Text style={styles.sectionTitle}>
+              An toàn, tin cậy & môi trường
+            </Text>
+            <TextInput
+              style={styles.textInput}
+              multiline
+              numberOfLines={4}
+              maxLength={500}
+              value={introduction}
+              onChangeText={(text) => setIntroduction(text)}
+              placeholder="Bạn hãy mô tả một ít về khu vực bạn đang sinh sống..."
+            />
+            <Text style={styles.characterCount}>
+              {introduction.length} / 500
+            </Text>
           </View>
         </ScrollView>
       ) : (
@@ -311,9 +342,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#1F1F1F",
     marginBottom: 4,
-    marginTop:10,
+    marginTop: 10,
   },
-  
+
   imageList: {
     marginBottom: 16,
   },
@@ -362,7 +393,7 @@ const styles = StyleSheet.create({
     color: "#8E8E8E",
     marginTop: 4,
   },
- activityContainer: {
+  activityContainer: {
     backgroundColor: "#FFFFFF",
     padding: 16,
     marginBottom: 16,
@@ -418,7 +449,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
-    marginTop:-40,
+    marginTop: -40,
   },
   addButtonText: {
     color: "#FFFFFF",
@@ -436,8 +467,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  end:{
-  marginBottom:50,
+  end: {
+    marginBottom: 50,
   },
 
   previewProfileContainer: {

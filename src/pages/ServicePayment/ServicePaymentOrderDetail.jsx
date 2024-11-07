@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -8,26 +8,55 @@ import {
   Image,
   Dimensions,
 } from "react-native";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
-
+const translateServiceName = (serviceName) => {
+  const serviceTranslations = {
+    "Basic Feeding": "Cho ăn cơ bản",
+    "Standard Grooming": "Chải lông tiêu chuẩn",
+    "Play Session": "Giờ chơi",
+    "Health Check-up": "Kiểm tra sức khỏe",
+    "Training Basics": "Huấn luyện cơ bản",
+  };
+  return serviceTranslations[serviceName] || serviceName;
+};
 export default function ServicePaymentOrderDetail() {
   const navigation = useNavigation();
-
+  const [bookingData, setBookingData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const route = useRoute();
+  const bookingId = route.params?.bookingId;
 
-  const {
-    step1Info = {},
-    step2Info = {},
-    step3Info = {},
-    contactInfo = {},
-  } = route.params || {};
-  console.log("Step 1 Info:", step1Info);
-  console.log("Step 2 Info:", step2Info);
-  console.log("Step 3 Info:", step3Info);
-  console.log("Contact Info:", contactInfo);
-  const selectedCatNames = (step3Info.selectedCats || [])
-    .map((cat) => cat.name) // Truy cập thuộc tính 'name' của object mèo
+  useEffect(() => {
+    const fetchBookingDetails = async () => {
+      if (!bookingId) return;
+
+      try {
+        const response = await getData(`/booking-orders/${bookingId}`);
+        // console.log(
+        //   "Fetched booking details:",
+        //   response.data.bookingDetailWithPetAndServices
+        // );
+        setBookingData(response.data);
+      } catch (error) {
+        console.error("Error fetching booking details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookingDetails();
+  }, [bookingId]);
+
+  const serviceName = translateServiceName(
+    bookingData?.bookingDetailWithPetAndServices?.[0]?.service?.serviceName ||
+      "Unknown Service"
+  );
+
+  const petNames = bookingData?.bookingDetailWithPetAndServices
+    ?.map((detail) => detail.pet?.petName)
+    .filter(Boolean)
     .join(", ");
 
   return (
@@ -42,37 +71,39 @@ export default function ServicePaymentOrderDetail() {
           source={require("../../../assets/image91.png")}
           style={styles.roundImage}
         />
-        <Text style={styles.serviceText}>{step1Info.selectedService}</Text>
+        <Text style={styles.serviceText}>{serviceName}</Text>
       </View>
 
       <View style={styles.infoContainer}>
-        <Text style={styles.boldInfoText}>
+        {/* <Text style={styles.boldInfoText}>
           Thức ăn theo yêu cầu:{" "}
           <Text style={styles.highlightedText}>{step1Info.selectedFood}</Text>
-        </Text>
+        </Text> */}
         <Text style={styles.boldInfoText}>
           Thời gian chăm sóc:{" "}
           <Text style={styles.highlightedText}>
-            {step2Info.startTime} {step2Info.startDate} - {step2Info.endTime}{" "}
-            {step2Info.endDate}
+            {" "}
+            {new Date(
+              bookingData?.startDate * 1000
+            ).toLocaleDateString()} -{" "}
+            {new Date(bookingData?.endDate * 1000).toLocaleDateString()}
           </Text>
         </Text>
         <Text style={styles.boldInfoText}>
-          Mèo của bạn:{" "}
-          <Text style={styles.highlightedText}>{selectedCatNames}</Text>
+          Mèo của bạn: <Text style={styles.highlightedText}>{petNames}</Text>
         </Text>
         <View style={styles.separator1} />
         <Text style={styles.boldInfoText}>
           Họ và tên:{" "}
-          <Text style={styles.highlightedText}>{contactInfo.name}</Text>
+          <Text style={styles.highlightedText}>{bookingData?.name}</Text>
         </Text>
         <Text style={styles.boldInfoText}>
           Số điện thoại:{" "}
-          <Text style={styles.highlightedText}>{contactInfo.phoneNumber}</Text>
+          <Text style={styles.highlightedText}>{bookingData?.phoneNumber}</Text>
         </Text>
         <Text style={styles.boldInfoText}>
           Lời nhắn:{" "}
-          <Text style={styles.highlightedText}>{contactInfo.note}</Text>
+          <Text style={styles.highlightedText}>{bookingData?.note}</Text>
         </Text>
       </View>
 
