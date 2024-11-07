@@ -55,6 +55,7 @@ import SetupShedule from "./src/pages/Job/ProfileCatSitter/SetupShedule";
 import SetupLocation from "./src/pages/Job/ProfileCatSitter/SetupLocation";
 import SetupProfile from "./src/pages/Job/ProfileCatSitter/SetupProfile";
 import Notification from "./src/pages/Login/Notification";
+import FavoriteCatSitter from "./src/pages/Homepage/FavoriteCatSitter";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -155,6 +156,11 @@ export function Routes() {
           name="Thông báo"
           options={{ headerLeft: null, headerShown: false }}
           component={Notification}
+        />
+        <Stack.Screen
+          name="Yêu thích"
+          options={{ headerLeft: null, headerShown: false }}
+          component={FavoriteCatSitter}
         />
         <Stack.Screen
           name="BecomeSitter"

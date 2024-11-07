@@ -173,12 +173,14 @@ export default function Home({ navigation }) {
                   placeholder="Tìm kiếm người chăm sóc theo vị trí"
                   style={styles.searchBar}
                 />
+                <TouchableOpacity onPress={() => navigation.navigate("Yêu thích")}>
                 <FontAwesome
                   name="heart-o"
                   size={24}
                   color="#000857"
                   style={styles.searchIcon}
                 />
+                </TouchableOpacity>
               </View>
             </View>
             <View style={{ flex: 1, height: height * 0.6 }}>
