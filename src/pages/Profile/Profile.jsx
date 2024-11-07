@@ -55,7 +55,7 @@ export default function Profile() {
         <Text style={styles.squareText}>Số dư</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.squareContainer}>
+      <TouchableOpacity style={styles.squareContainer} onPress={() => navigation.navigate("Yêu thích")}>
         <Ionicons name="heart-outline" size={30} color="#902C6C" />
         <Text style={styles.squareText}>Yêu thích</Text>
       </TouchableOpacity>
