@@ -92,14 +92,17 @@ export default function Service() {
                 ? booking.bookingDetailWithPetAndServices[0].pet?.petName ||
                   "Unknown Pet"
                 : "Unknown Pet";
-
+            console.log("Cat Name:", catName);
             const serviceName =
               Array.isArray(booking.bookingDetailWithPetAndServices) &&
               booking.bookingDetailWithPetAndServices.length > 0
                 ? booking.bookingDetailWithPetAndServices[0].service
                     ?.serviceName || "Unknown Service"
                 : "Unknown Service";
+            console.log("Original status:", booking.status);
 
+            const formattedStatus = getStatusLabel(booking.status);
+            console.log("Formatted status:", formattedStatus);
             return {
               id: booking.id,
               userName,
@@ -290,15 +293,22 @@ export default function Service() {
                   item.bookingDetails.map((detail, index) => (
                     <View key={index} style={styles.petServiceContainer}>
                       <Text style={styles.label}>
-                        Dịch vụ: {detail.serviceName}
+                        Dịch vụ: {detail.serviceName || item.serviceName}
                       </Text>
                       <Text style={styles.label}>
-                        Mèo của người đặt: {detail.catName}
+                        Mèo của người đặt: {detail.catName || item.catName}
                       </Text>
                     </View>
                   ))
                 ) : (
-                  <Text style={styles.label}>Không có chi tiết dịch vụ</Text>
+                  <View style={styles.petServiceContainer}>
+                    <Text style={styles.label}>
+                      Dịch vụ: {item.serviceName}
+                    </Text>
+                    <Text style={styles.label}>
+                      Mèo của người đặt: {item.catName}
+                    </Text>
+                  </View>
                 )}
               </View>
             ))}
@@ -526,6 +536,7 @@ const styles = StyleSheet.create({
     fontSize: width * 0.036,
     color: "rgba(0,8,87,0.6)",
   },
+
   time: {
     fontSize: width * 0.035,
     color: "rgba(0,8,97,0.8)",
