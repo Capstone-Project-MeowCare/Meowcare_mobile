@@ -12,40 +12,14 @@ import {
 import { createStackNavigator } from "@react-navigation/stack";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../../auth/useAuth";
-import { getData } from "../../api/api";
+import { getData, putData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
-
-const mockData = [
-  {
-    id: 1,
-    serviceName: "Gửi thú cưng",
-    sitterName: "Nguyễn Hoài Phúc",
-    catName: "Mèo Kitkat",
-    time: "8:00, 27/10/2024 - 15:00, 29/10/2024",
-    status: "Đang diễn ra",
-    statusColor: "#FFC107",
-  },
-  {
-    id: 2,
-    serviceName: "Trông thú cưng",
-    sitterName: "Nguyễn Phương Đại",
-    catName: "Kitty",
-    time: "9:00, 25/10/2024 - 12:00, 26/10/2024",
-    status: "Chờ xác nhận",
-    statusColor: "#9E9E9E",
-  },
-  {
-    id: 3,
-    serviceName: "Trông tại nhà",
-    sitterName: "ABC",
-    catName: "Orange",
-    time: "10:00, 20/10/2024 - 16:00, 22/10/2024",
-    status: "Đã hủy",
-    statusColor: "#FF4343",
-  },
-];
-
+const CustomButton = ({ title, onPress }) => (
+  <TouchableOpacity style={styles.button} onPress={onPress}>
+    <Text style={styles.buttonText}>{title}</Text>
+  </TouchableOpacity>
+);
 export default function Service() {
   const { roles, user } = useAuth();
   const Stack = createStackNavigator();
@@ -74,10 +48,10 @@ export default function Service() {
     const fetchBookings = async () => {
       try {
         const endpoint = `/booking-orders/sitter?id=${user?.id}`;
-        console.log("API Endpoint:", endpoint);
+        // console.log("API Endpoint:", endpoint);
 
         const response = await getData(endpoint);
-        console.log("API Response:", response);
+        // console.log("API Response:", response);
 
         if (response && response.data && Array.isArray(response.data)) {
           const formattedData = response.data.map((booking) => {
@@ -92,17 +66,17 @@ export default function Service() {
                 ? booking.bookingDetailWithPetAndServices[0].pet?.petName ||
                   "Unknown Pet"
                 : "Unknown Pet";
-            console.log("Cat Name:", catName);
+            // console.log("Cat Name:", catName);
             const serviceName =
               Array.isArray(booking.bookingDetailWithPetAndServices) &&
               booking.bookingDetailWithPetAndServices.length > 0
                 ? booking.bookingDetailWithPetAndServices[0].service
                     ?.serviceName || "Unknown Service"
                 : "Unknown Service";
-            console.log("Original status:", booking.status);
+            // console.log("Original status:", booking.status);
 
             const formattedStatus = getStatusLabel(booking.status);
-            console.log("Formatted status:", formattedStatus);
+            // console.log("Formatted status:", formattedStatus);
             return {
               id: booking.id,
               userName,
@@ -125,7 +99,7 @@ export default function Service() {
     };
     fetchBookings();
   }, [user?.id]);
-  // Map numeric status values to text labels
+
   const getStatusLabel = (status) => {
     const statusMapping = {
       0: "Chờ xác nhận",
@@ -137,7 +111,6 @@ export default function Service() {
     return statusMapping[status] || "Không xác định";
   };
 
-  // Get color based on the status label
   const getStatusColor = (statusLabel) => {
     const colorMapping = {
       "Chờ xác nhận": "#9E9E9E",
@@ -147,6 +120,41 @@ export default function Service() {
       "Đã hủy": "#FF4343",
     };
     return colorMapping[statusLabel] || "#000000";
+  };
+  const handleStatusUpdate = async (id, action) => {
+    try {
+      const endpoint = `/booking-orders/${id}`;
+      const updatedStatus = action === "accept" ? 1 : 4;
+
+      const dataToSend = {
+        sitterId: user.id,
+        status: updatedStatus,
+        address: "1",
+        name: "1",
+        phoneNumber: "123456789",
+        time: new Date().toISOString(),
+        startDate: new Date().toISOString(),
+        endDate: new Date().toISOString(),
+        note: "Update status",
+      };
+
+      console.log("Data to Send:", dataToSend);
+
+      const response = await putData(endpoint, dataToSend);
+
+      console.log("Response from API:", response);
+
+      setBookingData((prevData) =>
+        prevData.map((item) =>
+          item.id === id
+            ? { ...item, status: getStatusLabel(updatedStatus) }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error("Error updating booking status:", error);
+      console.log("Error details:", error.response?.data || error.message);
+    }
   };
 
   // Component for User View
@@ -175,7 +183,6 @@ export default function Service() {
     </View>
   );
 
-  // Component for Cat Sitter View
   const CatSitterView = () => (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1, paddingBottom: height * 0.1 }}
@@ -282,32 +289,40 @@ export default function Service() {
                   <Text style={styles.serviceName}>
                     Người đặt: {item.userName}
                   </Text>
-                  <Text style={[styles.status, { color: item.statusColor }]}>
-                    {item.status}
-                  </Text>
                 </View>
                 <Text style={styles.time}>{item.time}</Text>
 
                 {Array.isArray(item.bookingDetails) &&
                 item.bookingDetails.length > 0 ? (
                   item.bookingDetails.map((detail, index) => (
-                    <View key={index} style={styles.petServiceContainer}>
-                      <Text style={styles.label}>
-                        Dịch vụ: {detail.serviceName || item.serviceName}
-                      </Text>
-                      <Text style={styles.label}>
-                        Mèo của người đặt: {detail.catName || item.catName}
-                      </Text>
-                    </View>
+                    <View key={index}></View>
                   ))
                 ) : (
-                  <View style={styles.petServiceContainer}>
+                  <View>
                     <Text style={styles.label}>
                       Dịch vụ: {item.serviceName}
                     </Text>
                     <Text style={styles.label}>
                       Mèo của người đặt: {item.catName}
                     </Text>
+                    {item.status === "Chờ xác nhận" ? (
+                      <View style={styles.buttonRow}>
+                        <CustomButton
+                          title="Chấp nhận"
+                          onPress={() => handleStatusUpdate(item.id, "accept")}
+                        />
+                        <CustomButton
+                          title="Từ chối"
+                          onPress={() => handleStatusUpdate(item.id, "reject")}
+                        />
+                      </View>
+                    ) : (
+                      <Text
+                        style={[styles.status, { color: item.statusColor }]}
+                      >
+                        {item.status}
+                      </Text>
+                    )}
                   </View>
                 )}
               </View>
@@ -429,7 +444,7 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
   },
   tabButton: {
@@ -532,11 +547,31 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#000857",
   },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    marginTop: height * 0.02,
+    right: height * 0.012,
+    top: height * 0.01,
+  },
+  button: {
+    width: width * 0.26,
+    height: height * 0.04,
+    backgroundColor: "#2E67D1",
+    borderRadius: width * 0.04,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: height * 0.008,
+  },
+  buttonText: {
+    color: "#FFF",
+    fontSize: width * 0.03,
+    fontWeight: "bold",
+  },
   sitterName: {
     fontSize: width * 0.036,
     color: "rgba(0,8,87,0.6)",
   },
-
   time: {
     fontSize: width * 0.035,
     color: "rgba(0,8,97,0.8)",
