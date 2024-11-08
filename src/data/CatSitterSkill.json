@@ -1,0 +1,23 @@
+[
+    { "id": 1, "skill": "Cho ăn đúng cách và đủ dinh dưỡng" },
+    { "id": 2, "skill": "Chải lông và chăm sóc lông mèo" },
+    { "id": 3, "skill": "Vệ sinh khay cát thường xuyên" },
+    { "id": 4, "skill": "Nhận biết các dấu hiệu bệnh thường gặp ở mèo" },
+    { "id": 5, "skill": "Giữ vệ sinh nơi ở và đồ chơi của mèo" },
+    { "id": 6, "skill": "Tạo điều kiện cho mèo vận động" },
+    { "id": 7, "skill": "Đánh răng và chăm sóc răng miệng cho mèo" },
+    { "id": 8, "skill": "Kiểm tra sức khỏe định kỳ" },
+    { "id": 9, "skill": "Đảm bảo đủ nước uống sạch cho mèo" },
+    { "id": 10, "skill": "Chăm sóc móng, cắt tỉa móng thường xuyên" },
+    { "id": 11, "skill": "Huấn luyện mèo sử dụng khay cát" },
+    { "id": 12, "skill": "Quan sát và hiểu ngôn ngữ cơ thể của mèo" },
+    { "id": 13, "skill": "Xây dựng mối quan hệ thân thiện và tin cậy với mèo" },
+    { "id": 14, "skill": "Chăm sóc sức khỏe tâm lý và giảm căng thẳng cho mèo" },
+    { "id": 15, "skill": "Nhận biết và xử lý các vết thương nhỏ" },
+    { "id": 16, "skill": "Tạo lịch trình chăm sóc hợp lý" },
+    { "id": 17, "skill": "Chọn đồ chơi phù hợp và an toàn cho mèo" },
+    { "id": 18, "skill": "Giúp mèo thích nghi với môi trường mới" },
+    { "id": 19, "skill": "Chăm sóc mắt, tai và vệ sinh tai mèo" },
+    { "id": 20, "skill": "Xử lý các tình huống khẩn cấp liên quan đến sức khỏe" }
+  ]
+  

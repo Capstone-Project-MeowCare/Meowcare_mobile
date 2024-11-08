@@ -20,6 +20,7 @@ import { useAuth } from "../../../auth/useAuth";
 import * as yup from "yup";
 import { useForm, FormProvider } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import * as Device from "expo-device";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
@@ -132,9 +133,14 @@ export default function Login() {
     Keyboard.dismiss();
 
     try {
+      const deviceId = Device.osBuildId || "unknown_deviceId";
+      const deviceName = Device.modelName || "unknown_device";
+
       const responseData = await postData("/auth/token", {
         email: data.email,
         password: data.password,
+        deviceId,
+        deviceName,
       });
 
       if (responseData.status !== 1000 || !responseData.data.token) {

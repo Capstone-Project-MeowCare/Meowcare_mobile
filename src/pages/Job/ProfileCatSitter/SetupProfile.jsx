@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,147 +9,168 @@ import {
   FlatList,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../../../auth/useAuth";
+import { getData, putData } from "../../../api/api";
+import { firebaseImg } from "../../../api/firebaseImg";
+import CatSitterSkill from "../../../data/CatSitterSkill.json";
+import CustomToast from "../../../components/CustomToast";
 
 export default function SetupProfile({ navigation }) {
-  const [tab, setTab] = useState("edit"); // State to handle tab selection
-  const [introduction, setIntroduction] = useState("");
+  const { user } = useAuth();
+  const [bio, setBio] = useState("");
+  const [experience, setExperience] = useState("");
+  const [environment, setEnvironment] = useState("");
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [profilePictures, setProfilePictures] = useState([]);
+  const [sitterProfileId, setSitterProfileId] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [images, setImages] = useState([
-    { id: "1", uri: "../../../assets/BecomeCatsitter.png" }, // Thay "image1_url" bằng link ảnh thật
-  ]);
   const renderImage = ({ item }) => (
     <View style={styles.imageContainer}>
-      <Image source={{ uri: item.uri }} style={styles.image} />
-      <TouchableOpacity style={styles.removeButton}>
+      <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      <TouchableOpacity
+        style={styles.removeButton}
+        onPress={() =>
+          setProfilePictures((prevPictures) =>
+            prevPictures.filter((pic) => pic.id !== item.id)
+          )
+        }
+      >
         <Text style={styles.removeText}>X</Text>
       </TouchableOpacity>
     </View>
   );
 
-  const handleSave = () => {
-    // Xử lý logic lưu thông tin
-    Alert.alert("Thông báo", "Thông tin của bạn đã được lưu thành công!");
-  };
+  const handleImagePick = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+      });
 
-  const [activities, setActivities] = useState([
-    { id: "1", start: "6:00", end: "9:00", description: "Mô tả hoạt động" },
-  ]);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newImage = result.assets[0];
+        if (newImage.uri) {
+          const imageUrl = await firebaseImg(newImage.uri);
 
-  const endInputRefs = useRef([]);
-
-  const convertTo24HourFormat = (time) => {
-    const [hours, minutes] = time.split(":").map(Number);
-    return hours + minutes / 60;
-  };
-
-  const formatTime = (timeInHours) => {
-    const hours = Math.floor(timeInHours);
-    const minutes = Math.floor((timeInHours % 1) * 60);
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-  };
-
-  const addActivity = () => {
-    const lastActivity = activities[activities.length - 1];
-    const lastEndTime = convertTo24HourFormat(lastActivity.end);
-    const maxEndTime = 21; // 9:00 PM in 24-hour format
-
-    // Check if we've reached the max end time
-    if (lastEndTime >= maxEndTime) {
-      Alert.alert(
-        "Không thể thêm hoạt động",
-        "Thời gian hoạt động đã đến giới hạn 21:00."
-      );
-      endInputRefs.current[index].focus();
-      return;
-    }
-
-    const newStartTime = lastEndTime;
-    const newEndTime = Math.min(newStartTime + 1, maxEndTime); // Adjust to 1-hour duration
-
-    const newActivity = {
-      id: (activities.length + 1).toString(),
-      start: formatTime(newStartTime),
-      end: formatTime(newEndTime),
-      description: "",
-    };
-    setActivities([...activities, newActivity]);
-  };
-
-  const updateActivity = (index, field, value, shouldValidate = true) => {
-    const updatedActivities = [...activities];
-
-    if (field === "end" && shouldValidate) {
-      const start = convertTo24HourFormat(updatedActivities[index].start);
-      const end = convertTo24HourFormat(value);
-      const duration = end - start;
-
-      if (duration < 1) {
-        // Automatically correct to 1 hour if below minimum
-        Alert.alert(
-          "Lỗi",
-          "Thời gian cho mỗi hoạt động phải tối thiểu là 1 giờ. Tự động sửa thành 1 giờ."
-        );
-        updatedActivities[index].end = formatTime(start + 1); // Set end time to 1 hour after start
-      } else if (duration > 3) {
-        // Automatically correct to 3 hours if above maximum
-        Alert.alert(
-          "Lỗi",
-          "Thời gian cho mỗi hoạt động không được vượt quá 3 giờ. Tự động sửa thành 3 giờ."
-        );
-        updatedActivities[index].end = formatTime(start + 3); // Set end time to 3 hours after start
+          if (imageUrl) {
+            const newProfilePicture = {
+              id: new Date().getTime().toString(),
+              imageName: newImage.uri.split("/").pop(),
+              imageUrl: imageUrl,
+            };
+            setProfilePictures((prevPictures) => [
+              ...prevPictures,
+              newProfilePicture,
+            ]);
+          }
+        } else {
+          console.log("Invalid image URI");
+        }
       } else {
-        // If valid, set the end time as entered
-        updatedActivities[index][field] = value;
+        console.log("No image selected or assets not available");
       }
-    } else {
-      updatedActivities[index][field] = value;
+    } catch (error) {
+      console.error("Error picking image:", error);
     }
-
-    setActivities(updatedActivities);
-  };
-  const removeActivity = (index) => {
-    const updatedActivities = activities.filter((_, i) => i !== index);
-    setActivities(updatedActivities);
   };
 
-  const renderActivity = ({ item, index }) => (
-    <View style={styles.activityContainer}>
-      <View style={styles.row}>
-        <TextInput
-          style={styles.input}
-          placeholder="Bắt đầu"
-          value={item.start}
-          editable={false}
-        />
-        <Text style={styles.separator}>-</Text>
-        <TextInput
-          ref={(ref) => (endInputRefs.current[index] = ref)}
-          style={styles.input}
-          placeholder="Kết thúc"
-          value={item.end}
-          onChangeText={(text) => updateActivity(index, "end", text, false)} // Pass `false` to skip validation during typing
-          onEndEditing={() => updateActivity(index, "end", item.end, true)} // Pass `true` to validate on end editing
-        />
-      </View>
+  useEffect(() => {
+    const fetchSitterProfileId = async () => {
+      try {
+        const response = await getData(`/sitter-profiles/sitter/${user.id}`);
+        if (response?.data?.id) {
+          setSitterProfileId(response.data.id);
+        } else {
+          console.log("Không tìm thấy sitter profile ID");
+        }
+      } catch (error) {
+        console.error("Error fetching sitter profile ID:", error);
+      }
+    };
 
-      <TextInput
-        style={styles.input}
-        placeholder="Mô tả hoạt động"
-        value={item.description}
-        onChangeText={(text) => updateActivity(index, "description", text)}
-      />
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          onPress={() => removeActivity(index)}
-          style={styles.actionButton}
-        >
-          <Ionicons name="trash-outline" size={20} color="#FF4D4D" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    if (user?.id) {
+      fetchSitterProfileId();
+    }
+  }, [user?.id]);
+
+  const handleSave = async () => {
+    try {
+      if (!sitterProfileId) {
+        Alert.alert("Lỗi", "Không thể lấy ID của hồ sơ người chăm sóc.");
+        return;
+      }
+
+      setIsSaving(true); // Bắt đầu hiển thị ActivityIndicator
+
+      const profileData = {
+        sitterId: user?.id,
+        bio,
+        experience,
+        environment,
+        skill: selectedSkills.join(","),
+        rating: 0,
+        profilePictures: profilePictures.map((pic) => ({
+          imageName: pic.imageName,
+          imageUrl: pic.imageUrl,
+        })),
+      };
+
+      const endpoint = `/sitter-profiles/${sitterProfileId}`;
+      console.log("API Endpoint:", endpoint);
+      console.log("Payload Data:", profileData);
+
+      const response = await putData(endpoint, profileData, "PUT");
+      console.log("Profile Pictures:", response.data.profilePictures);
+      console.log("API Response:", response);
+
+      CustomToast({
+        text: "Chỉnh sửa hồ sơ thành công",
+        position: 300,
+      });
+
+      navigation.navigate("CatSitterProfile");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+
+      if (error.response) {
+        console.log("Error Response Data:", error.response.data);
+        console.log("Error Response Status:", error.response.status);
+        console.log("Error Response Headers:", error.response.headers);
+      } else {
+        console.log("Error Message:", error.message);
+      }
+      Alert.alert("Lỗi", "Không thể lưu thông tin. Vui lòng thử lại sau.");
+    } finally {
+      setIsSaving(false); // Kết thúc hiển thị ActivityIndicator
+    }
+  };
+
+  const toggleSkillSelection = (skillId) => {
+    const skillName = CatSitterSkill.find(
+      (skill) => skill.id === skillId
+    )?.skill;
+
+    if (!skillName) return;
+
+    if (selectedSkills.includes(skillName)) {
+      setSelectedSkills((prevSkills) =>
+        prevSkills.filter((s) => s !== skillName)
+      );
+    } else if (selectedSkills.length < 6) {
+      setSelectedSkills((prevSkills) => [...prevSkills, skillName]);
+    } else {
+      CustomToast({
+        text: "Bạn chỉ có thể chọn tối đa 6 kĩ năng. Vui lòng thử lại.",
+        position: 300,
+      });
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -163,125 +184,108 @@ export default function SetupProfile({ navigation }) {
 
         <Text style={styles.headerTitle}>Hồ sơ hoạt động</Text>
 
-        <TouchableOpacity onPress={handleSave}>
-          <Text style={styles.saveText}>Lưu</Text>
+        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
+          {isSaving ? (
+            <ActivityIndicator size="small" color="#902C6C" />
+          ) : (
+            <Text style={styles.saveText}>Lưu</Text>
+          )}
         </TouchableOpacity>
       </View>
       <View style={styles.divider} />
-      {/* Tabs for switching between Edit Profile and Preview Profile */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabButton, tab === "edit" && styles.activeTab]}
-          onPress={() => setTab("edit")}
-        >
-          <Text
-            style={[styles.tabText, tab === "edit" && styles.activeTabText]}
-          >
-            Chỉnh sửa hồ sơ
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, tab === "preview" && styles.activeTab]}
-          onPress={() => setTab("preview")}
-        >
-          <Text
-            style={[styles.tabText, tab === "preview" && styles.activeTabText]}
-          >
-            Xem lại hồ sơ
-          </Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Divider */}
-      <View style={styles.divider} />
-
-      {/* Main Content */}
-      {/* ------------------------------------------ Setup profile---------------------------------------------------- */}
-      {tab === "edit" ? (
-        <ScrollView style={styles.editProfileContainer}>
-          <Text style={styles.sectionTitle}>Ảnh và gợi ý</Text>
-          <Text style={styles.sectionSubtitle}>
-            Kéo rồi thả ảnh và gợi ý theo thứ tự mà bạn muốn xuất hiện.
-          </Text>
-          <View style={styles.imageListContainer}>
-            <FlatList
-              data={images}
-              renderItem={renderImage}
-              keyExtractor={(item) => item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              scrollEnabled={false} // Disable FlatList scrolling
-            />
+      <ScrollView
+        style={styles.editProfileContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.sectionTitle}>Ảnh của bạn</Text>
+        {/* <Text style={styles.sectionSubtitle}>
+          Kéo rồi thả ảnh và gợi ý theo thứ tự mà bạn muốn xuất hiện.
+        </Text> */}
+        <View style={styles.imageListContainer}>
+          <FlatList
+            data={profilePictures}
+            renderItem={renderImage}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={false}
+          />
+        </View>
+        <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
+          <Text style={styles.addButtonText}>Thêm ảnh </Text>
+        </TouchableOpacity>
+        <Text style={styles.sectionTitle}>Tiểu sử của bản thân:</Text>
+        <TextInput
+          style={styles.textInput}
+          multiline
+          numberOfLines={4}
+          maxLength={500}
+          value={bio}
+          onChangeText={(text) => setBio(text)}
+          placeholder="Bạn hãy mô tả tiểu sử của bản thân nhé..."
+        />
+        <Text style={styles.characterCount}>{bio.length} / 500</Text>
+        <Text style={styles.sectionTitle}>Kinh nghiệm chăm sóc mèo:</Text>
+        <TextInput
+          style={styles.textInput}
+          multiline
+          numberOfLines={4}
+          maxLength={500}
+          value={experience}
+          onChangeText={(text) => setExperience(text)}
+          placeholder="Bạn hãy mô tả kinh nghiệm chăm sóc mèo của bản thân nhé..."
+        />
+        <Text style={styles.characterCount}>{experience.length} / 500</Text>
+        <View style={styles.skillContainer}>
+          <Text style={styles.skillText}>Kỹ năng:</Text>
+          <View style={styles.skillsGrid}>
+            {CatSitterSkill.map((skillItem) => (
+              <TouchableOpacity
+                key={skillItem.id}
+                style={[
+                  styles.skillSquareContainer,
+                  selectedSkills.includes(skillItem.skill) && {
+                    backgroundColor: "#902C6C",
+                  },
+                ]}
+                onPress={() => toggleSkillSelection(skillItem.id)}
+              >
+                <Text
+                  style={[
+                    styles.skillTextInside,
+                    selectedSkills.includes(skillItem.skill) && {
+                      color: "#FFFFFF",
+                    },
+                  ]}
+                >
+                  {skillItem.skill}
+                </Text>
+                {selectedSkills.includes(skillItem.skill) && (
+                  <AntDesign name="checkcircleo" size={16} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+            ))}
           </View>
-          <TouchableOpacity style={styles.addButton}>
-            <Text style={styles.addButtonText}>Thêm ảnh hoặc gợi ý</Text>
-          </TouchableOpacity>
-          <Text style={styles.sectionTitle}>Tiểu sử của bản thân:</Text>
+        </View>
+
+        <View style={styles.end}>
+          <Text style={styles.sectionTitle}>An toàn, tin cậy & môi trường</Text>
           <TextInput
             style={styles.textInput}
             multiline
             numberOfLines={4}
             maxLength={500}
-            value={introduction}
-            onChangeText={(text) => setIntroduction(text)}
-            placeholder="Bạn hãy mô tả tiểu sử của bản thân nhé..."
+            value={environment}
+            onChangeText={(text) => setEnvironment(text)}
+            placeholder="Bạn hãy mô tả một ít về khu vực bạn đang sinh sống..."
           />
-          <Text style={styles.sectionTitle}>Kinh nghiệm chăm sóc mèo:</Text>
-          <TextInput
-            style={styles.textInput}
-            multiline
-            numberOfLines={4}
-            maxLength={500}
-            value={introduction}
-            onChangeText={(text) => setIntroduction(text)}
-            placeholder="Bạn hãy mô tả kinh nghiệm chăm sóc của bản thân nhé..."
-          />
-          <Text style={styles.characterCount}>{introduction.length} / 500</Text>
-
-          <Text style={styles.sectionTitle}>Thời gian chăm sóc:</Text>
-          <View>
-            <FlatList
-              data={activities}
-              renderItem={renderActivity}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false} // Disable FlatList scrolling
-            />
-            <TouchableOpacity
-              style={styles.addButtonActivity}
-              onPress={addActivity}
-            >
-              <Text style={styles.addButtonText}>+ Thêm hoạt động</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.end}>
-            <Text style={styles.sectionTitle}>
-              An toàn, tin cậy & môi trường
-            </Text>
-            <TextInput
-              style={styles.textInput}
-              multiline
-              numberOfLines={4}
-              maxLength={500}
-              value={introduction}
-              onChangeText={(text) => setIntroduction(text)}
-              placeholder="Bạn hãy mô tả một ít về khu vực bạn đang sinh sống..."
-            />
-            <Text style={styles.characterCount}>
-              {introduction.length} / 500
-            </Text>
-          </View>
-        </ScrollView>
-      ) : (
-        <ScrollView style={styles.previewProfileContainer}>
-          <Text>Xem lại hồ sơ của bạn</Text>
-          {/* Add preview content here */}
-        </ScrollView>
-      )}
+          <Text style={styles.characterCount}>{environment.length} / 500</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -393,79 +397,36 @@ const styles = StyleSheet.create({
     color: "#8E8E8E",
     marginTop: 4,
   },
-  activityContainer: {
-    backgroundColor: "#FFFFFF",
-    padding: 16,
-    marginBottom: 16,
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  separator: {
-    marginHorizontal: 8,
-    color: "#999999",
-  },
-  input: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderBottomColor: "#DDDDDD",
-    paddingVertical: 4,
-    fontSize: 14,
-    color: "#333333",
-  },
-  actionButtons: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 8,
-  },
-  actionButton: {
-    marginLeft: 8,
-  },
-  addButton: {
-    backgroundColor: "#007BFF",
-    padding: 12,
-    alignItems: "center",
-    borderRadius: 8,
-    marginVertical: 8,
-  },
-  addButtonActivity: {
-    backgroundColor: "#4CAF50", // Green color similar to the first image
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    borderRadius: 20, // Rounded corners
-    marginVertical: 16,
-    alignSelf: "center", // Center the button
-    flexDirection: "row",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-    marginTop: -40,
-  },
-  addButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-  },
-  saveButton: {
-    backgroundColor: "#28A745",
-    padding: 12,
-    alignItems: "center",
-    borderRadius: 8,
+  skillContainer: {
     marginTop: 16,
   },
-  saveButtonText: {
-    color: "#FFFFFF",
+  skillText: {
     fontSize: 16,
+    color: "#000857",
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  skillsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  skillSquareContainer: {
+    width: "48%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.6)",
+    marginBottom: 8,
+  },
+  skillTextInside: {
+    fontSize: 14,
+    color: "#000857",
     fontWeight: "bold",
+    marginRight: 4,
   },
   end: {
     marginBottom: 50,

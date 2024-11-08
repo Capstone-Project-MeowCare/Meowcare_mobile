@@ -46,13 +46,23 @@ export default function Service() {
   ];
   const filteredData =
     selectedTab === "Tất cả"
-      ? bookingData.filter(
-          (item) => item.status === "Đang diễn ra" || item.status === "Đã hủy"
-        )
-      : bookingData.filter(
-          (item) =>
-            item.status === "Đang diễn ra" && item.status === selectedTab
-        );
+      ? bookingData
+      : bookingData.filter((item) => {
+          switch (selectedTab) {
+            case "Chờ xác nhận":
+              return item.status === "AWAITING_PAYMENT";
+            case "Đã xác nhận":
+              return item.status === "CONFIRMED";
+            case "Đang diễn ra":
+              return item.status === "IN_PROGRESS";
+            case "Hoàn thành":
+              return item.status === "COMPLETED";
+            case "Đã hủy":
+              return item.status === "CANCELLED";
+            default:
+              return true;
+          }
+        });
 
   const hasSitterRole =
     Array.isArray(roles) && roles.some((role) => role.roleName === "SITTER");
@@ -68,7 +78,7 @@ export default function Service() {
           id: booking.id,
           userName: booking.user?.fullName || "Unknown User",
           time: booking.startDate
-            ? `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`
+            ? `${new Date(booking.startDate).toLocaleString()} - ${new Date(booking.endDate).toLocaleString()}`
             : "Unknown Time",
           catName:
             booking.bookingDetailWithPetAndServices
@@ -100,18 +110,18 @@ export default function Service() {
 
   const getStatusLabel = (status) => {
     const statusMapping = {
-      0: "Chờ xác nhận",
-      1: "Đã xác nhận",
-      2: "Đang diễn ra",
-      3: "Hoàn thành",
-      4: "Đã hủy",
+      AWAITING_PAYMENT: "Chờ thanh toán",
+      CONFIRMED: "Đã xác nhận",
+      IN_PROGRESS: "Đang diễn ra",
+      COMPLETED: "Hoàn thành",
+      CANCELLED: "Đã hủy",
     };
     return statusMapping[status] || "Không xác định";
   };
 
   const getStatusColor = (statusLabel) => {
     const colorMapping = {
-      "Chờ xác nhận": "#9E9E9E",
+      "Chờ thanh toán": "#FFA500",
       "Đã xác nhận": "#4CAF50",
       "Đang diễn ra": "#FFC107",
       "Hoàn thành": "#4CAF50",
@@ -148,8 +158,8 @@ export default function Service() {
 
   const CatSitterView = () => (
     <ScrollView
-      contentContainerStyle={{ flexGrow: 1, paddingBottom: height * 0.1 }}
       style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1, paddingBottom: height * 0.1 }}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.catSitterContainer}>
@@ -332,7 +342,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFF7F0",
+    flexGrow: 1,
+    // paddingVertical: height * 0.01,
   },
+
   functionBox: {
     flexDirection: "row",
     justifyContent: "space-around",

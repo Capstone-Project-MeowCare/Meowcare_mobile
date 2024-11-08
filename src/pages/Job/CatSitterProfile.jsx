@@ -8,11 +8,11 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons'
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { NavigationContainer } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 
-export default function CatSitterProfile({navigation}) {
+export default function CatSitterProfile({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -20,7 +20,7 @@ export default function CatSitterProfile({navigation}) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-         <Ionicons name="chevron-back-outline" size={30} color="#000857" />
+          <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hồ sơ</Text>
       </View>
@@ -36,50 +36,60 @@ export default function CatSitterProfile({navigation}) {
             style={styles.profileImage}
           />
           <Text style={styles.profileName}>Nguyễn Hoài Phúc</Text>
-          <Text style={styles.editProfile}>Chỉnh sửa hồ sơ</Text>
+          {/* <Text style={styles.editProfile}>Chỉnh sửa hồ sơ</Text> */}
         </View>
 
         {/* Các mục chọn */}
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('SetupProfile')}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate("SetupProfile")}
+        >
           <Ionicons name="person-outline" size={24} color="#000857" />
-          <Text style={styles.menuText}>Hồ sơ dịch vụ</Text>
+          <Text style={styles.menuText}>Chỉnh sửa hồ sơ dịch vụ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}  onPress={() => navigation.navigate('SetupService')}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate("SetupService")}
+        >
           <Ionicons name="briefcase-outline" size={24} color="#000857" />
-          <Text style={styles.menuText}>Dịch vụ</Text>
+          <Text style={styles.menuText}>Chỉnh sửa dịch vụ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}  onPress={() => navigation.navigate('SetupLocation')}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate("SetupLocation")}
+        >
           <Ionicons name="location-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Địa chỉ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}  onPress={() => navigation.navigate('SetupShedule')}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate("SetupShedule")}
+        >
           <Ionicons name="calendar-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Lịch làm việc</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
-
-       
       </ScrollView>
-       {/* Nút Tôi đồng ý */}
-       <TouchableOpacity style={styles.agreeButton}>
-          <Text style={styles.agreeText}>Bắt đầu kinh doanh dịch vụ</Text>
-        </TouchableOpacity>
+      {/* Nút Tôi đồng ý */}
+      <TouchableOpacity style={styles.agreeButton}>
+        <Text style={styles.agreeText}>Bắt đầu kinh doanh dịch vụ</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 const styles = StyleSheet.create({
   container: {
-   flex: 1,
+    flex: 1,
     backgroundColor: "#FFFAF5",
     justifyContent: "space-between", // Để đảm bảo các phần tử nằm đúng vị trí
   },
-  
+
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -104,8 +114,7 @@ const styles = StyleSheet.create({
   divider: {
     borderBottomColor: "#D3D3D3", // Màu của đường kẻ ngang
     borderBottomWidth: 1, // Độ dày của đường kẻ
-   
-  }, 
+  },
   profileContainer: {
     alignItems: "center",
     marginVertical: 20,
