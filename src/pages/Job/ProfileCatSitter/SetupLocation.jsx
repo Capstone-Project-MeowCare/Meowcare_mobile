@@ -8,13 +8,14 @@ import {
   Switch,
   ScrollView,
 } from "react-native";
-import { Ionicons } from '@expo/vector-icons';
+import { Entypo, Ionicons } from "@expo/vector-icons";
 
 export default function SetupLocation({ navigation }) {
   const [isDefault, setIsDefault] = useState(false); // State for default address toggle
   const [addressType, setAddressType] = useState("Chung Cư"); // State for address type
 
-  const handleToggleSwitch = () => setIsDefault((previousState) => !previousState);
+  const handleToggleSwitch = () =>
+    setIsDefault((previousState) => !previousState);
 
   return (
     <View style={styles.container}>
@@ -34,70 +35,126 @@ export default function SetupLocation({ navigation }) {
 
       {/* Main Content */}
       <ScrollView>
-      <View style={styles.content}>
-        <Text style={styles.sectionTitle}>Liên hệ</Text>
+        <View style={styles.content}>
+          <Text style={styles.sectionTitle}>Liên hệ</Text>
 
-        <TextInput style={styles.input} placeholder="Họ và tên" />
-        <TextInput style={styles.input} placeholder="Số điện thoại" />
+          <TextInput style={styles.input} placeholder="Họ và tên" />
+          <TextInput style={styles.input} placeholder="Số điện thoại" />
 
-        <Text style={styles.sectionTitle}>Địa chỉ</Text>
+          <Text style={styles.sectionTitle}>Địa chỉ</Text>
 
-        <TextInput style={styles.input} placeholder="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã" />
-        <TextInput style={styles.input} placeholder="Tên đường, Tòa nhà, Số nhà." />
+          {/* <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.inputWithIcon}
+              placeholder="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
+            />
+            <Entypo
+              name="chevron-right"
+              size={20}
+              color="#000857"
+              style={styles.icon}
+            />
+          </View> */}
 
-        <Text style={styles.sectionTitle}>Cài đặt</Text>
-
-        <View style={styles.addressTypeContainer}>
-          <Text style={styles.label}>Loại địa chỉ:</Text>
-          <TouchableOpacity
-            style={[
-              styles.addressTypeButton,
-              addressType === "Căn hộ" && styles.activeButton,
-            ]}
-            onPress={() => setAddressType("Căn hộ")}
-          >
-            <Text
-              style={[
-                styles.addressTypeText,
-                addressType === "Căn hộ" && styles.activeButtonText,
-              ]}
+          {/* <TextInput
+            style={styles.input}
+            placeholder="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
+          /> */}
+          {/* <TextInput
+            style={styles.input}
+            placeholder="Tên đường, Tòa nhà, Số nhà."
+          /> */}
+          <View style={styles.inputContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("LocationScreen")}
             >
-              Căn hộ
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.addressTypeButton,
-              addressType === "Nhà Riêng" && styles.activeButton,
-            ]}
-            onPress={() => setAddressType("Nhà Riêng")}
-          >
-            <Text
-              style={[
-                styles.addressTypeText,
-                addressType === "Nhà Riêng" && styles.activeButtonText,
-              ]}
+              <TextInput
+                style={styles.inputWithIcon}
+                placeholder="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
+                editable={false}
+                pointerEvents="none"
+              />
+              <Entypo
+                name="chevron-right"
+                size={20}
+                color="#000857"
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TouchableOpacity
+            // onPress={() => navigation.navigate("AddressWithMapScreen")}
             >
-              Nhà Riêng
-            </Text>
+              <TextInput
+                style={styles.inputWithIcon}
+                placeholder="Tên đường, Tòa nhà, Số nhà."
+                editable={false}
+                pointerEvents="none"
+              />
+              <Entypo
+                name="chevron-right"
+                size={20}
+                color="#000857"
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.sectionTitle}>Cài đặt</Text>
+
+          <View style={styles.addressTypeContainer}>
+            <Text style={styles.label}>Loại địa chỉ:</Text>
+            <TouchableOpacity
+              style={[
+                styles.addressTypeButton,
+                addressType === "Căn hộ" && styles.activeButton,
+              ]}
+              onPress={() => setAddressType("Căn hộ")}
+            >
+              <Text
+                style={[
+                  styles.addressTypeText,
+                  addressType === "Căn hộ" && styles.activeButtonText,
+                ]}
+              >
+                Căn hộ
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.addressTypeButton,
+                addressType === "Nhà Riêng" && styles.activeButton,
+              ]}
+              onPress={() => setAddressType("Nhà Riêng")}
+            >
+              <Text
+                style={[
+                  styles.addressTypeText,
+                  addressType === "Nhà Riêng" && styles.activeButtonText,
+                ]}
+              >
+                Nhà Riêng
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.switchContainer}>
+            <Text style={styles.label}>Đặt làm địa chỉ mặc định</Text>
+            <Switch
+              onValueChange={handleToggleSwitch}
+              value={isDefault}
+              trackColor={{ false: "#767577", true: "#81b0ff" }}
+              thumbColor={isDefault ? "#f5dd4b" : "#f4f3f4"}
+            />
+          </View>
+
+          {/* Complete Button */}
+          <TouchableOpacity style={styles.completeButton} disabled={!isDefault}>
+            <Text style={styles.completeButtonText}>HOÀN THÀNH</Text>
           </TouchableOpacity>
         </View>
-
-        <View style={styles.switchContainer}>
-          <Text style={styles.label}>Đặt làm địa chỉ mặc định</Text>
-          <Switch
-            onValueChange={handleToggleSwitch}
-            value={isDefault}
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={isDefault ? "#f5dd4b" : "#f4f3f4"}
-          />
-        </View>
-
-        {/* Complete Button */}
-        <TouchableOpacity style={styles.completeButton} disabled={!isDefault}>
-          <Text style={styles.completeButtonText}>HOÀN THÀNH</Text>
-        </TouchableOpacity>
-      </View>
       </ScrollView>
     </View>
   );
@@ -137,6 +194,7 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 16,
   },
+
   input: {
     height: 40,
     borderBottomWidth: 1,
@@ -144,6 +202,23 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     paddingHorizontal: 8,
   },
+  inputContainer: {
+    position: "relative",
+    borderBottomWidth: 1,
+    borderBottomColor: "#D3D3D3",
+    marginVertical: 8,
+    paddingHorizontal: 8,
+  },
+  inputWithIcon: {
+    height: 40,
+    paddingRight: 25, // Tạo không gian cho icon
+  },
+  icon: {
+    position: "absolute",
+    right: 10,
+    top: 10, // Điều chỉnh vị trí theo chiều dọc của biểu tượng trong TextInput
+  },
+
   addressTypeContainer: {
     flexDirection: "row",
     alignItems: "center",

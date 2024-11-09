@@ -56,6 +56,7 @@ import SetupLocation from "./src/pages/Job/ProfileCatSitter/SetupLocation";
 import SetupProfile from "./src/pages/Job/ProfileCatSitter/SetupProfile";
 import Notification from "./src/pages/Login/Notification";
 import FavoriteCatSitter from "./src/pages/Homepage/FavoriteCatSitter";
+import LocationScreen from "./src/pages/Location/LocationScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -152,7 +153,7 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={FindSitterByMap}
         />
-         <Stack.Screen
+        <Stack.Screen
           name="Thông báo"
           options={{ headerLeft: null, headerShown: false }}
           component={Notification}
@@ -217,7 +218,7 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={SetupProfile}
         />
-         <Stack.Screen
+        <Stack.Screen
           name="SetupService"
           options={{ headerLeft: null, headerShown: false }}
           component={SetupService}
@@ -340,6 +341,26 @@ export function Routes() {
         <Stack.Screen
           name="CareServiceDetails"
           component={CareServiceDetails}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="LocationScreen"
+          component={LocationScreen}
           options={{
             headerShown: false,
             gestureEnabled: true,

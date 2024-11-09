@@ -78,54 +78,73 @@ export default function Login() {
     }, [accessToken])
   );
 
-  // const handleLogin = (data) => {
+  // const handleLogin = async (data) => {
   //   setLoginError(false);
   //   setLoginState(false);
   //   setLoading(true);
   //   Keyboard.dismiss();
 
-  //   postData("/auth/generateToken", {
-  //     email: data.email,
-  //     password: data.password,
-  //   })
-  //     .then((responseData) => {
-  //       console.log("Full response data:", responseData);
+  //   try {
+  //     const deviceId = Device.osBuildId || "unknown_deviceId";
+  //     const deviceName = Device.modelName || "unknown_device";
 
-  //       const token = responseData;
-  //       setToken(token);
-  //       setSavedEmail(data.email);
-  //       setSavedPassword(data.password);
-
-  //       CustomToast({ text: "Đăng nhập thành công", position: 190 });
-
-  //       setLoading(false);
-
-  //       return new Promise((resolve) => {
-  //         setTimeout(() => {
-  //           navigation.navigate("Homes", { screen: "Home" });
-  //           resolve();
-  //         }, 0);
-  //       });
-  //     })
-  //     .catch((error) => {
-  //       console.log("Error during login:", error);
-  //       console.log("Error response:", error?.response?.data);
-
-  //       if (error?.response?.status === 403) {
-  //         CustomToast({
-  //           text: "Thông tin đăng nhập không chính xác",
-  //           position: 300,
-  //         });
-  //       } else {
-  //         CustomToast({
-  //           text: "Đã có lỗi xảy ra. Vui lòng thử lại.",
-  //           position: 190,
-  //         });
-  //       }
-  //       setLoading(false);
+  //     const responseData = await postData("/auth/token", {
+  //       email: data.email,
+  //       password: data.password,
+  //       deviceId,
+  //       deviceName,
   //     });
-  // };
 
+  //     if (responseData.status !== 1000 || !responseData.data.token) {
+  //       throw new Error("Phản hồi API không hợp lệ");
+  //     }
+
+  //     const token = responseData.data.token;
+  //     await AsyncStorage.setItem("accessToken", token);
+
+  //     // Lấy thông tin người dùng
+  //     const userInfo = responseData.data.user;
+
+  //     if (!userInfo || !userInfo.email) {
+  //       throw new Error("Phản hồi người dùng không hợp lệ");
+  //     }
+
+  //     const userData = {
+  //       id: userInfo.id,
+  //       email: userInfo.email,
+  //       roles: userInfo.roles,
+  //       fullName: userInfo.fullName,
+  //     };
+
+  //     login(userData);
+  //     setLoading(false);
+
+  //     return new Promise((resolve) => {
+  //       setTimeout(() => {
+  //         navigation.navigate("Homes", { screen: "Home" });
+  //         resolve();
+  //       }, 0);
+  //     });
+  //   } catch (error) {
+  //     console.log("Error during login:", error);
+  //     console.log("Error response:", error?.response?.data);
+
+  //     if (error?.response?.status === 403 || error?.response?.status === 401) {
+  //       CustomToast({
+  //         text: "Thông tin đăng nhập không chính xác. Vui lòng đăng nhập lại.",
+  //         position: 300,
+  //       });
+  //     } else if (error?.response?.status === 500) {
+  //       await AsyncStorage.removeItem("accessToken");
+  //       CustomToast({
+  //         text: "Đã có lỗi xảy ra. Vui lòng thử lại.",
+  //         position: 190,
+  //       });
+  //     }
+
+  //     setLoading(false);
+  //   }
+  // };
   const handleLogin = async (data) => {
     setLoginError(false);
     setLoginState(false);
@@ -177,7 +196,17 @@ export default function Login() {
       console.log("Error during login:", error);
       console.log("Error response:", error?.response?.data);
 
-      if (error?.response?.status === 403 || error?.response?.status === 401) {
+      // Kiểm tra lỗi 401 với thông báo Jwt expired
+      if (
+        error?.response?.status === 401 &&
+        error?.response?.data?.error?.includes("Jwt expired")
+      ) {
+        await AsyncStorage.removeItem("accessToken");
+        CustomToast({
+          text: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+          position: 300,
+        });
+      } else if (error?.response?.status === 403) {
         CustomToast({
           text: "Thông tin đăng nhập không chính xác. Vui lòng đăng nhập lại.",
           position: 300,
