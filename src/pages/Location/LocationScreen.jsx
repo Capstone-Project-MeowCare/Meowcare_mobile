@@ -8,9 +8,34 @@ import {
   Dimensions,
 } from "react-native";
 import { Entypo, Ionicons } from "@expo/vector-icons";
+import StepIndicator from "react-native-step-indicator";
 import vietnamData from "../../data/vietnam.json";
 
 const { width, height } = Dimensions.get("window");
+
+const customStyles = {
+  stepIndicatorSize: 30,
+  currentStepIndicatorSize: 40,
+  separatorStrokeWidth: 2,
+  currentStepStrokeWidth: 3,
+  stepStrokeCurrentColor: "#FFA500",
+  stepStrokeWidth: 3,
+  stepStrokeFinishedColor: "#4CAF50",
+  stepStrokeUnFinishedColor: "#D3D3D3",
+  separatorFinishedColor: "#4CAF50",
+  separatorUnFinishedColor: "#D3D3D3",
+  stepIndicatorFinishedColor: "#4CAF50",
+  stepIndicatorUnFinishedColor: "#D3D3D3",
+  stepIndicatorCurrentColor: "#FFA500",
+  stepIndicatorLabelFontSize: 15,
+  currentStepIndicatorLabelFontSize: 15,
+  stepIndicatorLabelCurrentColor: "#FFFFFF",
+  stepIndicatorLabelFinishedColor: "#FFFFFF",
+  stepIndicatorLabelUnFinishedColor: "#000000",
+  labelColor: "#999999",
+  labelSize: 13,
+  currentStepLabelColor: "#4CAF50",
+};
 
 export default function LocationScreen({ navigation }) {
   const [provinces] = useState(vietnamData.province);
@@ -19,13 +44,39 @@ export default function LocationScreen({ navigation }) {
 
   const [selectedProvince, setSelectedProvince] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const stepLabels = ["Chọn Thành phố", "Chọn Quận/Huyện", "Chọn Phường/Xã"];
+
+  const handleStepPress = (position) => {
+    // Chỉ cho phép chuyển sang bước 1 nếu selectedProvince đã được chọn
+    if (position === 1 && !selectedProvince) return;
+
+    // Chỉ cho phép chuyển sang bước 2 nếu selectedDistrict đã được chọn
+    if (position === 2 && !selectedDistrict) return;
+
+    // Nếu điều kiện thỏa mãn, cập nhật currentStep
+    setCurrentStep(position);
+  };
 
   const renderProvince = ({ item }) => (
     <TouchableOpacity
       style={styles.provinceItem}
-      onPress={() => setSelectedProvince(item)}
+      onPress={() => {
+        setSelectedProvince(item);
+        setSelectedDistrict(null); // Reset district if a new province is selected
+        setCurrentStep(1); // Chuyển sang bước Quận/Huyện
+      }}
     >
-      <Text style={styles.provinceText}>{item.name}</Text>
+      <Text
+        style={[
+          styles.provinceText,
+          selectedProvince?.idProvince === item.idProvince &&
+            styles.selectedText, // Apply selected style
+        ]}
+      >
+        {item.name}
+      </Text>
       <Entypo name="chevron-right" size={20} color="#000857" />
     </TouchableOpacity>
   );
@@ -33,9 +84,20 @@ export default function LocationScreen({ navigation }) {
   const renderDistrict = ({ item }) => (
     <TouchableOpacity
       style={styles.provinceItem}
-      onPress={() => setSelectedDistrict(item)}
+      onPress={() => {
+        setSelectedDistrict(item);
+        setCurrentStep(2); // Chuyển sang bước Phường/Xã
+      }}
     >
-      <Text style={styles.provinceText}>{item.name}</Text>
+      <Text
+        style={[
+          styles.provinceText,
+          selectedDistrict?.idDistrict === item.idDistrict &&
+            styles.selectedText, // Apply selected style
+        ]}
+      >
+        {item.name}
+      </Text>
       <Entypo name="chevron-right" size={20} color="#000857" />
     </TouchableOpacity>
   );
@@ -63,11 +125,7 @@ export default function LocationScreen({ navigation }) {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => {
-            if (selectedDistrict) setSelectedDistrict(null);
-            else if (selectedProvince) setSelectedProvince(null);
-            else navigation.goBack();
-          }}
+          onPress={() => navigation.navigate("SetupLocation")}
         >
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
@@ -77,66 +135,39 @@ export default function LocationScreen({ navigation }) {
       {/* Divider */}
       <View style={styles.divider} />
 
-      {/* Progress Indicator */}
-      <View style={styles.progressContainer}>
-        <View style={styles.stepContainer}>
-          <View
-            style={[styles.step, selectedProvince && styles.stepCompleted]}
-          />
-          <Text style={styles.stepLabel}>
-            {selectedProvince ? selectedProvince.name : "Chọn Thành phố"}
-          </Text>
-        </View>
-        <View style={styles.stepLine} />
-        <View style={styles.stepContainer}>
-          <View
-            style={[
-              styles.step,
-              selectedProvince && !selectedDistrict && styles.stepActive,
-              selectedDistrict && styles.stepCompleted,
-            ]}
-          />
-          <Text style={styles.stepLabel}>
-            {selectedDistrict ? selectedDistrict.name : "Chọn Quận/Huyện"}
-          </Text>
-        </View>
-        <View style={styles.stepLine} />
-        <View style={styles.stepContainer}>
-          <View
-            style={[
-              styles.step,
-              selectedDistrict && !filteredCommunes.length && styles.stepActive,
-              filteredCommunes.length && styles.stepCompleted,
-            ]}
-          />
-          <Text style={styles.stepLabel}>Chọn Phường/Xã</Text>
-        </View>
+      {/* Step Indicator */}
+      <View style={styles.stepIndicatorContainer}>
+        <StepIndicator
+          customStyles={customStyles}
+          currentPosition={currentStep}
+          labels={stepLabels}
+          stepCount={3}
+          onPress={handleStepPress}
+        />
       </View>
 
       {/* List of locations */}
-      {selectedProvince ? (
-        selectedDistrict ? (
-          <FlatList
-            data={filteredCommunes}
-            keyExtractor={(item) => item.idCommune}
-            renderItem={renderCommune}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <FlatList
-            data={filteredDistricts}
-            keyExtractor={(item) => item.idDistrict}
-            renderItem={renderDistrict}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-          />
-        )
-      ) : (
+      {currentStep === 0 ? (
         <FlatList
           data={provinces}
           keyExtractor={(item) => item.idProvince}
           renderItem={renderProvince}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : currentStep === 1 ? (
+        <FlatList
+          data={filteredDistricts}
+          keyExtractor={(item) => item.idDistrict}
+          renderItem={renderDistrict}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <FlatList
+          data={filteredCommunes}
+          keyExtractor={(item) => item.idCommune}
+          renderItem={renderCommune}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
         />
@@ -176,6 +207,10 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D3D3D3",
     borderBottomWidth: 1,
   },
+  stepIndicatorContainer: {
+    marginVertical: 16,
+    paddingHorizontal: 16,
+  },
   listContainer: {
     padding: 16,
   },
@@ -192,38 +227,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1F1F1F",
   },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 16,
-  },
-  stepContainer: {
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  step: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#D3D3D3",
-  },
-  stepCompleted: {
-    backgroundColor: "#4CAF50", // màu cho bước hoàn thành
-  },
-  stepActive: {
-    backgroundColor: "#FFA500", // màu cho bước hiện tại
-  },
-  stepLabel: {
-    marginTop: 8,
-    fontSize: 12,
-    color: "#1F1F1F",
-    textAlign: "center",
-  },
-  stepLine: {
-    width: 30,
-    height: 1,
-    backgroundColor: "#D3D3D3",
-    marginHorizontal: 8,
+  selectedText: {
+    color: "rgba(0, 8, 87, 0.6)",
+    fontWeight: "bold",
   },
 });
