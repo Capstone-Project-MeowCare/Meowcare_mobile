@@ -12,11 +12,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FlatList } from "react-native-gesture-handler";
-import { getData, putData } from "../../../api/api";
+import { getData, postData, putData } from "../../../api/api";
 import { useAuth } from "../../../../auth/useAuth";
 const { width, height } = Dimensions.get("window");
 export default function SetupService({ navigation }) {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const [atHomeCare, setAtHomeCare] = useState(false);
   const [boardingCare, setBoardingCare] = useState(false);
 
@@ -39,6 +39,7 @@ export default function SetupService({ navigation }) {
     boardingService: null,
   });
   const endInputRefs = useRef([]);
+  const [configServices, setConfigServices] = useState([]);
   const [predefinedServices, setPredefinedServices] = useState([]);
   const [activities, setActivities] = useState([
     { id: "1", start: "6:00", end: "9:00", description: "Mô tả hoạt động" },
@@ -50,57 +51,58 @@ export default function SetupService({ navigation }) {
         const response = await getData("/services");
         if (response?.data) {
           const allServices = response.data;
-          const basicServices = allServices.filter(
+
+          // Lấy dịch vụ cơ bản
+          const basicServicesList = allServices.filter(
             (service) => service.isBasicService && service.status === 1
           );
 
-          const atHomeService = basicServices.find(
+          const atHomeService = basicServicesList.find(
             (service) => service.serviceName === "House Sitting"
           );
-          const boardingService = basicServices.find(
+          const boardingService = basicServicesList.find(
             (service) => service.serviceName === "Boarding Sitting"
           );
 
           setBasicServices({ atHomeService, boardingService });
 
-          const additional = allServices
+          console.log("Basic Services:", { atHomeService, boardingService });
+
+          // Lấy dịch vụ bổ sung
+          const additionalServices = allServices
             .filter(
               (service) => !service.isBasicService && service.status === 1
             )
             .map((service) => ({
               id: service.id,
               name: service.serviceName,
+              serviceType: service.serviceType,
               enabled: false,
               price: service.price.toString(),
             }));
-          setPredefinedServices(additional);
+
+          setPredefinedServices(additionalServices);
         }
       } catch (error) {
         console.error("Error fetching services:", error);
       }
     };
 
-    fetchServices();
-  }, []);
-  useEffect(() => {
-    const fetchSitterProfileId = async () => {
+    const fetchConfigServices = async () => {
       try {
-        const response = await getData(`/sitter-profiles/sitter/${user.id}`);
-        if (response?.data?.id) {
-          setSitterProfileId(response.data.id);
-          console.log("Fetched sitterProfileId:", response.data.id);
-        } else {
-          console.log("Không tìm thấy sitter profile ID");
+        const response = await getData("/config-services");
+        if (response?.data) {
+          setConfigServices(response.data);
         }
       } catch (error) {
-        console.error("Error fetching sitter profile ID:", error);
+        console.error("Error fetching config services:", error);
       }
     };
 
-    if (user?.id) {
-      fetchSitterProfileId();
-    }
-  }, [user?.id]);
+    fetchServices();
+    fetchConfigServices();
+  }, []);
+
   const handlePredefinedServiceToggle = (id) => {
     setPredefinedServices((prevServices) =>
       prevServices.map((service) =>
@@ -229,47 +231,57 @@ export default function SetupService({ navigation }) {
     setActivities(updatedActivities);
   };
   const handleComplete = async () => {
-    if (!sitterProfileId) {
-      Alert.alert("Lỗi", "Không tìm thấy sitter profile ID");
+    const enabledServices = predefinedServices.filter(
+      (service) => service.enabled
+    );
+
+    if (enabledServices.length === 0) {
+      Alert.alert("Lỗi", "Vui lòng chọn ít nhất một dịch vụ để tiếp tục.");
       return;
     }
 
-    const serviceData = {
-      atHomeCare: atHomeCare,
-      atHomePrices: atHomePrices,
-      boardingCare: boardingCare,
-      boardingPrices: boardingPrices,
-      predefinedServices: predefinedServices
-        .filter((service) => service.enabled)
-        .map((service) => ({
-          id: service.id,
-          enabled: service.enabled,
-          price: service.price,
-        })),
-      activities: activities.map((activity) => ({
-        start: activity.start,
-        end: activity.end,
-        description: activity.description,
-      })),
-    };
-
-    console.log("Service data to be sent:", serviceData); // Log service data trước khi gửi
-    console.log("Using sitterProfileId for service update:", sitterProfileId);
     try {
-      const response = await putData(
-        `/services/${sitterProfileId}`,
-        serviceData
-      );
-      console.log("Response from PUT /services:", response);
+      for (const service of enabledServices) {
+        const configService = configServices.find(
+          (config) =>
+            config.name.toLowerCase() === service.serviceType.toLowerCase()
+        );
 
-      if (response.status === 200) {
-        Alert.alert("Thành công", "Đã lưu dịch vụ thành công");
-        navigation.goBack();
-      } else {
-        Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu dịch vụ");
+        if (!configService) {
+          console.error(
+            "Không tìm thấy config cho dịch vụ:",
+            service.serviceType
+          );
+          continue;
+        }
+
+        const serviceData = {
+          serviceName: service.name,
+          serviceType: service.serviceType,
+          actionDescription: "Default description",
+          price: parseFloat(service.price.replace(/\D/g, "")),
+          duration: 1440,
+          startTime: 0,
+          status: 0,
+          configServiceId: configService.id,
+          isBasicService: service.isBasicService,
+        };
+
+        const response = await postData("/services", serviceData, accessToken);
+
+        // Kiểm tra trạng thái phản hồi để xác nhận thành công
+        if (response.status === 200 || response.status === 1001) {
+          console.log("Service posted successfully:", response.data);
+        } else {
+          console.error("Error posting service:", response);
+          Alert.alert("Lỗi", "Không thể lưu dịch vụ.");
+        }
       }
+
+      Alert.alert("Thành công", "Đã lưu tất cả dịch vụ thành công.");
+      navigation.goBack();
     } catch (error) {
-      console.error("Error updating service:", error);
+      console.error("Error posting services:", error);
       Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu dịch vụ");
     }
   };
