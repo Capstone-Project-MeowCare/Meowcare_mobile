@@ -42,24 +42,25 @@ export default function Pets({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Image
+            source={require("../../../assets/BackArrow.png")}
+            style={styles.backArrow}
+          />
+        </TouchableOpacity>
+        <Text style={styles.label}>Mèo của tôi</Text>
+      </View>
+
+      <View style={styles.separator} />
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Image
-              source={require("../../../assets/BackArrow.png")}
-              style={styles.backArrow}
-            />
-          </TouchableOpacity>
-          <Text style={styles.label}>Mèo của tôi</Text>
-        </View>
-        <View style={styles.separator} />
-
         <View style={styles.catContainerRow}>
           {displayCatData.map((cat, index) =>
             cat.isAddNewButton ? (
@@ -139,11 +140,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#000000",
     flex: 1,
+    bottom: height * 0.01,
   },
   separator: {
+    width: width,
     height: 1,
     backgroundColor: "#000000",
-    marginVertical: height * 0.02,
+    alignSelf: "center",
   },
   scrollContent: {
     paddingBottom: height * 0.05,
@@ -153,6 +156,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     width: width * 0.9,
+    marginTop: height * 0.04,
   },
   catContainer: {
     width: width * 0.4,
