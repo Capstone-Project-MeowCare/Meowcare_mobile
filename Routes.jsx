@@ -57,6 +57,7 @@ import SetupProfile from "./src/pages/Job/ProfileCatSitter/SetupProfile";
 import Notification from "./src/pages/Login/Notification";
 import FavoriteCatSitter from "./src/pages/Homepage/FavoriteCatSitter";
 import LocationScreen from "./src/pages/Location/LocationScreen";
+import AddressScreen from "./src/pages/Location/AddressScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -361,6 +362,26 @@ export function Routes() {
         <Stack.Screen
           name="LocationScreen"
           component={LocationScreen}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="AddressScreen"
+          component={AddressScreen}
           options={{
             headerShown: false,
             gestureEnabled: true,

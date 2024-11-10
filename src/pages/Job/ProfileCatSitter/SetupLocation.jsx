@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,29 @@ import {
   ScrollView,
 } from "react-native";
 import { Entypo, Ionicons } from "@expo/vector-icons";
+import { useRoute } from "@react-navigation/native";
 
 export default function SetupLocation({ navigation }) {
-  const [isDefault, setIsDefault] = useState(false); // State for default address toggle
-  const [addressType, setAddressType] = useState("Chung Cư"); // State for address type
+  const [isDefault, setIsDefault] = useState(false);
+  const [addressType, setAddressType] = useState("Chung Cư");
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const route = useRoute();
+
+  useEffect(() => {
+    if (route.params?.selectedLocation) {
+      setSelectedLocation(route.params.selectedLocation);
+    }
+  }, [route.params?.selectedLocation]);
 
   const handleToggleSwitch = () =>
     setIsDefault((previousState) => !previousState);
+
+  const navigateToLocationScreen = () => {
+    navigation.navigate("LocationScreen");
+  };
+
+  // Kiểm tra nếu nút hoàn thành được kích hoạt
+  const isCompleteEnabled = selectedLocation && isDefault;
 
   return (
     <View style={styles.container}>
@@ -43,35 +59,18 @@ export default function SetupLocation({ navigation }) {
 
           <Text style={styles.sectionTitle}>Địa chỉ</Text>
 
-          {/* <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.inputWithIcon}
-              placeholder="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
-            />
-            <Entypo
-              name="chevron-right"
-              size={20}
-              color="#000857"
-              style={styles.icon}
-            />
-          </View> */}
-
-          {/* <TextInput
-            style={styles.input}
-            placeholder="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
-          /> */}
-          {/* <TextInput
-            style={styles.input}
-            placeholder="Tên đường, Tòa nhà, Số nhà."
-          /> */}
           <View style={styles.inputContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("LocationScreen")}
-            >
+            <TouchableOpacity onPress={navigateToLocationScreen}>
               <TextInput
                 style={styles.inputWithIcon}
                 placeholder="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
+                value={
+                  selectedLocation
+                    ? `${selectedLocation.province}\n${selectedLocation.district}\n${selectedLocation.commune}`
+                    : ""
+                }
                 editable={false}
+                multiline={true}
                 pointerEvents="none"
               />
               <Entypo
@@ -85,10 +84,14 @@ export default function SetupLocation({ navigation }) {
 
           <View style={styles.inputContainer}>
             <TouchableOpacity
-            // onPress={() => navigation.navigate("AddressWithMapScreen")}
+              onPress={() => navigation.navigate("AddressScreen")}
+              disabled={!selectedLocation}
             >
               <TextInput
-                style={styles.inputWithIcon}
+                style={[
+                  styles.inputWithIcon,
+                  !selectedLocation && { color: "#ccc" },
+                ]}
                 placeholder="Tên đường, Tòa nhà, Số nhà."
                 editable={false}
                 pointerEvents="none"
@@ -96,7 +99,7 @@ export default function SetupLocation({ navigation }) {
               <Entypo
                 name="chevron-right"
                 size={20}
-                color="#000857"
+                color={!selectedLocation ? "#ccc" : "#000857"}
                 style={styles.icon}
               />
             </TouchableOpacity>
@@ -151,7 +154,13 @@ export default function SetupLocation({ navigation }) {
           </View>
 
           {/* Complete Button */}
-          <TouchableOpacity style={styles.completeButton} disabled={!isDefault}>
+          <TouchableOpacity
+            style={[
+              styles.completeButton,
+              isCompleteEnabled && { backgroundColor: "#902C6C" },
+            ]}
+            disabled={!isCompleteEnabled}
+          >
             <Text style={styles.completeButtonText}>HOÀN THÀNH</Text>
           </TouchableOpacity>
         </View>
@@ -194,7 +203,6 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 16,
   },
-
   input: {
     height: 40,
     borderBottomWidth: 1,
@@ -210,15 +218,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   inputWithIcon: {
-    height: 40,
-    paddingRight: 25, // Tạo không gian cho icon
+    height: 80,
+    paddingRight: 25,
+    color: "#000",
+    fontWeight: "bold",
+    paddingTop: 10,
   },
   icon: {
     position: "absolute",
     right: 10,
-    top: 10, // Điều chỉnh vị trí theo chiều dọc của biểu tượng trong TextInput
+    top: 30,
   },
-
   addressTypeContainer: {
     flexDirection: "row",
     alignItems: "center",

@@ -44,18 +44,14 @@ export default function LocationScreen({ navigation }) {
 
   const [selectedProvince, setSelectedProvince] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [selectedCommune, setSelectedCommune] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
 
   const stepLabels = ["Chọn Thành phố", "Chọn Quận/Huyện", "Chọn Phường/Xã"];
 
   const handleStepPress = (position) => {
-    // Chỉ cho phép chuyển sang bước 1 nếu selectedProvince đã được chọn
     if (position === 1 && !selectedProvince) return;
-
-    // Chỉ cho phép chuyển sang bước 2 nếu selectedDistrict đã được chọn
     if (position === 2 && !selectedDistrict) return;
-
-    // Nếu điều kiện thỏa mãn, cập nhật currentStep
     setCurrentStep(position);
   };
 
@@ -105,7 +101,16 @@ export default function LocationScreen({ navigation }) {
   const renderCommune = ({ item }) => (
     <TouchableOpacity
       style={styles.provinceItem}
-      onPress={() => console.log("Selected commune:", item.name)}
+      onPress={() => {
+        setSelectedCommune(item);
+        navigation.navigate("SetupLocation", {
+          selectedLocation: {
+            province: selectedProvince.name,
+            district: selectedDistrict.name,
+            commune: item.name,
+          },
+        });
+      }}
     >
       <Text style={styles.provinceText}>{item.name}</Text>
     </TouchableOpacity>
