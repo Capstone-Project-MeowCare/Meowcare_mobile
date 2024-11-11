@@ -43,7 +43,25 @@ export default function CatSitterService({ navigation }) {
     "Hoàn thành",
     "Đã hủy",
   ];
-
+  const filteredData =
+    selectedTab === "Tất cả"
+      ? bookingData
+      : bookingData.filter((item) => {
+          switch (selectedTab) {
+            case "Chờ xác nhận":
+              return item.status === "AWAITING_PAYMENT";
+            case "Đã xác nhận":
+              return item.status === "CONFIRMED";
+            case "Đang diễn ra":
+              return item.status === "IN_PROGRESS";
+            case "Hoàn thành":
+              return item.status === "COMPLETED";
+            case "Đã hủy":
+              return item.status === "CANCELLED";
+            default:
+              return true;
+          }
+        });
   useEffect(() => {
     if (!user?.id) return;
     const fetchBookings = async () => {
@@ -51,34 +69,36 @@ export default function CatSitterService({ navigation }) {
         const endpoint = `/booking-orders/sitter?id=${user?.id}`;
         const response = await getData(endpoint);
         if (response && response.data && Array.isArray(response.data)) {
-          const formattedData = response.data.map((booking) => {
-            const userName = booking.user?.fullName || "Unknown User";
-            const time = booking.startDate
-              ? `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`
-              : "Unknown Time";
-            const catName =
-              booking.bookingDetailWithPetAndServices
-                .map((detail) => detail.pet?.petName)
-                .filter(Boolean)
-                .join(", ") || "Unknown Pet";
-            const serviceName =
-              Array.isArray(booking.bookingDetailWithPetAndServices) &&
-              booking.bookingDetailWithPetAndServices.length > 0
-                ? translateServiceName(
-                    booking.bookingDetailWithPetAndServices[0].service
-                      ?.serviceName
-                  ) || "Unknown Service"
-                : "Unknown Service";
-            return {
-              id: booking.id,
-              userName,
-              time,
-              status: getStatusLabel(booking.status),
-              statusColor: getStatusColor(getStatusLabel(booking.status)),
-              catName,
-              serviceName,
-            };
-          });
+          const formattedData = response.data
+            .filter((booking) => booking.status === "AWAITING_PAYMENT")
+            .map((booking) => {
+              const userName = booking.user?.fullName || "Unknown User";
+              const time = booking.startDate
+                ? `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`
+                : "Unknown Time";
+              const catName =
+                booking.bookingDetailWithPetAndServices
+                  .map((detail) => detail.pet?.petName)
+                  .filter(Boolean)
+                  .join(", ") || "Unknown Pet";
+              const serviceName =
+                Array.isArray(booking.bookingDetailWithPetAndServices) &&
+                booking.bookingDetailWithPetAndServices.length > 0
+                  ? translateServiceName(
+                      booking.bookingDetailWithPetAndServices[0].service
+                        ?.serviceName
+                    ) || "Unknown Service"
+                  : "Unknown Service";
+              return {
+                id: booking.id,
+                userName,
+                time,
+                status: "Chờ thanh toán",
+                statusColor: "#FFA500",
+                catName,
+                serviceName,
+              };
+            });
           setBookingData(formattedData);
         } else {
           setBookingData([]);
@@ -91,52 +111,44 @@ export default function CatSitterService({ navigation }) {
     fetchBookings();
   }, [user?.id]);
 
-  const getStatusLabel = (status) => {
-    const statusMapping = {
-      0: "Chờ xác nhận",
-      1: "Đã xác nhận",
-      2: "Đang diễn ra",
-      3: "Hoàn thành",
-      4: "Đã hủy",
-    };
-    return statusMapping[status] || "Không xác định";
-  };
+  // const getStatusLabel = (status) => {
+  //   const statusMapping = {
+  //     AWAITING_PAYMENT: "Chờ thanh toán",
+  //     CONFIRMED: "Đã xác nhận",
+  //     IN_PROGRESS: "Đang diễn ra",
+  //     COMPLETED: "Hoàn thành",
+  //     CANCELLED: "Đã hủy",
+  //   };
+  //   return statusMapping[status] || "Không xác định";
+  // };
 
-  const getStatusColor = (statusLabel) => {
-    const colorMapping = {
-      "Chờ xác nhận": "#9E9E9E",
-      "Đã xác nhận": "#4CAF50",
-      "Đang diễn ra": "#FFC107",
-      "Hoàn thành": "#4CAF50",
-      "Đã hủy": "#FF4343",
-    };
-    return colorMapping[statusLabel] || "#000000";
-  };
+  // const getStatusColor = (statusLabel) => {
+  //   const colorMapping = {
+  //     "Chờ thanh toán": "#FFA500",
+  //     "Đã xác nhận": "#4CAF50",
+  //     "Đang diễn ra": "#FFC107",
+  //     "Hoàn thành": "#4CAF50",
+  //     "Đã hủy": "#FF4343",
+  //   };
+  //   return colorMapping[statusLabel] || "#000000";
+  // };
 
-  const handleStatusUpdate = async (id, action) => {
+  const handleStatusUpdate = async (bookingId, action) => {
     try {
-      const endpoint = `/booking-orders/${id}`;
-      const updatedStatus = action === "accept" ? 2 : 4;
+      const updatedStatus = action === "accept" ? "IN_PROGRESS" : "CANCELLED";
+      const endpoint = `/booking-orders/status/${bookingId}?status=${updatedStatus}`;
 
-      const dataToSend = {
-        sitterId: user.id,
-        status: updatedStatus,
-        address: "1",
-        name: "1",
-        phoneNumber: "123456789",
-        time: new Date().toISOString(),
-        startDate: new Date().toISOString(),
-        endDate: new Date().toISOString(),
-        note: "Update status",
-      };
-
-      const response = await putData(endpoint, dataToSend);
+      const response = await putData(endpoint);
 
       setBookingData((prevData) =>
         prevData
           .map((item) =>
-            item.id === id
-              ? { ...item, status: getStatusLabel(updatedStatus) }
+            item.id === bookingId
+              ? {
+                  ...item,
+                  status:
+                    updatedStatus === "IN_PROGRESS" ? "Đang diễn ra" : "Đã hủy",
+                }
               : item
           )
           .filter((item) => item.status !== "Đã hủy")
@@ -145,14 +157,6 @@ export default function CatSitterService({ navigation }) {
       console.error("Error updating booking status:", error);
     }
   };
-
-  const filteredData =
-    selectedTab === "Tất cả"
-      ? bookingData.filter((item) => item.status === "Chờ xác nhận")
-      : bookingData.filter(
-          (item) =>
-            item.status === selectedTab && item.status === "Chờ xác nhận"
-        );
 
   return (
     <View style={styles.container}>
@@ -236,7 +240,7 @@ export default function CatSitterService({ navigation }) {
               <Text style={styles.label}>
                 Mèo của người đặt: {item.catName}
               </Text>
-              {item.status === "Chờ xác nhận" && (
+              {item.status === "Chờ thanh toán" && (
                 <View style={styles.buttonRow}>
                   <CustomButton
                     title="Chấp nhận"

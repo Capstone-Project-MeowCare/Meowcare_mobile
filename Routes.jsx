@@ -58,6 +58,10 @@ import Notification from "./src/pages/Login/Notification";
 import FavoriteCatSitter from "./src/pages/Homepage/FavoriteCatSitter";
 import LocationScreen from "./src/pages/Location/LocationScreen";
 import AddressScreen from "./src/pages/Location/AddressScreen";
+import CallScreen from "./src/pages/VideoCall/CallScreen";
+import JoinScreen from "./src/pages/VideoCall/JoinScreen";
+import RoomScreen from "./src/pages/VideoCall/RoomScreen";
+import Chat from "./src/pages/Chat/Chat";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -398,6 +402,26 @@ export function Routes() {
               },
             }),
           }}
+        />
+        {/* <Stack.Screen
+          name="CallScreen"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CallScreen}
+        />
+        <Stack.Screen
+          name="JoinScreen"
+          options={{ headerLeft: null, headerShown: false }}
+          component={JoinScreen}
+        />
+        <Stack.Screen
+          name="RoomScreen"
+          options={{ headerLeft: null, headerShown: false }}
+          component={RoomScreen}
+        /> */}
+        <Stack.Screen
+          name="Chat"
+          options={{ headerLeft: null, headerShown: false }}
+          component={Chat}
         />
         <Stack.Screen
           name="MyPets"

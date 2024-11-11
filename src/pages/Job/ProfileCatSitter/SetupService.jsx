@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,11 +12,13 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FlatList } from "react-native-gesture-handler";
-import { getData, postData, putData } from "../../../api/api";
+import { getData, postData } from "../../../api/api";
 import { useAuth } from "../../../../auth/useAuth";
+import DateTimePicker from "react-native-modal-datetime-picker";
 const { width, height } = Dimensions.get("window");
+
 export default function SetupService({ navigation }) {
-  const { user, accessToken } = useAuth();
+  const { accessToken } = useAuth();
   const [atHomeCare, setAtHomeCare] = useState(false);
   const [boardingCare, setBoardingCare] = useState(false);
 
@@ -32,18 +34,40 @@ export default function SetupService({ navigation }) {
   });
 
   const [additionalServices, setAdditionalServices] = useState([]);
-  const [sitterProfileId, setSitterProfileId] = useState(null);
-  const [maxCats, setMaxCats] = useState(""); // Maximum number of cats state
+  const [maxCats, setMaxCats] = useState("");
   const [basicServices, setBasicServices] = useState({
     atHomeService: null,
     boardingService: null,
   });
-  const endInputRefs = useRef([]);
   const [configServices, setConfigServices] = useState([]);
   const [predefinedServices, setPredefinedServices] = useState([]);
   const [activities, setActivities] = useState([
     { id: "1", start: "6:00", end: "9:00", description: "Mô tả hoạt động" },
   ]);
+  const [showStartPicker, setShowStartPicker] = useState(null);
+  const [showEndPicker, setShowEndPicker] = useState(null);
+
+  const handleStartTimeChange = (selectedTime, index) => {
+    setShowStartPicker(null);
+    if (selectedTime) {
+      const start = selectedTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      updateActivity(index, "start", start);
+    }
+  };
+
+  const handleEndTimeChange = (selectedTime, index) => {
+    setShowEndPicker(null);
+    if (selectedTime) {
+      const end = selectedTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      updateActivity(index, "end", end);
+    }
+  };
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -52,7 +76,6 @@ export default function SetupService({ navigation }) {
         if (response?.data) {
           const allServices = response.data;
 
-          // Lấy dịch vụ cơ bản
           const basicServicesList = allServices.filter(
             (service) => service.isBasicService && service.status === 1
           );
@@ -66,9 +89,6 @@ export default function SetupService({ navigation }) {
 
           setBasicServices({ atHomeService, boardingService });
 
-          console.log("Basic Services:", { atHomeService, boardingService });
-
-          // Lấy dịch vụ bổ sung
           const additionalServices = allServices
             .filter(
               (service) => !service.isBasicService && service.status === 1
@@ -112,10 +132,7 @@ export default function SetupService({ navigation }) {
   };
 
   const handlePredefinedServicePriceChange = (id, price) => {
-    // Loại bỏ ký tự không phải số
     const numericPrice = price.replace(/\D/g, "");
-
-    // Định dạng giá với dấu chấm hàng nghìn
     const formattedPrice = new Intl.NumberFormat("vi-VN").format(numericPrice);
 
     setPredefinedServices((prevServices) =>
@@ -134,132 +151,82 @@ export default function SetupService({ navigation }) {
     ]);
   };
 
-  const handleAdditionalServiceNameChange = (id, name) => {
-    setAdditionalServices((prevServices) =>
-      prevServices.map((service) =>
-        service.id === id ? { ...service, name } : service
-      )
-    );
+  const updateActivity = (index, field, value) => {
+    const updatedActivities = [...activities];
+    updatedActivities[index][field] = value;
+    setActivities(updatedActivities);
   };
-
-  const handleAdditionalServicePriceChange = (id, price) => {
-    setAdditionalServices((prevServices) =>
-      prevServices.map((service) =>
-        service.id === id ? { ...service, price } : service
-      )
-    );
+  const addActivity = () => {
+    const newActivity = {
+      id: (activities.length + 1).toString(),
+      start: "6:00",
+      end: "7:00",
+      description: "",
+    };
+    setActivities([...activities, newActivity]);
   };
-
   const deleteAdditionalService = (id) => {
     setAdditionalServices((prevServices) =>
       prevServices.filter((service) => service.id !== id)
     );
   };
-
-  const convertTo24HourFormat = (time) => {
-    const [hours, minutes] = time.split(":").map(Number);
-    return hours + minutes / 60;
-  };
-
-  const formatTime = (timeInHours) => {
-    const hours = Math.floor(timeInHours);
-    const minutes = Math.floor((timeInHours % 1) * 60);
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-  };
-
-  const addActivity = () => {
-    const lastActivity = activities[activities.length - 1];
-    const lastEndTime = convertTo24HourFormat(lastActivity.end);
-    const maxEndTime = 21; // 9:00 PM in 24-hour format
-
-    // Check if we've reached the max end time
-    if (lastEndTime >= maxEndTime) {
-      Alert.alert(
-        "Không thể thêm hoạt động",
-        "Thời gian hoạt động đã đến giới hạn 21:00."
-      );
-      endInputRefs.current[index].focus();
-      return;
-    }
-
-    const newStartTime = lastEndTime;
-    const newEndTime = Math.min(newStartTime + 1, maxEndTime); // Adjust to 1-hour duration
-
-    const newActivity = {
-      id: (activities.length + 1).toString(),
-      start: formatTime(newStartTime),
-      end: formatTime(newEndTime),
-      description: "",
-    };
-    setActivities([...activities, newActivity]);
-  };
-
-  const updateActivity = (index, field, value, shouldValidate = true) => {
-    const updatedActivities = [...activities];
-
-    if (field === "end" && shouldValidate) {
-      const start = convertTo24HourFormat(updatedActivities[index].start);
-      const end = convertTo24HourFormat(value);
-      const duration = end - start;
-
-      if (duration < 1) {
-        // Automatically correct to 1 hour if below minimum
-        Alert.alert(
-          "Lỗi",
-          "Thời gian cho mỗi hoạt động phải tối thiểu là 1 giờ. Tự động sửa thành 1 giờ."
-        );
-        updatedActivities[index].end = formatTime(start + 1); // Set end time to 1 hour after start
-      } else if (duration > 3) {
-        // Automatically correct to 3 hours if above maximum
-        Alert.alert(
-          "Lỗi",
-          "Thời gian cho mỗi hoạt động không được vượt quá 3 giờ. Tự động sửa thành 3 giờ."
-        );
-        updatedActivities[index].end = formatTime(start + 3); // Set end time to 3 hours after start
-      } else {
-        // If valid, set the end time as entered
-        updatedActivities[index][field] = value;
-      }
-    } else {
-      updatedActivities[index][field] = value;
-    }
-
-    setActivities(updatedActivities);
-  };
-  const removeActivity = (index) => {
-    const updatedActivities = activities.filter((_, i) => i !== index);
-    setActivities(updatedActivities);
-  };
   const handleComplete = async () => {
-    const enabledServices = predefinedServices.filter(
+    const isAnyMainServiceSelected = atHomeCare || boardingCare;
+    const enabledAdditionalServices = predefinedServices.filter(
       (service) => service.enabled
     );
 
-    if (enabledServices.length === 0) {
-      Alert.alert("Lỗi", "Vui lòng chọn ít nhất một dịch vụ để tiếp tục.");
-      return;
-    }
+    console.log("Selected Main Services:", { atHomeCare, boardingCare });
+    console.log("Enabled Additional Services:", enabledAdditionalServices);
 
     try {
-      for (const service of enabledServices) {
+      const allEnabledServices = [];
+
+      if (atHomeCare && basicServices.atHomeService) {
+        const atHomeService = {
+          ...basicServices.atHomeService,
+          price: parseFloat(atHomePrices.normal.replace(/\D/g, "")),
+        };
+        allEnabledServices.push(atHomeService);
+        console.log("Added At Home Service:", atHomeService);
+      }
+
+      if (boardingCare && basicServices.boardingService) {
+        const boardingService = {
+          ...basicServices.boardingService,
+          price: parseFloat(boardingPrices.normal.replace(/\D/g, "")),
+        };
+        allEnabledServices.push(boardingService);
+        console.log("Added Boarding Service:", boardingService);
+      }
+
+      allEnabledServices.push(
+        ...enabledAdditionalServices.map((service) => ({
+          ...service,
+          price: parseFloat(service.price.replace(/\D/g, "")),
+        }))
+      );
+
+      console.log("All Enabled Services for Posting:", allEnabledServices);
+
+      for (const service of allEnabledServices) {
         const configService = configServices.find(
           (config) =>
-            config.name.toLowerCase() === service.serviceType.toLowerCase()
+            config.name.toLowerCase() === service.serviceName.toLowerCase()
         );
 
         if (!configService) {
           console.error(
             "Không tìm thấy config cho dịch vụ:",
-            service.serviceType
+            service.serviceName
           );
           continue;
         }
 
         const serviceData = {
-          serviceName: service.name,
+          serviceName: service.serviceName,
           serviceType: service.serviceType,
-          actionDescription: "Default description",
-          price: parseFloat(service.price.replace(/\D/g, "")),
+          price: service.price,
           duration: 1440,
           startTime: 0,
           status: 0,
@@ -267,44 +234,104 @@ export default function SetupService({ navigation }) {
           isBasicService: service.isBasicService,
         };
 
+        console.log("Posting Service Data:", serviceData);
+
         const response = await postData("/services", serviceData, accessToken);
 
-        // Kiểm tra trạng thái phản hồi để xác nhận thành công
-        if (response.status === 200 || response.status === 1001) {
+        if (response.status === 1000) {
           console.log("Service posted successfully:", response.data);
         } else {
-          console.error("Error posting service:", response);
+          console.error("Unexpected response:", response);
           Alert.alert("Lỗi", "Không thể lưu dịch vụ.");
         }
       }
 
-      Alert.alert("Thành công", "Đã lưu tất cả dịch vụ thành công.");
+      for (const activity of activities) {
+        const startTime = parseInt(activity.start.split(":")[0], 10) * 60;
+        const endTime = parseInt(activity.end.split(":")[0], 10) * 60;
+        const duration = endTime - startTime;
+
+        if (duration <= 0) {
+          console.error(
+            `Invalid duration for activity with start time ${activity.start} and end time ${activity.end}. Duration must be positive.`
+          );
+          Alert.alert(
+            "Lỗi",
+            `Thời gian kết thúc phải lớn hơn thời gian bắt đầu cho hoạt động: ${activity.description}`
+          );
+          continue;
+        }
+
+        const randomConfigId =
+          configServices.length > 0 ? configServices[0].id : null;
+
+        const activityData = {
+          serviceName: "Activity",
+          actionDescription: activity.description,
+          price: 0,
+          duration,
+          startTime,
+          status: 0,
+          configServiceId: randomConfigId,
+          isBasicService: false,
+        };
+
+        console.log("Posting Activity Data:", activityData);
+
+        const response = await postData("/services", activityData, accessToken);
+
+        if (response.status === 1000) {
+          console.log("Activity posted successfully:", response.data);
+        } else {
+          console.error("Unexpected response for activity:", response);
+          Alert.alert("Lỗi", "Không thể lưu hoạt động.");
+        }
+      }
+
+      Alert.alert(
+        "Thành công",
+        "Đã lưu tất cả dịch vụ và hoạt động thành công."
+      );
       navigation.goBack();
     } catch (error) {
-      console.error("Error posting services:", error);
-      Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu dịch vụ");
+      console.error("Error posting services or activities:", error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu dịch vụ hoặc hoạt động");
     }
   };
 
   const renderActivity = ({ item, index }) => (
     <View style={styles.activityContainer}>
       <View style={styles.row}>
-        <TextInput
-          style={styles.input}
-          placeholder="Bắt đầu"
-          value={item.start}
-          editable={false}
-        />
+        <TouchableOpacity onPress={() => setShowStartPicker(index)}>
+          <Text style={styles.timeText}>{item.start || "Bắt đầu"}</Text>
+        </TouchableOpacity>
         <Text style={styles.separator}>-</Text>
-        <TextInput
-          ref={(ref) => (endInputRefs.current[index] = ref)}
-          style={styles.input}
-          placeholder="Kết thúc"
-          value={item.end}
-          onChangeText={(text) => updateActivity(index, "end", text, false)} // Pass `false` to skip validation during typing
-          onEndEditing={() => updateActivity(index, "end", item.end, true)} // Pass `true` to validate on end editing
-        />
+        <TouchableOpacity onPress={() => setShowEndPicker(index)}>
+          <Text style={styles.timeText}>{item.end || "Kết thúc"}</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Start Time Picker */}
+      {showStartPicker === index && (
+        <DateTimePicker
+          isVisible={showStartPicker === index}
+          mode="time"
+          onCancel={() => setShowStartPicker(null)}
+          onConfirm={(selectedTime) =>
+            handleStartTimeChange(selectedTime, index)
+          }
+        />
+      )}
+
+      {/* End Time Picker */}
+      {showEndPicker === index && (
+        <DateTimePicker
+          isVisible={showEndPicker === index}
+          mode="time"
+          onCancel={() => setShowEndPicker(null)}
+          onConfirm={(selectedTime) => handleEndTimeChange(selectedTime, index)}
+        />
+      )}
 
       <TextInput
         style={styles.input}
@@ -312,7 +339,6 @@ export default function SetupService({ navigation }) {
         value={item.description}
         onChangeText={(text) => updateActivity(index, "description", text)}
       />
-
       <View style={styles.actionButtons}>
         {activities.length > 1 && (
           <TouchableOpacity
@@ -587,10 +613,11 @@ const styles = StyleSheet.create({
     marginTop: height * 0.01,
   },
   activityContainer: {
-    backgroundColor: "#FFFFFF",
     padding: height * 0.016,
     marginBottom: height * 0.016,
     borderRadius: 8,
+    borderColor: "#00000",
+    borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

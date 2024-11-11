@@ -54,7 +54,8 @@ const taskData = [
   },
 ];
 
-export default function CareMonitor({ navigation }) {
+export default function CareMonitor({ navigation, route }) {
+  const { userEmail, sitterEmail, bookingId } = route.params;
   // Đổi thành mảng để mở collapsible view độc lập
   const [expandedStates, setExpandedStates] = useState(
     Array(taskData.length).fill(false)
@@ -75,6 +76,16 @@ export default function CareMonitor({ navigation }) {
     }).start();
 
     setExpandedStates(newExpandedStates);
+  };
+  // const handleVideoCallPress = () => {
+  //   // Điều hướng sang màn hình VideoCall
+  //   navigation.navigate("VideoCall", { roomId: "room123", userId: "user123" });
+  // };
+  const handleChatPress = () => {
+    navigation.navigate("Chat", {
+      conversationId: `${userEmail}-${sitterEmail}-${bookingId}`,
+      userEmail,
+    });
   };
 
   return (
@@ -206,7 +217,11 @@ export default function CareMonitor({ navigation }) {
         </View>
 
         <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.messageContainer} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.messageContainer}
+            activeOpacity={0.8}
+            onPress={handleChatPress}
+          >
             <AntDesign name="message1" size={20} color="rgba(0,0,0,0.6)" />
             <Text style={styles.messageText}>Nhắn tin với người chăm sóc</Text>
           </TouchableOpacity>

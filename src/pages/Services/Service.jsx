@@ -69,6 +69,38 @@ export default function Service() {
   const hasUserRole =
     Array.isArray(roles) && roles.some((role) => role.roleName === "USER");
 
+  // const fetchBookings = async () => {
+  //   if (!user?.id) return;
+  //   try {
+  //     const response = await getData(`/booking-orders/sitter?id=${user.id}`);
+  //     if (response?.data && Array.isArray(response.data)) {
+  //       const formattedData = response.data.map((booking) => ({
+  //         id: booking.id,
+  //         userName: booking.user?.fullName || "Unknown User",
+  //         time: booking.startDate
+  //           ? `${new Date(booking.startDate).toLocaleString()} - ${new Date(booking.endDate).toLocaleString()}`
+  //           : "Unknown Time",
+  //         catName:
+  //           booking.bookingDetailWithPetAndServices
+  //             .map((detail) => detail.pet?.petName)
+  //             .filter(Boolean)
+  //             .join(", ") || "Unknown Pet",
+  //         serviceName: translateServiceName(
+  //           booking.bookingDetailWithPetAndServices[0]?.service?.serviceName ||
+  //             "Unknown Service"
+  //         ),
+  //         status: getStatusLabel(booking.status),
+  //         statusColor: getStatusColor(getStatusLabel(booking.status)),
+  //       }));
+  //       setBookingData(formattedData);
+  //       // console.log("log test service:", formattedData);
+  //     } else {
+  //       setBookingData([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching bookings:", error);
+  //   }
+  // };
   const fetchBookings = async () => {
     if (!user?.id) return;
     try {
@@ -76,6 +108,8 @@ export default function Service() {
       if (response?.data && Array.isArray(response.data)) {
         const formattedData = response.data.map((booking) => ({
           id: booking.id,
+          userEmail: booking.user?.email, // Lấy email của user
+          sitterEmail: booking.sitter?.email, // Lấy email của sitter
           userName: booking.user?.fullName || "Unknown User",
           time: booking.startDate
             ? `${new Date(booking.startDate).toLocaleString()} - ${new Date(booking.endDate).toLocaleString()}`
@@ -284,7 +318,13 @@ export default function Service() {
                   <View style={styles.buttonRow}>
                     <CustomButton
                       title="Theo dõi lịch"
-                      onPress={() => navigation.navigate("CareMonitor")}
+                      onPress={() =>
+                        navigation.navigate("CareMonitor", {
+                          userEmail: item.userEmail, // Truyền userEmail
+                          sitterEmail: item.sitterEmail,
+                          bookingId: item.id,
+                        })
+                      }
                     />
                     <CustomButton title="Hủy lịch" />
                   </View>
