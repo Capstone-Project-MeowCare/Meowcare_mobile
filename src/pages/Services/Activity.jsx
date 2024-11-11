@@ -50,12 +50,12 @@ export default function Activity() {
     const fetchBookings = async () => {
       try {
         const endpoint = `/booking-orders/user?id=${user.id}`;
-        console.log("API Endpoint:", endpoint);
-
         const response = await getData(endpoint);
         if (response?.data) {
           const bookingData = response.data.map((booking) => ({
             id: booking.id,
+            userEmail: booking.user?.email,
+            sitterEmail: booking.sitter?.email,
             serviceName: translateServiceName(
               booking.bookingDetailWithPetAndServices[0]?.service?.serviceName
             ),
@@ -63,10 +63,10 @@ export default function Activity() {
               .map((detail) => detail.pet?.petName)
               .filter(Boolean)
               .join(", "),
-
             time: `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`,
-            status: getStatusLabel(booking.status),
-            statusColor: getStatusColor(getStatusLabel(booking.status)),
+            status: booking.status,
+            statusLabel: getStatusLabel(booking.status), // Lấy nhãn tiếng Việt
+            statusColor: getStatusColor(getStatusLabel(booking.status)), // Lấy màu tương ứng
           }));
           setBookingData(bookingData);
         }
@@ -77,22 +77,40 @@ export default function Activity() {
 
     fetchBookings();
   }, [user?.id]);
+  const filteredData =
+    selectedTab === "Tất cả"
+      ? bookingData
+      : bookingData.filter((item) => {
+          switch (selectedTab) {
+            case "Chờ xác nhận":
+              return item.status === "AWAITING_PAYMENT";
+            case "Đã xác nhận":
+              return item.status === "CONFIRMED";
+            case "Đang diễn ra":
+              return item.status === "IN_PROGRESS";
+            case "Hoàn thành":
+              return item.status === "COMPLETED";
+            case "Đã hủy":
+              return item.status === "CANCELLED";
+            default:
+              return true;
+          }
+        });
 
   const getStatusLabel = (status) => {
     const statusMapping = {
-      0: "Chờ xác nhận",
-      1: "Đã xác nhận",
-      2: "Đang diễn ra",
-      3: "Hoàn thành",
-      4: "Đã hủy",
+      AWAITING_PAYMENT: "Chờ thanh toán",
+      CONFIRMED: "Đã xác nhận",
+      IN_PROGRESS: "Đang diễn ra",
+      COMPLETED: "Hoàn thành",
+      CANCELLED: "Đã hủy",
     };
     return statusMapping[status] || "Không xác định";
   };
 
-  // Get color based on the status label
   const getStatusColor = (statusLabel) => {
     const colorMapping = {
-      "Chờ xác nhận": "#9E9E9E",
+      "Chờ thanh toán": "#9E9E9E",
       "Đã xác nhận": "#4CAF50",
       "Đang diễn ra": "#FFC107",
       "Hoàn thành": "#4CAF50",
@@ -100,11 +118,6 @@ export default function Activity() {
     };
     return colorMapping[statusLabel] || "#000000";
   };
-
-  const filteredData =
-    selectedTab === "Tất cả"
-      ? bookingData
-      : bookingData.filter((item) => item.status === selectedTab);
 
   return (
     <ScrollView
@@ -153,7 +166,7 @@ export default function Activity() {
                   Dịch vụ: {item.serviceName}
                 </Text>
                 <Text style={[styles.status, { color: item.statusColor }]}>
-                  {item.status}
+                  {item.statusLabel}
                 </Text>
               </View>
 
@@ -170,10 +183,16 @@ export default function Activity() {
                 <Text style={styles.time}>{item.time}</Text>
               </Text>
               <View style={styles.buttonRow}>
-                {item.status === "Đang diễn ra" && (
+                {item.status === "IN_PROGRESS" && (
                   <CustomButton
                     title="Theo dõi lịch"
-                    onPress={() => navigation.navigate("CareMonitor")}
+                    onPress={() =>
+                      navigation.navigate("CareMonitor", {
+                        userEmail: item.userEmail,
+                        sitterEmail: item.sitterEmail,
+                        bookingId: item.id,
+                      })
+                    }
                   />
                 )}
                 {item.status === "Chờ xác nhận" && (

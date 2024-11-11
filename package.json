@@ -11,6 +11,7 @@
   "dependencies": {
     "@casl/ability": "^6.7.1",
     "@casl/react": "^4.0.0",
+    "@config-plugins/react-native-webrtc": "^9.0.0",
     "@hookform/resolvers": "^3.9.0",
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-community/datetimepicker": "^8.0.1",
@@ -51,6 +52,7 @@
     "react-native-swipe-gestures": "^1.0.5",
     "react-native-swiper": "^1.6.0",
     "react-native-webview": "^13.8.6",
+    "socket.io": "^4.8.1",
     "typescript": "~5.3.3",
     "uuid": "^11.0.2",
     "yup": "^1.4.0"
