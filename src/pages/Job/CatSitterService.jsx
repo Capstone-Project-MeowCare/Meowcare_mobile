@@ -111,28 +111,6 @@ export default function CatSitterService({ navigation }) {
     fetchBookings();
   }, [user?.id]);
 
-  // const getStatusLabel = (status) => {
-  //   const statusMapping = {
-  //     AWAITING_PAYMENT: "Chờ thanh toán",
-  //     CONFIRMED: "Đã xác nhận",
-  //     IN_PROGRESS: "Đang diễn ra",
-  //     COMPLETED: "Hoàn thành",
-  //     CANCELLED: "Đã hủy",
-  //   };
-  //   return statusMapping[status] || "Không xác định";
-  // };
-
-  // const getStatusColor = (statusLabel) => {
-  //   const colorMapping = {
-  //     "Chờ thanh toán": "#FFA500",
-  //     "Đã xác nhận": "#4CAF50",
-  //     "Đang diễn ra": "#FFC107",
-  //     "Hoàn thành": "#4CAF50",
-  //     "Đã hủy": "#FF4343",
-  //   };
-  //   return colorMapping[statusLabel] || "#000000";
-  // };
-
   const handleStatusUpdate = async (bookingId, action) => {
     try {
       const updatedStatus = action === "accept" ? "IN_PROGRESS" : "CANCELLED";
@@ -242,9 +220,17 @@ export default function CatSitterService({ navigation }) {
               </Text>
               {item.status === "Chờ thanh toán" && (
                 <View style={styles.buttonRow}>
-                  <CustomButton
+                  {/* <CustomButton
                     title="Chấp nhận"
                     onPress={() => handleStatusUpdate(item.id, "accept")}
+                  /> */}
+                  <CustomButton
+                    title="Xem chi tiết"
+                    onPress={() =>
+                      navigation.navigate("BookingDetailRequest", {
+                        bookingId: item.id,
+                      })
+                    }
                   />
                   <CustomButton
                     title="Từ chối"
@@ -252,14 +238,14 @@ export default function CatSitterService({ navigation }) {
                   />
                 </View>
               )}
-              {item.status === "Đang diễn ra" && (
+              {/* {item.status === "Đang diễn ra" && (
                 <View style={styles.buttonRow}>
                   <CustomButton
                     title="Theo dõi lịch"
                     onPress={() => navigation.navigate("CareMonitor")}
                   />
                 </View>
-              )}
+              )} */}
             </View>
           ))
         ) : (

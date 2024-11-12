@@ -62,6 +62,7 @@ import CallScreen from "./src/pages/VideoCall/CallScreen";
 import JoinScreen from "./src/pages/VideoCall/JoinScreen";
 import RoomScreen from "./src/pages/VideoCall/RoomScreen";
 import Chat from "./src/pages/Chat/Chat";
+import BookingDetailRequest from "./src/pages/Job/BookingDetailRequest";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -418,6 +419,11 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={RoomScreen}
         /> */}
+        <Stack.Screen
+          name="BookingDetailRequest"
+          options={{ headerLeft: null, headerShown: false }}
+          component={BookingDetailRequest}
+        />
         <Stack.Screen
           name="Chat"
           options={{ headerLeft: null, headerShown: false }}

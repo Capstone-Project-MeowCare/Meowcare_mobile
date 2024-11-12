@@ -56,6 +56,7 @@ export default function Activity() {
             id: booking.id,
             userEmail: booking.user?.email,
             sitterEmail: booking.sitter?.email,
+            sitterName: booking.sitter?.fullName,
             serviceName: translateServiceName(
               booking.bookingDetailWithPetAndServices[0]?.service?.serviceName
             ),
@@ -63,7 +64,9 @@ export default function Activity() {
               .map((detail) => detail.pet?.petName)
               .filter(Boolean)
               .join(", "),
-            time: `${new Date(booking.startDate * 1000).toLocaleString()} - ${new Date(booking.endDate * 1000).toLocaleString()}`,
+            time: booking.startDate
+              ? `${new Date(booking.startDate).toLocaleString()} - ${new Date(booking.endDate).toLocaleString()}`
+              : "Unknown Time",
             status: booking.status,
             statusLabel: getStatusLabel(booking.status), // Lấy nhãn tiếng Việt
             statusColor: getStatusColor(getStatusLabel(booking.status)), // Lấy màu tương ứng
