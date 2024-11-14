@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { getData, putData } from "../../api/api";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { ActivityIndicator } from "react-native-paper";
 
 const { width, height } = Dimensions.get("window");
 
@@ -17,7 +18,7 @@ export default function BookingDetailRequest({ navigation }) {
   const route = useRoute();
   const { bookingId } = route.params;
   const [bookingDetails, setBookingDetails] = useState(null);
-
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
@@ -27,6 +28,8 @@ export default function BookingDetailRequest({ navigation }) {
         }
       } catch (error) {
         console.error("Error fetching booking details:", error);
+      } finally {
+        setLoading(false); // Stop loading once data is fetched
       }
     };
 
@@ -37,7 +40,7 @@ export default function BookingDetailRequest({ navigation }) {
 
   const handleStatusUpdate = async (action) => {
     try {
-      const updatedStatus = action === "accept" ? "IN_PROGRESS" : "CANCELLED";
+      const updatedStatus = action === "accept" ? "CONFIRMED" : "CANCELLED";
       const endpoint = `/booking-orders/status/${bookingId}?status=${updatedStatus}`;
 
       await putData(endpoint);
@@ -47,16 +50,16 @@ export default function BookingDetailRequest({ navigation }) {
         status: updatedStatus,
       }));
 
-      navigation.navigate("Công Việc"); // Điều hướng về trang Service sau khi cập nhật
+      navigation.navigate("Công Việc");
     } catch (error) {
       console.error("Error updating booking status:", error);
     }
   };
 
-  if (!bookingDetails) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Đang tải chi tiết đặt lịch...</Text>
+        <ActivityIndicator size="large" color="#A94B84" />
       </View>
     );
   }
@@ -395,6 +398,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#FFFAF5",
   },
   noteText: {
     fontSize: width * 0.04,

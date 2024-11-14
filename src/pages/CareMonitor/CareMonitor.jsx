@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Text,
   View,
@@ -11,6 +11,7 @@ import {
 import { AntDesign, Entypo, Feather } from "@expo/vector-icons";
 import StarRating from "react-native-star-rating-widget";
 import { ScrollView } from "react-native-gesture-handler";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
@@ -56,14 +57,56 @@ const taskData = [
 
 export default function CareMonitor({ navigation, route }) {
   const { userEmail, sitterEmail, bookingId } = route.params;
-  // Đổi thành mảng để mở collapsible view độc lập
-  const [expandedStates, setExpandedStates] = useState(
-    Array(taskData.length).fill(false)
-  );
-
+  const [expandedStates, setExpandedStates] = useState([]);
+  const [tasks, setTasks] = useState([]); // Để lưu trữ các nhiệm vụ từ API
+  const [currentDate, setCurrentDate] = useState(null);
+  const [careSchedule, setCareSchedule] = useState(null); // Để lưu trữ toàn bộ thông tin từ API
   const animatedHeights = taskData.map(
     () => useRef(new Animated.Value(height * 0.04)).current
   );
+  const fetchCareSchedule = async () => {
+    try {
+      const endpoint = `/care-schedules/booking/${bookingId}`;
+      const response = await getData(endpoint);
+      setCareSchedule(response);
+      setTasks(response.tasks || []);
+      setCurrentDate(new Date(response.data.startTime));
+      console.log("Care Schedule Data:", response);
+    } catch (error) {
+      console.error("Error fetching care schedule:", error);
+    }
+  };
+
+  useEffect(() => {
+    console.log("Booking ID:", bookingId);
+    fetchCareSchedule();
+  }, [bookingId]);
+
+  const handlePreviousDay = () => {
+    if (
+      currentDate &&
+      new Date(currentDate) > new Date(careSchedule.data.startTime)
+    ) {
+      setCurrentDate((prevDate) => {
+        const newDate = new Date(prevDate);
+        newDate.setDate(newDate.getDate() - 1);
+        return newDate;
+      });
+    }
+  };
+
+  const handleNextDay = () => {
+    if (
+      currentDate &&
+      new Date(currentDate) < new Date(careSchedule.data.endTime)
+    ) {
+      setCurrentDate((prevDate) => {
+        const newDate = new Date(prevDate);
+        newDate.setDate(newDate.getDate() + 1);
+        return newDate;
+      });
+    }
+  };
 
   const toggleExpansion = (index) => {
     const newExpandedStates = [...expandedStates];
@@ -77,14 +120,17 @@ export default function CareMonitor({ navigation, route }) {
 
     setExpandedStates(newExpandedStates);
   };
-  // const handleVideoCallPress = () => {
-  //   // Điều hướng sang màn hình VideoCall
-  //   navigation.navigate("VideoCall", { roomId: "room123", userId: "user123" });
-  // };
   const handleChatPress = () => {
     navigation.navigate("Chat", {
       conversationId: `${userEmail}-${sitterEmail}-${bookingId}`,
       userEmail,
+    });
+  };
+  const handleDetailPress = (status) => {
+    navigation.navigate("CareServiceDetails", {
+      status,
+      userEmail,
+      sitterEmail,
     });
   };
 
@@ -107,11 +153,19 @@ export default function CareMonitor({ navigation, route }) {
       <Text style={styles.timeLabel}>Thời gian chăm sóc</Text>
 
       <View style={styles.dateRow}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handlePreviousDay}>
           <Entypo name="chevron-left" size={24} color="#000857" />
         </TouchableOpacity>
-        <Text style={styles.dateText}>27 Tháng 9 2024</Text>
-        <TouchableOpacity>
+        <Text style={styles.dateText}>
+          {currentDate
+            ? currentDate.toLocaleDateString("vi-VN", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })
+            : ""}
+        </Text>
+        <TouchableOpacity onPress={handleNextDay}>
           <Entypo name="chevron-right" size={24} color="#000857" />
         </TouchableOpacity>
       </View>
@@ -172,9 +226,7 @@ export default function CareMonitor({ navigation, route }) {
                     <TouchableOpacity
                       style={styles.detailButton}
                       onPress={() =>
-                        navigation.navigate("CareServiceDetails", {
-                          status: item.status,
-                        })
+                        handleDetailPress(item.status, userEmail, sitterEmail)
                       }
                     >
                       <Text style={styles.detailButtonText}>Xem chi tiết</Text>
