@@ -11,7 +11,7 @@
   "dependencies": {
     "@casl/ability": "^6.7.1",
     "@casl/react": "^4.0.0",
-    "@config-plugins/react-native-webrtc": "^9.0.0",
+    "@daily-co/react-native-webrtc": "118.0.3-daily.2",
     "@hookform/resolvers": "^3.9.0",
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-community/datetimepicker": "^8.0.1",
@@ -35,6 +35,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.53.0",
     "react-native": "0.74.5",
+    "react-native-background-timer": "^2.3.1",
     "react-native-calendars": "^1.1307.0",
     "react-native-geolocation-service": "^5.3.1",
     "react-native-gesture-handler": "~2.16.1",

@@ -5,7 +5,7 @@ export const defineRulesFor = (user) => {
 
   const userRole = user?.roles?.[0]?.name;
 
-  console.log("User role in defineRulesFor:", userRole);
+  // console.log("User role in defineRulesFor:", userRole);
 
   switch (userRole) {
     case "SITTER":
@@ -19,7 +19,7 @@ export const defineRulesFor = (user) => {
       can("update", "Profile");
       break;
     default:
-      console.log("Unknown role:", userRole);
+      // console.log("Unknown role:", userRole);
       break;
   }
 

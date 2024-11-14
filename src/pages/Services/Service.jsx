@@ -13,6 +13,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../../auth/useAuth";
 import { getData } from "../../api/api";
+import { ActivityIndicator } from "react-native-paper";
 
 const { width, height } = Dimensions.get("window");
 const CustomButton = ({ title, onPress }) => (
@@ -36,6 +37,7 @@ export default function Service() {
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
   const [bookingData, setBookingData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const tabs = [
     "Tất cả",
     "Chờ xác nhận",
@@ -102,37 +104,54 @@ export default function Service() {
   //   }
   // };
   const fetchBookings = async () => {
+    setLoading(true);
     if (!user?.id) return;
     try {
       const response = await getData(`/booking-orders/sitter?id=${user.id}`);
       if (response?.data && Array.isArray(response.data)) {
-        const formattedData = response.data.map((booking) => ({
-          id: booking.id,
-          userEmail: booking.user?.email, // Lấy email của user
-          sitterEmail: booking.sitter?.email, // Lấy email của sitter
-          userName: booking.user?.fullName || "Unknown User",
-          time: booking.startDate
-            ? `${new Date(booking.startDate).toLocaleString()} - ${new Date(booking.endDate).toLocaleString()}`
-            : "Unknown Time",
-          catName:
-            booking.bookingDetailWithPetAndServices
-              .map((detail) => detail.pet?.petName)
-              .filter(Boolean)
-              .join(", ") || "Unknown Pet",
-          serviceName: translateServiceName(
-            booking.bookingDetailWithPetAndServices[0]?.service?.serviceName ||
-              "Unknown Service"
-          ),
-          status: getStatusLabel(booking.status),
-          statusColor: getStatusColor(getStatusLabel(booking.status)),
-        }));
+        const currentDate = new Date();
+
+        const formattedData = response.data.map((booking) => {
+          const isInProgress =
+            booking.status === "CONFIRMED" &&
+            new Date(booking.startDate) <= currentDate &&
+            currentDate <= new Date(booking.endDate);
+
+          return {
+            id: booking.id,
+            userEmail: booking.user?.email,
+            sitterEmail: booking.sitter?.email,
+            userName: booking.user?.fullName || "Unknown User",
+            time: booking.startDate
+              ? `${new Date(booking.startDate).toLocaleString()} - ${new Date(booking.endDate).toLocaleString()}`
+              : "Unknown Time",
+            catName:
+              booking.bookingDetailWithPetAndServices
+                .map((detail) => detail.pet?.petName)
+                .filter(Boolean)
+                .join(", ") || "Unknown Pet",
+            serviceName: translateServiceName(
+              booking.bookingDetailWithPetAndServices[0]?.service
+                ?.serviceName || "Unknown Service"
+            ),
+            // Nếu điều kiện isInProgress đúng, hiển thị IN_PROGRESS thay vì CONFIRMED
+            status: isInProgress
+              ? "IN_PROGRESS"
+              : getStatusLabel(booking.status),
+            statusColor: getStatusColor(
+              isInProgress ? "IN_PROGRESS" : getStatusLabel(booking.status)
+            ),
+          };
+        });
+
         setBookingData(formattedData);
-        console.log("log test service:", formattedData);
       } else {
         setBookingData([]);
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -146,7 +165,7 @@ export default function Service() {
     const statusMapping = {
       AWAITING_PAYMENT: "Chờ thanh toán",
       CONFIRMED: "Đã xác nhận",
-      IN_PROGRESS: "Đang diễn ra",
+      IN_PROGRESS: "Đang diễn ra", // Thêm IN_PROGRESS cho hiển thị
       COMPLETED: "Hoàn thành",
       CANCELLED: "Đã hủy",
     };
@@ -163,7 +182,13 @@ export default function Service() {
     };
     return colorMapping[statusLabel] || "#000000";
   };
-
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#A94B84" />
+      </View>
+    );
+  }
   // Component for User View
   const UserView = () => (
     <View style={styles.userContainer}>
@@ -314,7 +339,8 @@ export default function Service() {
                   Mèo của người đặt: {item.catName}
                 </Text>
 
-                {item.status === "Đang diễn ra" && (
+                {(item.status === "Đang diễn ra" ||
+                  item.status === "Đã xác nhận") && (
                   <View style={styles.buttonRow}>
                     <CustomButton
                       title="Theo dõi lịch"
@@ -385,7 +411,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     // paddingVertical: height * 0.01,
   },
-
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFAF5",
+  },
   functionBox: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -435,6 +466,7 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
     color: "#333",
   },
+
   searchButton: {
     paddingHorizontal: width * 0.025,
   },

@@ -10,12 +10,15 @@ import {
   TextInput,
 } from "react-native";
 import StarRating from "react-native-star-rating-widget";
+import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CareServiceDetails({ navigation, route }) {
   const [rating, setRating] = useState(0);
-  const { status } = route.params;
+  const { status, userEmail, sitterEmail } = route.params;
+  const { user } = useAuth();
+  const isUser = user.email === userEmail;
   const statusColor =
     status === "Hoàn thành"
       ? "#4CAF50"
@@ -101,19 +104,26 @@ export default function CareServiceDetails({ navigation, route }) {
       ) : (
         <>
           <Text style={styles.noteTitle}>Ghi chú từ người chăm sóc:</Text>
-          <TextInput
-            style={[
-              styles.noteInput,
-              {
-                color: noteText ? "rgba(0, 8, 8, 0.87)" : "rgba(0, 0, 0, 0.4)",
-              },
-            ]}
-            value={noteText}
-            onChangeText={setNoteText}
-            placeholder="Nhập ghi chú của bạn"
-            placeholderTextColor="rgba(0, 0, 0, 0.4)"
-            multiline
-          />
+          {!isUser ? (
+            <TextInput
+              style={[
+                styles.noteInput,
+                {
+                  color: noteText
+                    ? "rgba(0, 8, 8, 0.87)"
+                    : "rgba(0, 0, 0, 0.4)",
+                },
+              ]}
+              value={noteText}
+              onChangeText={setNoteText}
+              placeholder="Nhập ghi chú của bạn"
+              placeholderTextColor="rgba(0, 0, 0, 0.4)"
+              multiline
+            />
+          ) : (
+            <View style={styles.placeholderView} />
+          )}
+
           <View style={styles.separator1} />
           <Text style={styles.noteTitle}>Hình ảnh và video:</Text>
           <View style={styles.imageContainer}>
@@ -258,6 +268,12 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingBottom: height * 0.02,
   },
+  placeholderView: {
+    width: width * 0.9,
+    height: height * 0.12,
+    marginTop: height * 0.01,
+  },
+
   ratingText: {
     fontSize: 14,
     fontWeight: "600",
