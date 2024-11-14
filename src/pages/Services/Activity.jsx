@@ -68,8 +68,8 @@ export default function Activity() {
               ? `${new Date(booking.startDate).toLocaleString()} - ${new Date(booking.endDate).toLocaleString()}`
               : "Unknown Time",
             status: booking.status,
-            statusLabel: getStatusLabel(booking.status), // Lấy nhãn tiếng Việt
-            statusColor: getStatusColor(getStatusLabel(booking.status)), // Lấy màu tương ứng
+            statusLabel: getStatusLabel(booking.status),
+            statusColor: getStatusColor(getStatusLabel(booking.status)),
           }));
           setBookingData(bookingData);
         }
