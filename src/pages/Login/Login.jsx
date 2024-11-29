@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Text, TextInput } from "react-native-paper";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { Ionicons, FontAwesome } from "@expo/vector-icons";
 import CustomButton from "../../components/CustomButton";
 import CustomToast from "../../components/CustomToast";
 import { useStorage } from "../../hooks/useLocalStorage";
@@ -27,7 +27,7 @@ const { width, height } = Dimensions.get("window");
 
 export default function Login() {
   const navigation = useNavigation();
-  const [token, setToken] = useStorage("accessToken", null);
+  // const [token, setToken] = useStorage("accessToken", null);
   const [savedEmail, setSavedEmail] = useStorage("savedEmail", "");
   const [savedPassword, setSavedPassword] = useStorage("savedPassword", "");
   const [LoginState, setLoginState] = useState(true);
@@ -35,7 +35,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const { accessToken, role, logout, login } = useAuth();
-
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const togglePasswordVisibility = () => {
+    setPasswordVisible((prev) => !prev);
+  };
   const loginSchema = yup.object().shape({
     email: yup
       .string()
@@ -145,6 +148,84 @@ export default function Login() {
   //     setLoading(false);
   //   }
   // };
+
+  // const handleLogin = async (data) => {
+  //   setLoginError(false);
+  //   setLoginState(false);
+  //   setLoading(true);
+  //   Keyboard.dismiss();
+
+  //   try {
+  //     const deviceId = Device.osBuildId || "unknown_deviceId";
+  //     const deviceName = Device.modelName || "unknown_device";
+
+  //     const responseData = await postData("/auth/token", {
+  //       email: data.email,
+  //       password: data.password,
+  //       deviceId,
+  //       deviceName,
+  //     });
+
+  //     if (responseData.status !== 1000 || !responseData.data.token) {
+  //       throw new Error("Phản hồi API không hợp lệ");
+  //     }
+
+  //     const token = responseData.data.token;
+  //     await AsyncStorage.setItem("accessToken", token);
+
+  //     // Lấy thông tin người dùng
+  //     const userInfo = responseData.data.user;
+
+  //     if (!userInfo || !userInfo.email) {
+  //       throw new Error("Phản hồi người dùng không hợp lệ");
+  //     }
+
+  //     const userData = {
+  //       id: userInfo.id,
+  //       email: userInfo.email,
+  //       roles: userInfo.roles,
+  //       fullName: userInfo.fullName,
+  //     };
+
+  //     login(userData);
+  //     setLoading(false);
+
+  //     return new Promise((resolve) => {
+  //       setTimeout(() => {
+  //         navigation.navigate("Homes", { screen: "Home" });
+  //         resolve();
+  //       }, 0);
+  //     });
+  //   } catch (error) {
+  //     console.log("Error during login:", error);
+  //     console.log("Error response:", error?.response?.data);
+
+  //     // Kiểm tra lỗi 401 với thông báo Jwt expired
+  //     if (
+  //       error?.response?.status === 401 &&
+  //       error?.response?.data?.error?.includes("Jwt expired")
+  //     ) {
+  //       await AsyncStorage.removeItem("accessToken");
+  //       CustomToast({
+  //         text: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+  //         position: 300,
+  //       });
+  //     } else if (error?.response?.status === 403) {
+  //       CustomToast({
+  //         text: "Thông tin đăng nhập không chính xác. Vui lòng đăng nhập lại.",
+  //         position: 300,
+  //       });
+  //     } else if (error?.response?.status === 500) {
+  //       await AsyncStorage.removeItem("accessToken");
+  //       CustomToast({
+  //         text: "Đã có lỗi xảy ra. Vui lòng thử lại.",
+  //         position: 190,
+  //       });
+  //     }
+
+  //     setLoading(false);
+  //   }
+  // };
   const handleLogin = async (data) => {
     setLoginError(false);
     setLoginState(false);
@@ -152,8 +233,16 @@ export default function Login() {
     Keyboard.dismiss();
 
     try {
+      console.log("========== Bắt đầu đăng nhập ==========");
       const deviceId = Device.osBuildId || "unknown_deviceId";
       const deviceName = Device.modelName || "unknown_device";
+
+      console.log("Dữ liệu gửi đến API:", {
+        email: data.email,
+        password: data.password,
+        deviceId,
+        deviceName,
+      });
 
       const responseData = await postData("/auth/token", {
         email: data.email,
@@ -162,12 +251,17 @@ export default function Login() {
         deviceName,
       });
 
+      console.log("Phản hồi từ API:", responseData);
+
       if (responseData.status !== 1000 || !responseData.data.token) {
         throw new Error("Phản hồi API không hợp lệ");
       }
 
-      const token = responseData.data.token;
-      await AsyncStorage.setItem("accessToken", token);
+      // Lấy accessToken và refreshToken từ phản hồi
+      const { token, refreshToken } = responseData.data;
+
+      console.log("AccessToken:", token);
+      console.log("RefreshToken:", refreshToken);
 
       // Lấy thông tin người dùng
       const userInfo = responseData.data.user;
@@ -183,9 +277,20 @@ export default function Login() {
         fullName: userInfo.fullName,
       };
 
-      login(userData);
+      console.log("Dữ liệu người dùng:", userData);
+
+      // Gọi login để lưu thông tin user, accessToken và refreshToken
+      login(userData, { token, refreshToken });
+
+      console.log("Thông tin người dùng đã được lưu vào useAuth:", {
+        userData,
+        token,
+        refreshToken,
+      });
+
       setLoading(false);
 
+      // Điều hướng sau khi đăng nhập thành công
       return new Promise((resolve) => {
         setTimeout(() => {
           navigation.navigate("Homes", { screen: "Home" });
@@ -196,8 +301,19 @@ export default function Login() {
       console.log("Error during login:", error);
       console.log("Error response:", error?.response?.data);
 
-      // Kiểm tra lỗi 401 với thông báo Jwt expired
-      if (
+      const { status, message } = error?.response?.data || {};
+
+      if (status === 2002 && message === "Not Found") {
+        CustomToast({
+          text: "Tài khoản không tồn tại.",
+          position: 300,
+        });
+      } else if (status === 2007 && message === "Invalid Credentials") {
+        CustomToast({
+          text: "Sai tài khoản hoặc mật khẩu.",
+          position: 300,
+        });
+      } else if (
         error?.response?.status === 401 &&
         error?.response?.data?.error?.includes("Jwt expired")
       ) {
@@ -216,6 +332,11 @@ export default function Login() {
         CustomToast({
           text: "Đã có lỗi xảy ra. Vui lòng thử lại.",
           position: 190,
+        });
+      } else {
+        CustomToast({
+          text: "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+          position: 300,
         });
       }
 
@@ -244,7 +365,7 @@ export default function Login() {
               style={styles.textInput}
               onChangeText={(text) => methods.setValue("email", text)}
               keyboardType="email-address"
-              left={<TextInput.Icon icon="email" />}
+              // left={<TextInput.Icon name={() => <Ionicons name="cash-outline" size={50} color="#902C6C" />} />}
               error={!!errors.email}
               value={methods.watch("email")}
             />
@@ -256,15 +377,25 @@ export default function Login() {
               mode="outlined"
               style={styles.textInput}
               onChangeText={(text) => methods.setValue("password", text)}
-              secureTextEntry
-              left={<TextInput.Icon icon="lock" />}
+              secureTextEntry={!passwordVisible} // Điều chỉnh hiển thị mật khẩu
               error={!!errors.password}
               value={methods.watch("password")}
+              right={
+                <TextInput.Icon
+                  icon={() => (
+                    <Ionicons
+                      name={passwordVisible ? "eye-outline" : "eye-off-outline"}
+                      size={24}
+                      color="#000"
+                    />
+                  )}
+                  onPress={togglePasswordVisibility}
+                />
+              }
             />
             {errors.password && (
               <Text style={{ color: "red" }}>* {errors.password.message}</Text>
             )}
-
             <View style={styles.footer}>
               <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
             </View>
@@ -285,10 +416,10 @@ export default function Login() {
           </View>
           <View style={styles.iconContainer}>
             <TouchableOpacity style={styles.iconWrapper1}>
-              <Icon name="facebook-square" size={30} color="#FFFFFF" />
+              <FontAwesome name="facebook-square" size={40} color="#FFFFFF" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconWrapper}>
-              <Icon name="google" size={30} color="#FFFFFF" />
+              <FontAwesome name="google" size={40} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           <View style={{ margin: height * 0.02 }} />

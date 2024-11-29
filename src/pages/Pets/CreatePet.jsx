@@ -132,7 +132,8 @@ export default function CreatePet({ navigation }) {
         navigation.navigate("PetProfile", { petId });
       } else {
         await postData("/pet-profiles", petProfileData);
-        navigation.navigate("MyPets");
+        // navigation.navigate("MyPets");
+        navigation.goBack();
       }
     } catch (error) {
       console.error(

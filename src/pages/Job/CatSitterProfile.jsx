@@ -10,15 +10,50 @@ import {
 } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../../auth/useAuth";
+import { getData } from "../../api/api";
 
 export default function CatSitterProfile({ navigation }) {
+  const { user } = useAuth(); // Lấy thông tin người dùng
+  const [sitterInfo, setSitterInfo] = useState({
+    fullName: "",
+    avatar: "",
+    sitterId: "",
+    sitterProfileId: "",
+  });
+
+  // Gọi API lấy thông tin user
+  const fetchUserProfile = async () => {
+    try {
+      const response = await getData(`/users/${user.id}`);
+      if (response?.data) {
+        const { id, sitterProfile } = response.data;
+        setSitterInfo({
+          fullName: sitterProfile?.fullName || "Người dùng",
+          avatar: sitterProfile?.avatar || null, // Sử dụng null nếu không có avatar
+          sitterId: id || "",
+          sitterProfileId: sitterProfile?.id || "",
+        });
+      } else {
+        console.error("Invalid response:", response);
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin hồ sơ:", error);
+      Alert.alert("Lỗi", "Không thể tải thông tin hồ sơ. Vui lòng thử lại.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate("Công Việc")}
         >
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
@@ -31,11 +66,18 @@ export default function CatSitterProfile({ navigation }) {
       <ScrollView>
         <View style={styles.profileContainer}>
           {/* Ảnh và tên người dùng */}
-          <Image
-            source={require("../../../assets/BecomeCatsitter.png")}
-            style={styles.profileImage}
-          />
-          <Text style={styles.profileName}>Nguyễn Hoài Phúc</Text>
+          {sitterInfo.avatar ? (
+            <Image
+              source={{ uri: sitterInfo.avatar }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <Image
+              source={require("../../../assets/BecomeCatsitter.png")}
+              style={styles.profileImage}
+            />
+          )}
+          <Text style={styles.profileName}>{sitterInfo.fullName}</Text>
           {/* <Text style={styles.editProfile}>Chỉnh sửa hồ sơ</Text> */}
         </View>
 
@@ -73,6 +115,19 @@ export default function CatSitterProfile({ navigation }) {
         >
           <Ionicons name="calendar-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Lịch làm việc</Text>
+          <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() =>
+            navigation.navigate("SitterServicePage", {
+              sitterId: sitterInfo.sitterProfileId, // `id` của `sitterProfile`
+              userId: sitterInfo.sitterId, // `id` của `user`
+            })
+          }
+        >
+          <FontAwesome5 name="cat" size={24} color="#000857" />
+          <Text style={styles.menuText}>Hồ sơ chăm sóc mèo</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
       </ScrollView>

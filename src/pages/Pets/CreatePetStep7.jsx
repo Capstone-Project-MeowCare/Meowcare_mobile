@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { firebaseImgForPet } from "../../api/firebaseImg";
@@ -36,8 +37,24 @@ export default function CreatePetStep7({
     }
   }, [initialProfilePicture, isUpdating]);
 
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Quyền bị từ chối",
+        "Ứng dụng cần quyền truy cập vào thư viện ảnh của bạn để tiếp tục."
+      );
+      return false;
+    }
+    return true;
+  };
+
   const handleImagePick = async () => {
     try {
+      // Kiểm tra quyền trước khi truy cập
+      const hasPermission = await requestPermissions();
+      if (!hasPermission) return;
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,

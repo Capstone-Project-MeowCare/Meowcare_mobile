@@ -90,9 +90,7 @@ export default function Pets({ navigation }) {
               >
                 <Image
                   source={{
-                    uri:
-                      cat.profilePicture ||
-                      "../../../assets/defaultCatImage.png",
+                    uri: cat.profilePicture,
                   }}
                   style={styles.catImage}
                 />

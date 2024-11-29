@@ -12,16 +12,16 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FlatList } from "react-native-gesture-handler";
-import { getData, postData } from "../../../api/api";
+import { getData, postData, putData } from "../../../api/api";
 import { useAuth } from "../../../../auth/useAuth";
 import DateTimePicker from "react-native-modal-datetime-picker";
 const { width, height } = Dimensions.get("window");
 
 export default function SetupService({ navigation }) {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const [atHomeCare, setAtHomeCare] = useState(false);
   const [boardingCare, setBoardingCare] = useState(false);
-
+  const [configServicesFetched, setConfigServicesFetched] = useState(false);
   const [atHomePrices, setAtHomePrices] = useState({
     normal: "",
     holiday: "",
@@ -41,12 +41,9 @@ export default function SetupService({ navigation }) {
   });
   const [configServices, setConfigServices] = useState([]);
   const [predefinedServices, setPredefinedServices] = useState([]);
-  const [activities, setActivities] = useState([
-    { id: "1", start: "6:00", end: "9:00", description: "Mô tả hoạt động" },
-  ]);
   const [showStartPicker, setShowStartPicker] = useState(null);
   const [showEndPicker, setShowEndPicker] = useState(null);
-
+  const [editedServices, setEditedServices] = useState(new Set());
   const handleStartTimeChange = (selectedTime, index) => {
     setShowStartPicker(null);
     if (selectedTime) {
@@ -69,77 +66,160 @@ export default function SetupService({ navigation }) {
     }
   };
 
+  // Fetch Config Services
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const response = await getData("/config-services");
-        if (response?.data) {
-          const allServices = response.data;
-
-          const basicServicesList = allServices.filter(
-            (service) => service.isBasicService
-          );
-
-          const atHomeService = basicServicesList.find(
-            (service) => service.name === "Trông tại nhà"
-          );
-          const boardingService = basicServicesList.find(
-            (service) => service.name === "Gửi thú cưng"
-          );
-
-          setBasicServices({ atHomeService, boardingService });
-
-          // Lọc dịch vụ bổ sung và định dạng theo cấu trúc cần thiết
-          const additionalServices = allServices
-            .filter((service) => !service.isBasicService)
-            .map((service) => ({
-              id: service.id,
-              name: service.name,
-              enabled: false,
-              price: service.floorPrice.toString(),
-            }));
-
-          setPredefinedServices(additionalServices);
-        }
-      } catch (error) {
-        console.error("Error fetching config services:", error);
-      }
-    };
-
     const fetchConfigServices = async () => {
       try {
+        console.log("Fetching config services...");
         const response = await getData("/config-services");
-        if (response?.data) {
-          setConfigServices(response.data);
+
+        if (response?.status === 1000 && Array.isArray(response.data)) {
+          const allServices = response.data;
+
+          // Phân loại dịch vụ chính và dịch vụ bổ sung
+          const mainServices = allServices.filter(
+            (service) => service.serviceType === "MAIN_SERVICE"
+          );
+
+          const additionalServices = allServices.filter(
+            (service) => service.serviceType === "ADDITION_SERVICE"
+          );
+
+          setBasicServices({
+            atHomeService: mainServices.find(
+              (service) =>
+                service.name === "Dịch Vụ Trông Thú Cưng Tại Nhà Của Bạn"
+            ),
+            boardingService: mainServices.find(
+              (service) =>
+                service.name === "Dịch Vụ Trông Thú Cưng Tại Các Cơ Sở Chăm Sóc"
+            ),
+          });
+
+          setPredefinedServices(
+            additionalServices.map((service) => ({
+              ...service,
+              enabled: false,
+              price: "",
+              description: "",
+            }))
+          );
+
+          setConfigServicesFetched(true);
+          console.log("Config services fetched and updated.");
         }
       } catch (error) {
         console.error("Error fetching config services:", error);
       }
     };
 
-    fetchServices();
     fetchConfigServices();
   }, []);
 
+  // Fetch Sitter Services
+  useEffect(() => {
+    const fetchSitterServices = async () => {
+      try {
+        if (configServicesFetched && user?.id) {
+          console.log("Fetching sitter services...");
+          const response = await getData(`/services/sitter/${user.id}`);
+
+          if (response?.status === 1000 && Array.isArray(response.data)) {
+            const sitterServices = response.data;
+
+            const atHomeService = sitterServices.find(
+              (service) =>
+                service.name === "Dịch Vụ Trông Thú Cưng Tại Nhà Của Bạn"
+            );
+
+            const boardingService = sitterServices.find(
+              (service) =>
+                service.name === "Dịch Vụ Trông Thú Cưng Tại Các Cơ Sở Chăm Sóc"
+            );
+
+            setBasicServices((prev) => ({
+              ...prev,
+              atHomeService: atHomeService || prev.atHomeService,
+              boardingService: boardingService || prev.boardingService,
+            }));
+
+            if (atHomeService) {
+              setAtHomeCare(true);
+              setAtHomePrices((prev) => ({
+                ...prev,
+                normal: atHomeService.price.toString(),
+              }));
+            }
+
+            if (boardingService) {
+              setBoardingCare(true);
+              setBoardingPrices((prev) => ({
+                ...prev,
+                normal: boardingService.price.toString(),
+              }));
+            }
+
+            setPredefinedServices((prevServices) =>
+              prevServices.map((service) => {
+                const matchedService = sitterServices.find(
+                  (sitterService) => sitterService.name === service.name
+                );
+                return matchedService
+                  ? {
+                      ...service,
+                      enabled: true,
+                      price: matchedService.price.toString(),
+                      description: matchedService.actionDescription || "",
+                    }
+                  : service;
+              })
+            );
+            console.log("Updated predefined services:", predefinedServices);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching sitter services:", error);
+      }
+    };
+
+    fetchSitterServices();
+  }, [configServicesFetched, user?.id]);
+
+  const convertMinutesToTime = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const markServiceAsEdited = (id) => {
+    setEditedServices((prev) => new Set(prev).add(id));
+  };
+
   const handlePredefinedServiceToggle = (id) => {
-    setPredefinedServices((prevServices) =>
-      prevServices.map((service) =>
+    setPredefinedServices((prevServices) => {
+      const updatedServices = prevServices.map((service) =>
         service.id === id ? { ...service, enabled: !service.enabled } : service
-      )
-    );
+      );
+      markServiceAsEdited(id);
+      return updatedServices;
+    });
   };
 
   const handlePredefinedServicePriceChange = (id, price) => {
     const numericPrice = price.replace(/\D/g, "");
     const formattedPrice = new Intl.NumberFormat("vi-VN").format(numericPrice);
 
-    setPredefinedServices((prevServices) =>
-      prevServices.map((service) =>
+    setPredefinedServices((prevServices) => {
+      const updatedServices = prevServices.map((service) =>
         service.id === id
           ? { ...service, price: formattedPrice + "đ" }
           : service
-      )
-    );
+      );
+      markServiceAsEdited(id);
+      return updatedServices;
+    });
   };
 
   const addNewAdditionalService = () => {
@@ -163,135 +243,112 @@ export default function SetupService({ navigation }) {
   };
 
   const handleComplete = async () => {
-    const isAnyMainServiceSelected = atHomeCare || boardingCare;
     const enabledAdditionalServices = predefinedServices.filter(
       (service) => service.enabled
     );
 
-    console.log("Selected Main Services:", { atHomeCare, boardingCare });
-    console.log("Enabled Additional Services:", enabledAdditionalServices);
-
     try {
       const allEnabledServices = [];
 
-      // Thêm dịch vụ chính nếu có chọn
-      if (atHomeCare && basicServices.atHomeService) {
-        const atHomeService = {
-          serviceName: basicServices.atHomeService.name,
-          price: parseFloat(atHomePrices.normal.replace(/\D/g, "")),
-          isBasicService: true,
-          otherName: "",
-          additionDescription: "", // thêm additionDescription rỗng cho dịch vụ chính
-          serviceType: "Main",
-          startTime: 0,
-          duration: 1440,
-          status: 0,
-        };
-        allEnabledServices.push(atHomeService);
-      }
+      const processMainService = (careEnabled, serviceConfig, prices) => {
+        if (careEnabled && serviceConfig) {
+          const enteredPrice = parseFloat(prices.normal.replace(/\D/g, ""));
+          if (
+            enteredPrice < serviceConfig.floorPrice ||
+            enteredPrice > serviceConfig.ceilPrice
+          ) {
+            Alert.alert(
+              "Lỗi",
+              `Giá của ${serviceConfig.name} phải nằm trong khoảng từ ${serviceConfig.floorPrice} đến ${serviceConfig.ceilPrice}.`
+            );
+            return null;
+          }
 
-      if (boardingCare && basicServices.boardingService) {
-        const boardingService = {
-          serviceName: basicServices.boardingService.name,
-          price: parseFloat(boardingPrices.normal.replace(/\D/g, "")),
-          isBasicService: true,
-          otherName: "",
-          additionDescription: "", // thêm additionDescription rỗng cho dịch vụ chính
-          serviceType: "Main",
-          startTime: 0,
-          duration: 1440,
-          status: 0,
-        };
-        allEnabledServices.push(boardingService);
-      }
+          return {
+            id: serviceConfig.id,
+            serviceName: serviceConfig.name,
+            price: enteredPrice,
+            serviceType: "MAIN_SERVICE",
+            status: 0,
+          };
+        }
+        return null;
+      };
 
-      // Thêm dịch vụ bổ sung
+      const atHomeService = processMainService(
+        atHomeCare,
+        basicServices.atHomeService,
+        atHomePrices
+      );
+      const boardingService = processMainService(
+        boardingCare,
+        basicServices.boardingService,
+        boardingPrices
+      );
+
+      if (atHomeService) allEnabledServices.push(atHomeService);
+      if (boardingService) allEnabledServices.push(boardingService);
+
       for (const service of enabledAdditionalServices) {
-        // Lấy thông tin dịch vụ từ cấu hình để kiểm tra khoảng giá
-        const configService = configServices.find(
+        const enteredPrice = parseFloat(service.price.replace(/\D/g, ""));
+        const configService = predefinedServices.find(
           (config) => config.name === service.name
         );
 
-        if (!configService) {
-          console.error("Không tìm thấy config cho dịch vụ:", service.name);
-          continue;
-        }
-
-        const enteredPrice = parseFloat(service.price.replace(/\D/g, ""));
         if (
           enteredPrice < configService.floorPrice ||
           enteredPrice > configService.ceilPrice
         ) {
           Alert.alert(
             "Lỗi",
-            `Giá của ${service.name} phải nằm trong khoảng từ ${configService.floorPrice} đến ${configService.ceilPrice}`
+            `Giá của ${service.name} phải nằm trong khoảng từ ${configService.floorPrice} đến ${configService.ceilPrice}.`
           );
           return;
         }
 
-        // Tính toán thời gian bắt đầu và duration
-        const startTimeParts = service.start.split(":");
-        const endTimeParts = service.end.split(":");
-        const startTime =
-          parseInt(startTimeParts[0], 10) * 60 +
-          parseInt(startTimeParts[1], 10);
-        const endTime =
-          parseInt(endTimeParts[0], 10) * 60 + parseInt(endTimeParts[1], 10);
-        const duration = endTime - startTime;
-
-        if (duration <= 0) {
-          Alert.alert(
-            "Lỗi",
-            `Thời gian kết thúc phải lớn hơn thời gian bắt đầu cho hoạt động: ${service.name}`
-          );
-          continue;
-        }
-
-        const cleanPrice = parseInt(service.price.replace(/[^\d]/g, ""), 10);
-
-        const serviceData = {
+        allEnabledServices.push({
+          id: service.id || null,
           serviceName: service.name,
-          serviceType: "Additional",
-          price: cleanPrice,
-          duration: duration,
-          startTime: startTime,
+          price: enteredPrice,
+          serviceType: "ADDITION_SERVICE",
           status: 0,
-          isBasicService: false,
-          configServiceId: configService.id,
-          additionDescription: service.description,
-          otherName: "",
-        };
-
-        allEnabledServices.push(serviceData);
+        });
       }
 
-      console.log("All Enabled Services for Posting:", allEnabledServices);
+      console.log(
+        "All Enabled Services for Posting/Updating:",
+        allEnabledServices
+      );
 
-      // Gửi từng dịch vụ lên server
       for (const service of allEnabledServices) {
-        const response = await postData("/services", service, accessToken);
-        if (response.status === 1000) {
-          console.log("Service posted successfully:", response.data);
-        } else {
-          console.error("Unexpected response:", response);
-          Alert.alert("Lỗi", "Không thể lưu dịch vụ.");
+        try {
+          if (service.id) {
+            const response = await putData(
+              `/services/${service.id}`,
+              service,
+              accessToken
+            );
+            console.log("Update response:", response);
+          } else {
+            const response = await postData("/services", service, accessToken);
+            console.log("Create response:", response);
+          }
+        } catch (error) {
+          console.error("Error processing service:", service, error);
+          Alert.alert("Lỗi", `Không thể xử lý dịch vụ: ${service.serviceName}`);
         }
       }
 
-      Alert.alert(
-        "Thành công",
-        "Đã lưu tất cả dịch vụ và hoạt động thành công."
-      );
+      Alert.alert("Thành công", "Dịch vụ đã được cập nhật thành công.");
       navigation.goBack();
     } catch (error) {
-      console.error("Error posting services or activities:", error);
-      Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu dịch vụ hoặc hoạt động");
+      console.error("Error saving services:", error);
+      Alert.alert("Lỗi", "Không thể lưu dịch vụ.");
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -301,19 +358,13 @@ export default function SetupService({ navigation }) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thiết kế dịch vụ</Text>
       </View>
-
-      {/* Divider */}
       <View style={styles.divider} />
-
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Main Services */}
         <Text style={styles.sectionTitle}>Dịch vụ chính</Text>
-
-        {/* Maximum Cats Setting */}
-        <View style={styles.serviceOptionRow}>
+        {/* <View style={styles.serviceOptionRow}>
           <Text style={styles.optionLabel}>
             Số lượng mèo bạn có thể chăm sóc:
           </Text>
@@ -324,9 +375,7 @@ export default function SetupService({ navigation }) {
             value={maxCats}
             onChangeText={setMaxCats}
           />
-        </View>
-
-        {/* At Home Care Service */}
+        </View> */}
         {basicServices.atHomeService && (
           <View style={styles.serviceOption}>
             <View style={styles.headerRow}>
@@ -340,40 +389,31 @@ export default function SetupService({ navigation }) {
             </View>
             {atHomeCare && (
               <View style={styles.pricingContainerWrapper}>
-                <Text>Giá : {basicServices.atHomeService.floorPrice}</Text>
                 <TextInput
                   style={styles.priceInput}
-                  placeholder="Ngày thường: giá/đêm"
+                  placeholder="Giá: Nhập giá/đêm"
                   keyboardType="numeric"
-                  value={atHomePrices.normal}
-                  onChangeText={(price) =>
-                    setAtHomePrices((prev) => ({ ...prev, normal: price }))
-                  }
+                  value={`Giá: ${
+                    atHomePrices.normal
+                      ? new Intl.NumberFormat("vi-VN").format(
+                          atHomePrices.normal
+                        ) + "đ/ngày"
+                      : ""
+                  }`}
+                  onChangeText={(price) => {
+                    const numericPrice = price.replace(/[^\d]/g, ""); // Chỉ giữ lại số
+                    setAtHomePrices((prev) => ({
+                      ...prev,
+                      normal: numericPrice,
+                    }));
+                  }}
                 />
-                {/* <TextInput
-                  style={styles.priceInput}
-                  placeholder="Ngày lễ: giá/đêm"
-                  keyboardType="numeric"
-                  value={atHomePrices.holiday}
-                  onChangeText={(price) =>
-                    setAtHomePrices((prev) => ({ ...prev, holiday: price }))
-                  }
-                />
-                <TextInput
-                  style={styles.priceInput}
-                  placeholder="Thêm số lượng mèo: giá/bé mèo"
-                  keyboardType="numeric"
-                  value={atHomePrices.extraCat}
-                  onChangeText={(price) =>
-                    setAtHomePrices((prev) => ({ ...prev, extraCat: price }))
-                  }
-                /> */}
+                {/* Render Child Services */}
               </View>
             )}
           </View>
         )}
 
-        {/* Boarding Care Service */}
         {basicServices.boardingService && (
           <View style={styles.serviceOption}>
             <View style={styles.headerRow}>
@@ -387,45 +427,43 @@ export default function SetupService({ navigation }) {
             </View>
             {boardingCare && (
               <View style={styles.pricingContainerWrapper}>
-                <Text>Giá mỗi đêm: {basicServices.boardingService.price}</Text>
                 <TextInput
                   style={styles.priceInput}
-                  placeholder="Ngày thường: giá/đêm"
+                  placeholder="Giá: Nhập giá/đêm"
                   keyboardType="numeric"
-                  value={boardingPrices.normal}
-                  onChangeText={(price) =>
-                    setBoardingPrices((prev) => ({ ...prev, normal: price }))
-                  }
+                  value={`Giá: ${
+                    boardingPrices.normal
+                      ? new Intl.NumberFormat("vi-VN").format(
+                          boardingPrices.normal
+                        ) + "đ/ngày"
+                      : ""
+                  }`}
+                  onChangeText={(price) => {
+                    const numericPrice = price.replace(/[^\d]/g, ""); // Chỉ giữ lại số
+                    setBoardingPrices((prev) => ({
+                      ...prev,
+                      normal: numericPrice,
+                    }));
+                  }}
                 />
-                {/* <TextInput
-                  style={styles.priceInput}
-                  placeholder="Ngày lễ: giá/đêm"
-                  keyboardType="numeric"
-                  value={boardingPrices.holiday}
-                  onChangeText={(price) =>
-                    setBoardingPrices((prev) => ({ ...prev, holiday: price }))
-                  }
-                />
-                <TextInput
-                  style={styles.priceInput}
-                  placeholder="Thêm số lượng mèo: giá/bé mèo"
-                  keyboardType="numeric"
-                  value={boardingPrices.extraCat}
-                  onChangeText={(price) =>
-                    setBoardingPrices((prev) => ({ ...prev, extraCat: price }))
-                  }
-                /> */}
               </View>
             )}
           </View>
         )}
-
-        {/* Predefined Additional Services */}
+        <TouchableOpacity
+          style={styles.addServiceButton} // Dùng chung style
+          onPress={() => navigation.navigate("CareTimeManagement")} // Điều hướng
+        >
+          <Ionicons name="time-outline" size={24} color="#902C6C" />
+          <Text style={styles.addServiceButtonText}>
+            Quản lý thời gian chăm sóc
+          </Text>
+        </TouchableOpacity>
         <Text style={styles.sectionTitle}>Dịch vụ thêm</Text>
         {predefinedServices.map((service, index) => (
           <View key={service.id} style={styles.serviceOption}>
             <View style={styles.headerRow}>
-              <Text style={styles.additionalServiceName}>{service.name}</Text>
+              <Text style={styles.optionLabel}>{service.name}</Text>
               <Switch
                 value={service.enabled}
                 onValueChange={() => handlePredefinedServiceToggle(service.id)}
@@ -433,7 +471,7 @@ export default function SetupService({ navigation }) {
             </View>
             {service.enabled && (
               <View style={styles.pricingContainerWrapper}>
-                <View style={styles.row}>
+                {/* <View style={styles.row}>
                   <TouchableOpacity onPress={() => setShowStartPicker(index)}>
                     <Text style={styles.timeText}>
                       {service.start || "Bắt đầu"}
@@ -445,9 +483,9 @@ export default function SetupService({ navigation }) {
                       {service.end || "Kết thúc"}
                     </Text>
                   </TouchableOpacity>
-                </View>
+                </View> */}
 
-                {showStartPicker === index && (
+                {/* {showStartPicker === index && (
                   <DateTimePicker
                     isVisible={showStartPicker === index}
                     mode="time"
@@ -456,9 +494,9 @@ export default function SetupService({ navigation }) {
                       handleStartTimeChange(selectedTime, index)
                     }
                   />
-                )}
+                )} */}
 
-                {showEndPicker === index && (
+                {/* {showEndPicker === index && (
                   <DateTimePicker
                     isVisible={showEndPicker === index}
                     mode="time"
@@ -467,7 +505,7 @@ export default function SetupService({ navigation }) {
                       handleEndTimeChange(selectedTime, index)
                     }
                   />
-                )}
+                )} */}
 
                 <TextInput
                   style={styles.input}
@@ -477,22 +515,45 @@ export default function SetupService({ navigation }) {
                     updateServiceActivity(index, "description", text)
                   }
                 />
-
-                <TextInput
-                  style={styles.priceInput}
-                  placeholder="Nhập giá tiền"
-                  keyboardType="numeric"
-                  value={service.price}
-                  onChangeText={(price) =>
-                    handlePredefinedServicePriceChange(service.id, price)
-                  }
-                />
+                <View style={styles.childServiceRow}>
+                  <Text style={styles.childServiceName}>Giá:</Text>
+                  <TextInput
+                    style={[
+                      styles.childServicePriceInput,
+                      { textAlign: "right" },
+                    ]}
+                    placeholder="Nhập giá tiền"
+                    keyboardType="numeric"
+                    value={
+                      service.price
+                        ? `${parseInt(service.price.replace(/\D/g, ""), 10).toLocaleString("vi-VN")} đ/ngày`
+                        : " đ/ngày"
+                    }
+                    onChangeText={(price) => {
+                      const numericPrice = price.replace(/[^\d]/g, ""); // Chỉ giữ số
+                      const formattedPrice = numericPrice
+                        ? `${parseInt(numericPrice, 10).toLocaleString("vi-VN")}`
+                        : "";
+                      handlePredefinedServicePriceChange(
+                        service.id,
+                        formattedPrice
+                      );
+                    }}
+                    onKeyPress={({ nativeEvent }) => {
+                      if (
+                        nativeEvent.key === "Backspace" &&
+                        service.price &&
+                        service.price.endsWith("đ/ngày")
+                      ) {
+                        return false;
+                      }
+                    }}
+                  />
+                </View>
               </View>
             )}
           </View>
         ))}
-
-        {/* Custom Additional Services */}
         {additionalServices.map((service) => (
           <View key={service.id} style={styles.additionalService}>
             <TextInput
@@ -523,7 +584,6 @@ export default function SetupService({ navigation }) {
           </View>
         ))}
 
-        {/* Add New Additional Service Button */}
         <TouchableOpacity
           style={styles.addServiceButton}
           onPress={addNewAdditionalService}
@@ -531,7 +591,6 @@ export default function SetupService({ navigation }) {
           <Ionicons name="add-circle-outline" size={24} color="#902C6C" />
           <Text style={styles.addServiceButtonText}>Tạo mới dịch vụ thêm</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.completeButton}
           onPress={handleComplete}
@@ -724,11 +783,39 @@ const styles = StyleSheet.create({
     marginLeft: height * 0.01,
   },
   completeButton: {
-    backgroundColor: "#D3D3D3",
+    // backgroundColor: "#D3D3D3",
+    backgroundColor: "#902C6C",
     paddingVertical: 12,
     alignItems: "center",
     borderRadius: 8,
     marginTop: height * 0.016,
+  },
+  childServiceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: height * 0.005,
+  },
+  childServiceName: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+  },
+  childServicePrice: {
+    fontSize: 14,
+    color: "#902C6C",
+    fontWeight: "bold",
+    textAlign: "right",
+    flexShrink: 0,
+  },
+  childServicePriceInput: {
+    flex: 1,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#D3D3D3",
+    borderRadius: 5,
+    paddingHorizontal: height * 0.01,
+    color: "#333",
   },
   completeButtonText: {
     color: "#FFFFFF",

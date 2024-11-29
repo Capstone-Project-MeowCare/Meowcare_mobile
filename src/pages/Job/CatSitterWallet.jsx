@@ -1,15 +1,45 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
-import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from "react";
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { getData } from "../../api/api";
+import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "../../../auth/useAuth";
 
 export default function CatSitterProfile({ navigation }) {
-  const [isVisible, setIsVisible] = useState(true); // Trạng thái ẩn/hiện số tiền
+  const [isVisible, setIsVisible] = useState(false); // Trạng thái ẩn/hiện số tiền
+  const [balance, setBalance] = useState("0");
+  const { user } = useAuth();
+  const [walletId, setWalletId] = useState(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchWalletBalance = async () => {
+        try {
+          if (!user?.id) {
+            console.error("Không tìm thấy userId, bỏ qua việc gọi API.");
+            return;
+          }
+
+          console.log(`Đang gọi API để lấy số dư ví của userId: ${user.id}`);
+          const response = await getData(`/wallets/user/${user.id}`);
+          console.log("Kết quả API trả về:", response);
+
+          if (response?.data) {
+            const { balance, id } = response.data;
+            setBalance(balance);
+            setWalletId(id);
+            console.log("Số dư ví được cập nhật:", balance);
+          } else {
+            console.log("Không tìm thấy dữ liệu ví phù hợp.");
+          }
+        } catch (error) {
+          console.error("Lỗi khi gọi API lấy số dư ví:", error);
+        }
+      };
+
+      fetchWalletBalance();
+    }, [user?.id])
+  );
 
   // Hàm toggle hiển thị số tiền
   const toggleVisibility = () => {
@@ -21,13 +51,16 @@ export default function CatSitterProfile({ navigation }) {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate("Công Việc")}
         >
-            <Ionicons name="chevron-back-outline" size={30} color="#000857" />
+          <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Ví tiền</Text>
-      
-        <TouchableOpacity style={styles.historyButton} onPress={() => navigation.navigate('HistoryWallet')}>
+
+        <TouchableOpacity
+          style={styles.historyButton}
+          onPress={() => navigation.navigate("HistoryWallet")}
+        >
           <Ionicons name="time-outline" size={20} color="#000857" />
           <Text style={styles.historyText}>Lịch sử</Text>
         </TouchableOpacity>
@@ -37,12 +70,6 @@ export default function CatSitterProfile({ navigation }) {
       <View style={styles.divider} />
 
       {/* Nội dung chính */}
-      <View style={styles.imageContainer}>
-        <Image
-          source={require("../../../assets/wallet.png")}
-          style={styles.image}
-        />
-      </View>
 
       {/* Thông tin ví */}
       <View style={styles.walletInfo}>
@@ -57,37 +84,46 @@ export default function CatSitterProfile({ navigation }) {
           </TouchableOpacity>
         </View>
         <Text style={styles.walletBalance}>
-          {isVisible ? "0đ" : "*******"} {/* Hiển thị hoặc ẩn số tiền */}
+          {isVisible
+            ? `${Number(balance).toLocaleString("vi-VN")}đ`
+            : "*******"}
         </Text>
       </View>
 
       {/* Các tùy chọn nạp và rút tiền */}
       <View style={styles.transactionOptions}>
-      
-        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('DepositWallet')}>
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => navigation.navigate("DepositWallet", { walletId })}
+        >
           <Ionicons name="wallet-outline" size={40} color="#902C6C" />
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionText}>Nạp tiền</Text>
             <Text style={styles.optionSubText}>Từ ngân hàng vào ví</Text>
           </View>
-          <Ionicons
-            name="chevron-forward-outline"
-            size={24}
-            color="#902C6C"
-          />
+          <Ionicons name="chevron-forward-outline" size={24} color="#902C6C" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('WithdrawWallet')}>
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => navigation.navigate("WithdrawWallet")}
+        >
           <Ionicons name="cash-outline" size={40} color="#902C6C" />
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionText}>Rút tiền</Text>
             <Text style={styles.optionSubText}>Từ ví về ngân hàng</Text>
           </View>
-          <Ionicons
-            name="chevron-forward-outline"
-            size={24}
-            color="#902C6C"
-          />
+          <Ionicons name="chevron-forward-outline" size={24} color="#902C6C" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => navigation.navigate("Thống kê thu nhập")}
+        >
+          <Ionicons name="pie-chart-outline" size={40} color="#902C6C" />
+          <View style={styles.optionTextContainer}>
+            <Text style={styles.optionText}>Thống kê thu nhập</Text>
+          </View>
+          <Ionicons name="chevron-forward-outline" size={24} color="#902C6C" />
         </TouchableOpacity>
       </View>
     </View>
@@ -155,7 +191,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
-    marginTop: -80,
+    // marginTop: -80,
   },
   walletHeader: {
     flexDirection: "row",

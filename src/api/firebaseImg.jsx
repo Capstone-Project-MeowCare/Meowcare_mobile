@@ -1,42 +1,6 @@
 import { getDownloadURL, ref, uploadBytes } from "@firebase/storage";
 import { storage } from "../configs/firebase";
-import { v4 as uuidv4 } from "uuid";
-// export const firebaseImg = async (image) => {
-//     const pathParts = image.assets[0].uri?.split('/');
-//     const fileName = pathParts[pathParts.length - 1];
-//     if (image) {
-//       const imageRef = ref(storage, `images/${fileName}`);
-//       // Upload image to Firebase Storage
-//       await uploadBytes(imageRef, await fetch(image.assets[0].uri).then((res) => res.blob()));
-//       // Get the download URL of the image
-//       const imageUrl = await getDownloadURL(imageRef);
-//       return imageUrl;
-//     }
-//     return null;
-// };
-// export const firebaseImg = async (image) => {
-//   try {
-//     if (!image || !image.assets[0]?.uri) {
-//       return null; // Handle case where image or URI is missing
-//     }
 
-//     const pathParts = image.assets[0].uri.split("/");
-//     const fileName = pathParts[pathParts.length - 1];
-
-//     const imageRef = ref(storage, `sitterprofilepictures/${fileName}`);
-
-//     // Fetch and upload in parallel
-//     const [blob] = await Promise.all([
-//       fetch(image.assets[0].uri).then((res) => res.blob()),
-//     ]);
-//     await uploadBytes(imageRef, blob);
-//     const imageUrl = await getDownloadURL(imageRef);
-//     return imageUrl;
-//   } catch (error) {
-//     console.error("Error uploading image:", error);
-//     return null; // or throw the error for further handling
-//   }
-// };
 export const firebaseImg = async (imageUri) => {
   try {
     if (!imageUri) {
@@ -46,7 +10,7 @@ export const firebaseImg = async (imageUri) => {
 
     // Tạo tên file dựa trên thời gian hiện tại và một số ngẫu nhiên
     const fileName = `pet_${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`;
-    const imageRef = ref(storage, `petImages/${fileName}`);
+    const imageRef = ref(storage, `images/${fileName}`);
 
     const response = await fetch(imageUri);
     const blob = await response.blob();
@@ -78,6 +42,49 @@ export const firebaseImgForPet = async (imageUri) => {
     return imageUrl;
   } catch (error) {
     console.error("Error uploading image:", error);
+    return null;
+  }
+};
+export const firebaseTask = async (mediaUri, isVideo = false) => {
+  try {
+    if (!mediaUri) {
+      console.error("Media URI is missing");
+      return null;
+    }
+    const fileName = `task_${Date.now()}_${Math.floor(Math.random() * 10000)}.${isVideo ? "mp4" : "jpg"}`;
+    const folder = isVideo ? "videosTask/" : "imagesTask/";
+    const mediaRef = ref(storage, `${folder}${fileName}`);
+
+    const response = await fetch(mediaUri);
+    const blob = await response.blob();
+
+    await uploadBytes(mediaRef, blob);
+    const mediaUrl = await getDownloadURL(mediaRef);
+    return mediaUrl;
+  } catch (error) {
+    console.error("Error uploading media:", error);
+    return null;
+  }
+};
+export const firebaseAvatar = async (imageUri) => {
+  try {
+    if (!imageUri) {
+      console.error("Image URI is missing");
+      return null;
+    }
+
+    // Tạo tên file dựa trên thời gian hiện tại và số ngẫu nhiên
+    const fileName = `avatar_${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`;
+    const imageRef = ref(storage, `avatar/${fileName}`);
+
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+
+    await uploadBytes(imageRef, blob);
+    const imageUrl = await getDownloadURL(imageRef);
+    return imageUrl;
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
     return null;
   }
 };

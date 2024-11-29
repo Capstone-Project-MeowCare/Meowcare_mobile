@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Text,
   View,
@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  Alert,
 } from "react-native";
 
 const { width, height } = Dimensions.get("window");
@@ -22,7 +23,14 @@ export default function ServicePaymentComplete() {
     contactInfo = {},
     bookingId,
   } = route.params || {};
-
+  useEffect(() => {
+    if (!bookingId && route.params) {
+      // Alert.alert(
+      //   "Thông báo",
+      //   "Không tìm thấy thông tin đặt lịch từ deeplink."
+      // );
+    }
+  }, [route.params]);
   return (
     <View style={styles.container}>
       <Image

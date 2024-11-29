@@ -13,6 +13,7 @@ import {
 import GestureRecognizer from "react-native-swipe-gestures";
 import { getData } from "../../api/api";
 import { useAuth } from "../../../auth/useAuth";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -25,24 +26,27 @@ export default function BookingStep3({
   const { user } = useAuth();
   const [catData, setCatData] = useState([]);
   const [loading, setLoading] = useState(true); // State to track loading
+  const navigation = useNavigation();
 
-  useEffect(() => {
-    const fetchCatData = async () => {
-      try {
-        const response = await getData(`/pet-profiles/user/${user.id}`);
-        if (response?.data) {
-          setCatData(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching cat data:", error);
-      } finally {
-        setLoading(false); // Set loading to false after data is fetched
+  const fetchCatData = async () => {
+    try {
+      const response = await getData(`/pet-profiles/user/${user.id}`);
+      if (response?.data) {
+        setCatData(response.data);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching cat data:", error);
+    } finally {
+      setLoading(false); // Set loading to false after data is fetched
+    }
+  };
 
-    fetchCatData();
-  }, [user.id]);
-
+  useFocusEffect(
+    React.useCallback(() => {
+      setLoading(true);
+      fetchCatData();
+    }, [])
+  );
   const handleSelectCat = (cat) => {
     if (
       step3Info.selectedCats.some((selectedCat) => selectedCat.id === cat.id)
@@ -146,7 +150,10 @@ export default function BookingStep3({
           </View>
 
           <View style={styles.newContainerWrapper}>
-            <TouchableOpacity style={styles.catContainer}>
+            <TouchableOpacity
+              style={styles.catContainer}
+              onPress={() => navigation.navigate("CreatePet")}
+            >
               <Image
                 source={require("../../../assets/image89.png")}
                 style={styles.catImage}

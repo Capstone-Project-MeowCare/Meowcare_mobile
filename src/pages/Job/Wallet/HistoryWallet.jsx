@@ -1,20 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
-// Sample data for transaction history
-const transactions = [
-  { id: "1", type: "deposit", amount: 500000, date: "2024-10-01" },
-  { id: "2", type: "withdraw", amount: 200000, date: "2024-10-02" },
-  { id: "3", type: "deposit", amount: 300000, date: "2024-09-25" },
-  { id: "4", type: "withdraw", amount: 150000, date: "2024-09-28" },
-];
+import { getData } from "../../../api/api";
+import { useAuth } from "../../../../auth/useAuth";
 
 // Function to format month headers
 const formatMonthHeader = (dateString) => {
@@ -24,18 +19,72 @@ const formatMonthHeader = (dateString) => {
   return `Tháng ${month}/${year}`;
 };
 
-export default function HistoryWallet({ navigation }) {
-  const [filter, setFilter] = useState("all");
+const getStatusLabel = (status) => {
+  switch (status) {
+    case "PENDING":
+      return { label: "Đang chờ", color: "#FFC107" }; // Màu vàng
+    case "COMPLETED":
+      return { label: "Thành công", color: "#4CAF50" }; // Màu xanh lá
+    case "FAILED":
+      return { label: "Thất bại", color: "#FF4343" }; // Màu đỏ
+    default:
+      return { label: "Không rõ", color: "#999999" }; // Màu xám
+  }
+};
 
-  // Filter transactions based on selected filter
+export default function HistoryWallet({ navigation }) {
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState([]);
+  const [users, setUsers] = useState({});
+  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [expandedTransaction, setExpandedTransaction] = useState(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await getData("/users");
+        if (Array.isArray(response)) {
+          const userMap = response.reduce((acc, user) => {
+            acc[user.id] = user;
+            return acc;
+          }, {});
+          setUsers(userMap);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách người dùng:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await getData(`/transactions/user/${user.id}`);
+        if (response?.status === 1000 && Array.isArray(response.data)) {
+          setTransactions(response.data);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách giao dịch:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, [user.id]);
+
   const filteredTransactions = transactions.filter((transaction) => {
     if (filter === "all") return true;
-    return transaction.type === filter;
+    return transaction.transactionType?.toLowerCase() === filter;
   });
 
-  // Group transactions by month
-  const groupedTransactions = filteredTransactions.reduce((acc, transaction) => {
-    const monthHeader = formatMonthHeader(transaction.date);
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  const groupedTransactions = sortedTransactions.reduce((acc, transaction) => {
+    const monthHeader = formatMonthHeader(transaction.createdAt);
     if (!acc[monthHeader]) {
       acc[monthHeader] = [];
     }
@@ -43,17 +92,14 @@ export default function HistoryWallet({ navigation }) {
     return acc;
   }, {});
 
-  const renderTransaction = ({ item }) => (
-    <View style={styles.transactionItem}>
-      <Text style={styles.transactionType}>
-        {item.type === "deposit" ? "Tiền Nạp Vô" : "Tiền Rút"}
-      </Text>
-      <Text style={styles.transactionAmount}>
-        {item.type === "deposit" ? "+" : "-"}{item.amount.toLocaleString()} VND
-      </Text>
-      <Text style={styles.transactionDate}>{item.date}</Text>
-    </View>
-  );
+  const getTransactionAmount = (transaction) => {
+    if (transaction.transactionType === "COMMISSION") {
+      return `-${transaction.amount?.toLocaleString() || 0} VND`;
+    }
+    return transaction.fromUserId === user.id
+      ? `-${transaction.amount?.toLocaleString() || 0} VND`
+      : `+${transaction.amount?.toLocaleString() || 0} VND`;
+  };
 
   return (
     <View style={styles.container}>
@@ -69,57 +115,130 @@ export default function HistoryWallet({ navigation }) {
 
       <View style={styles.divider} />
 
-      {/* Filter tabs */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterTab, filter === "all" && styles.activeFilterTab]}
           onPress={() => setFilter("all")}
         >
-          <Text style={[styles.filterText, filter === "all" && styles.activeFilterText]}>
+          <Text
+            style={[
+              styles.filterText,
+              filter === "all" && styles.activeFilterText,
+            ]}
+          >
             Tất cả
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.filterTab, filter === "deposit" && styles.activeFilterTab]}
+          style={[
+            styles.filterTab,
+            filter === "deposit" && styles.activeFilterTab,
+          ]}
           onPress={() => setFilter("deposit")}
         >
-          <Text style={[styles.filterText, filter === "deposit" && styles.activeFilterText]}>
+          <Text
+            style={[
+              styles.filterText,
+              filter === "deposit" && styles.activeFilterText,
+            ]}
+          >
             Tiền Nạp
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.filterTab, filter === "withdraw" && styles.activeFilterTab]}
+          style={[
+            styles.filterTab,
+            filter === "withdraw" && styles.activeFilterTab,
+          ]}
           onPress={() => setFilter("withdraw")}
         >
-          <Text style={[styles.filterText, filter === "withdraw" && styles.activeFilterText]}>
+          <Text
+            style={[
+              styles.filterText,
+              filter === "withdraw" && styles.activeFilterText,
+            ]}
+          >
             Tiền Rút
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Transaction list */}
-      <FlatList
-        data={Object.entries(groupedTransactions)}
-        keyExtractor={(item) => item[0]}
-        renderItem={({ item }) => (
-          <View style={styles.monthSection}>
-            <Text style={styles.monthHeader}>{item[0]}</Text>
-            {item[1].map((transaction) => (
-              <View key={transaction.id} style={styles.transactionItem}>
-                <Text style={styles.transactionType}>
-                  {transaction.type === "deposit" ? "Tiền Nạp Vô" : "Tiền Rút"}
-                </Text>
-                <Text style={styles.transactionAmount}>
-                  {transaction.type === "deposit" ? "+" : "-"}
-                  {transaction.amount.toLocaleString()} VND
-                </Text>
-                <Text style={styles.transactionDate}>{transaction.date}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-        contentContainerStyle={styles.transactionList}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#902C6C" />
+        </View>
+      ) : transactions.length === 0 ? ( // Kiểm tra danh sách trống
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Không có lịch sử giao dịch nào</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={Object.entries(groupedTransactions)}
+          keyExtractor={(item) => item[0]}
+          renderItem={({ item }) => (
+            <View style={styles.monthSection}>
+              <Text style={styles.monthHeader}>{item[0]}</Text>
+              {item[1].map((transaction) => (
+                <TouchableOpacity
+                  key={transaction.id}
+                  onPress={() =>
+                    transaction.transactionType !== "COMMISSION" &&
+                    setExpandedTransaction(
+                      expandedTransaction === transaction.id
+                        ? null
+                        : transaction.id
+                    )
+                  }
+                  style={styles.transactionItem}
+                >
+                  <View style={styles.row}>
+                    <Text style={styles.transactionType}>
+                      {transaction.transactionType === "deposit"
+                        ? "Tiền Nạp Vô"
+                        : transaction.transactionType === "COMMISSION"
+                          ? "Chiết Khấu"
+                          : "Tiền Nhận"}
+                    </Text>
+                    <Text style={styles.transactionAmount}>
+                      {getTransactionAmount(transaction)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.row}>
+                    <Text style={styles.transactionDate}>
+                      {transaction.createdAt
+                        ? new Date(transaction.createdAt).toLocaleDateString()
+                        : "Không có ngày"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.transactionStatus,
+                        { color: getStatusLabel(transaction.status).color },
+                      ]}
+                    >
+                      {getStatusLabel(transaction.status).label}
+                    </Text>
+                  </View>
+
+                  {expandedTransaction === transaction.id && (
+                    <View style={styles.expandedDetails}>
+                      <Text>
+                        Người gửi:{" "}
+                        {users[transaction.fromUserId]?.fullName || "Không rõ"}
+                      </Text>
+                      <Text>
+                        Loại giao dịch:{" "}
+                        {transaction.transactionType || "Không rõ"}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          contentContainerStyle={styles.transactionList}
+        />
+      )}
     </View>
   );
 }
@@ -138,7 +257,6 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: "#FFF7F0",
   },
-
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -189,10 +307,21 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
+    elevation: 2,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center", // Đảm bảo căn giữa theo chiều dọc
+    marginBottom: 5, // Khoảng cách giữa các hàng
+  },
+  transactionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 2,
+  },
+  amountAndStatus: {
+    alignItems: "flex-end",
   },
   transactionType: {
     fontSize: 16,
@@ -203,8 +332,19 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#902C6C",
   },
+  transactionStatus: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 4, // Tạo khoảng cách với số tiền
+  },
   transactionDate: {
     fontSize: 14,
     color: "#999",
+  },
+  expandedDetails: {
+    marginTop: 10,
+    backgroundColor: "#F9F9F9",
+    padding: 10,
+    borderRadius: 5,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -7,8 +7,11 @@ import {
   Dimensions,
   Image,
   FlatList,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import Checkbox from "expo-checkbox";
+import { getData, postData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
@@ -56,17 +59,30 @@ const additionalServicesData = [
     price: 20000,
   },
 ];
+const imageMap = {
+  0: require("../../../assets/BrushFur.png"),
+  1: require("../../../assets/CleaningEar.png"),
+  2: require("../../../assets/Bathing.png"),
+  3: require("../../../assets/CuttingNails.png"),
+  4: require("../../../assets/VitaminSupplement.png"),
+  5: require("../../../assets/RelaxingMassage.png"),
+};
 
-export default function AdditionalServices({ navigation }) {
+export default function AdditionalServices({ navigation, route }) {
+  const { sitterId, taskId, userId, petProfile } = route.params;
   const [selectedServices, setSelectedServices] = useState({});
-
+  const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState([]);
   const toggleCheckbox = (id, price) => {
     setSelectedServices((prevState) => ({
       ...prevState,
       [id]: prevState[id] ? undefined : price,
     }));
   };
-
+  useEffect(() => {
+    console.log("Received pet profile:", petProfile);
+    // Sử dụng thông tin petProfile nếu cần hiển thị hoặc xử lý
+  }, [petProfile]);
   const totalCost = Object.values(selectedServices).reduce(
     (acc, price) => acc + (price || 0),
     0
@@ -74,6 +90,96 @@ export default function AdditionalServices({ navigation }) {
   const hasSelectedServices = Object.values(selectedServices).some(
     (price) => price !== undefined
   );
+  useEffect(() => {
+    const fetchAdditionalServices = async () => {
+      try {
+        console.log("Fetching additional services...");
+        const response = await getData(`/services/sitter/${sitterId}`);
+        console.log("Response from API:", response.data);
+
+        // Lọc các service có type là Addition Service
+        const filteredServices = response.data.filter(
+          (service) => service.serviceType === "Addition Service"
+        );
+
+        // Gắn hình ảnh từ imageMap
+        const servicesWithImages = filteredServices.map((service, index) => ({
+          ...service,
+          image: imageMap[index % Object.keys(imageMap).length], // Ánh xạ hình ảnh theo chỉ số
+        }));
+
+        setServices(servicesWithImages);
+      } catch (error) {
+        console.error("Error fetching additional services:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (sitterId) {
+      fetchAdditionalServices();
+    }
+  }, [sitterId]);
+  const handleNavigateToPayment = () => {
+    console.log("=== Chuẩn bị chuyển sang màn hình thanh toán ===");
+
+    // Kiểm tra thông tin cần thiết
+    if (!petProfile?.id || !taskId) {
+      console.error("Lỗi: Thiếu thông tin cần thiết.");
+      console.log("Thông tin hiện tại:", { petProfile, taskId });
+      Alert.alert("Lỗi", "Thiếu thông tin cần thiết để xác nhận dịch vụ.");
+      return;
+    }
+
+    // Lấy danh sách các dịch vụ đã chọn
+    const selectedServiceIds = Object.keys(selectedServices).filter(
+      (serviceId) => selectedServices[serviceId] !== undefined
+    );
+
+    console.log("Dịch vụ được chọn:", selectedServiceIds);
+
+    if (selectedServiceIds.length === 0) {
+      console.warn("Người dùng chưa chọn dịch vụ nào.");
+      Alert.alert("Thông báo", "Vui lòng chọn ít nhất một dịch vụ.");
+      return;
+    }
+
+    // Chuẩn bị dữ liệu dịch vụ đã chọn để chuyển sang màn hình thanh toán
+    const selectedServiceDetails = selectedServiceIds.map((serviceId) => {
+      const service = services.find((s) => s.id === serviceId);
+      return {
+        id: serviceId,
+        name: service.serviceName,
+        price: service.price,
+      };
+    });
+
+    navigation.navigate("AdditionServicePayment", {
+      taskId,
+      petProfile,
+      sitterId,
+      selectedServices: selectedServiceDetails,
+      totalPrice: totalCost,
+      bookingId: route.params.bookingId, // Truyền bookingId từ params
+    });
+
+    console.log("Chuyển hướng đến màn hình thanh toán với dữ liệu:", {
+      taskId,
+      petProfile,
+      sitterId,
+      selectedServices: selectedServiceDetails,
+      totalPrice: totalCost,
+      bookingId: route.params.bookingId,
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#902C6C" />
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -93,21 +199,23 @@ export default function AdditionalServices({ navigation }) {
 
       <FlatList
         showsVerticalScrollIndicator={false}
-        data={additionalServicesData}
-        keyExtractor={(item) => item.id.toString()}
+        data={services} // Dữ liệu từ API
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.serviceItem}>
             <Image source={item.image} style={styles.serviceImage} />
             <View style={styles.serviceDetails}>
               <View style={styles.nameRow}>
-                <Text style={styles.serviceName}>{item.name}</Text>
+                <Text style={styles.serviceName}>{item.serviceName}</Text>
                 <Checkbox
                   value={selectedServices[item.id] !== undefined}
                   onValueChange={() => toggleCheckbox(item.id, item.price)}
                   color={selectedServices[item.id] ? "#2B764F" : undefined}
                 />
               </View>
-              <Text style={styles.serviceDescription}>{item.description}</Text>
+              <Text style={styles.serviceDescription}>
+                {item.actionDescription}
+              </Text>
               <Text style={styles.servicePrice}>
                 {item.price.toLocaleString()}đ
               </Text>
@@ -127,7 +235,7 @@ export default function AdditionalServices({ navigation }) {
           </View>
           <TouchableOpacity
             style={styles.confirmButton}
-            onPress={() => navigation.goBack()}
+            onPress={handleNavigateToPayment} // Chuyển hướng thay vì gọi API
           >
             <Text style={styles.confirmButtonText}>Xác nhận dịch vụ</Text>
           </TouchableOpacity>
@@ -228,6 +336,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "rgba(0,8,87,0.8)",
     marginTop: height * 0.005,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFAF5",
   },
   servicePrice: {
     fontSize: 14,

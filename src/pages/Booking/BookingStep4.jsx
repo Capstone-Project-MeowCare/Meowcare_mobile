@@ -10,6 +10,8 @@ import {
   TextInput,
 } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
+import { useAuth } from "../../../auth/useAuth";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
@@ -20,7 +22,30 @@ export default function BookingStep4({
   setIsValid,
 }) {
   const navigation = useNavigation();
+  const { user } = useAuth();
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        if (user && user.id) {
+          const response = await getData(`/users/${user.id}`);
+          if (response?.data) {
+            const { fullName, phoneNumber } = response.data;
+            setContactInfo((prev) => ({
+              ...prev,
+              name: fullName || "",
+              phoneNumber: phoneNumber || "",
+            }));
+          }
+        } else {
+          console.warn("No user ID found in useAuth.");
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
 
+    fetchUserInfo();
+  }, [user, setContactInfo]);
   // Kiểm tra hợp lệ form
   const validateForm = () => {
     const phoneRegex = /^[0-9]{10,11}$/; // Kiểm tra số điện thoại hợp lệ

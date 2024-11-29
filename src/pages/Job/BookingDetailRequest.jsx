@@ -23,13 +23,34 @@ export default function BookingDetailRequest({ navigation }) {
     const fetchBookingDetails = async () => {
       try {
         const response = await getData(`/booking-orders/${bookingId}`);
+        console.log("Response Data:", response);
+
         if (response) {
-          setBookingDetails(response.data);
+          const rawDetails = response.data;
+
+          console.log("Booking Details Raw:", rawDetails);
+          console.log(
+            "Booking Details with Pet and Services:",
+            rawDetails.bookingDetailWithPetAndServices
+          );
+
+          // Lấy Main Service từ danh sách dịch vụ
+          const mainService = rawDetails.bookingDetailWithPetAndServices.find(
+            (detail) => detail.service?.serviceType === "MAIN_SERVICE"
+          );
+
+          console.log("Main Service:", mainService);
+
+          setBookingDetails({
+            ...rawDetails,
+            mainService: mainService, // Lưu Main Service vào state
+            mainServiceName: mainService?.service?.name || "Không xác định",
+          });
         }
       } catch (error) {
         console.error("Error fetching booking details:", error);
       } finally {
-        setLoading(false); // Stop loading once data is fetched
+        setLoading(false);
       }
     };
 
@@ -90,7 +111,11 @@ export default function BookingDetailRequest({ navigation }) {
         <View style={styles.section}>
           <View style={styles.userInfoContainer}>
             <Image
-              source={{ uri: user?.avatar || "avatar.png" }}
+              source={
+                user?.avatar
+                  ? { uri: user.avatar }
+                  : require("../../../assets/avatar.png")
+              }
               style={styles.avatar}
             />
             <View style={styles.userInfoText}>
@@ -108,8 +133,7 @@ export default function BookingDetailRequest({ navigation }) {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Dịch vụ:</Text>
               <Text style={styles.detailValue}>
-                {bookingDetailWithPetAndServices[0]?.service?.serviceName ||
-                  "Không xác định"}
+                {bookingDetails?.mainServiceName || "Không xác định"}
               </Text>
             </View>
             <View style={styles.detailRow}>
@@ -125,31 +149,38 @@ export default function BookingDetailRequest({ navigation }) {
         {/* Chi tiết mèo và dịch vụ */}
         <View style={styles.section}>
           <Text style={styles.petLabel}>Thông tin thú cưng:</Text>
-          {bookingDetailWithPetAndServices.map((detail, index) => (
-            <View key={index} style={styles.detailContainer}>
+          {Array.from(
+            new Map(
+              bookingDetailWithPetAndServices.map((detail) => [
+                detail.pet?.id, // Key: ID của thú cưng
+                detail.pet, // Value: Object của thú cưng
+              ])
+            ).values() // Lấy danh sách các giá trị duy nhất
+          ).map((uniquePet, index) => (
+            <View key={uniquePet.id || index} style={styles.detailContainer}>
               <View style={styles.petInfoContainer}>
                 <Image
-                  source={{ uri: detail.pet?.profilePicture }}
+                  source={{ uri: uniquePet?.profilePicture }}
                   style={styles.petImage}
                 />
                 <View style={styles.petDetails}>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Tên mèo:</Text>
                     <Text style={styles.detailValue}>
-                      {detail.pet?.petName || "Không xác định"}
+                      {uniquePet?.petName || "Không xác định"}
                     </Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel1}>Giống mèo:</Text>
-                    <Text style={styles.detailValue1}>
-                      {detail.pet?.breed || "Không xác định"}
+                    <Text style={styles.detailLabel}>Giống mèo:</Text>
+                    <Text style={styles.detailValue}>
+                      {uniquePet?.breed || "Không xác định"}
                     </Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel1}>Cân nặng:</Text>
-                    <Text style={styles.detailValue1}>
-                      {detail.pet?.weight
-                        ? `${detail.pet.weight} kg`
+                    <Text style={styles.detailLabel}>Cân nặng:</Text>
+                    <Text style={styles.detailValue}>
+                      {uniquePet?.weight
+                        ? `${uniquePet.weight} kg`
                         : "Không xác định"}
                     </Text>
                   </View>
@@ -164,7 +195,7 @@ export default function BookingDetailRequest({ navigation }) {
             {otherDetails.note || "Không có lời nhắn"}
           </Text>
         </View>
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.petLabel}>Dịch vụ khách đã chọn:</Text>
           <View style={styles.dotTextContainer}>
             <View style={styles.textWrapper}>
@@ -181,7 +212,102 @@ export default function BookingDetailRequest({ navigation }) {
         <View style={styles.totalPaymentContainer}>
           <Text style={styles.totalPaymentLabel}>Tổng thanh toán:</Text>
           <Text style={styles.totalPaymentPrice}>350.000đ</Text>
+        </View> */}
+        <View style={styles.section}>
+          <Text style={styles.petLabel}>Dịch vụ khách đã chọn:</Text>
+
+          {/* Liệt kê Main Service */}
+          <View style={styles.dotTextContainer}>
+            <View style={styles.textWrapper}>
+              <Text style={styles.dot}>•</Text>
+              <Text style={styles.dotText}>
+                {` ${bookingDetails.mainService?.service?.name || "Không xác định"}`}
+              </Text>
+            </View>
+            <Text style={styles.price}>
+              {`${bookingDetails.mainService?.service?.price.toLocaleString() || 0}đ`}
+            </Text>
+          </View>
+
+          {/* Liệt kê Child Services */}
+          {bookingDetailWithPetAndServices
+            .filter((detail) => detail.service?.serviceType === "CHILD_SERVICE")
+            .map((childService, index) => (
+              <View key={index} style={styles.dotTextContainer}>
+                <View style={styles.textWrapper}>
+                  <Text style={styles.dot}>•</Text>
+                  <Text style={styles.dotText}>
+                    {`Dịch vụ con: ${childService.service?.name || "Không xác định"}`}
+                  </Text>
+                </View>
+                <Text style={styles.price}>
+                  {`${childService.service?.price.toLocaleString() || 0}đ`}
+                </Text>
+              </View>
+            ))}
+
+          {/* Số ngày đã đặt */}
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Số ngày đã đặt:</Text>
+            <Text style={styles.detailValue}>
+              {`${
+                Math.round(
+                  (new Date(otherDetails.endDate).setHours(0, 0, 0, 0) -
+                    new Date(otherDetails.startDate).setHours(0, 0, 0, 0)) /
+                    (1000 * 60 * 60 * 24)
+                ) + 1 || 1
+              } ngày`}
+            </Text>
+          </View>
+
+          {/* Số lượng mèo */}
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Số lượng mèo:</Text>
+            <Text style={styles.detailValue}>
+              {`${
+                Array.from(
+                  new Map(
+                    bookingDetailWithPetAndServices.map((detail) => [
+                      detail.pet?.id,
+                      detail.pet,
+                    ])
+                  )
+                ).length
+              } mèo`}
+            </Text>
+          </View>
         </View>
+
+        {/* Tổng thanh toán */}
+        <Text style={styles.totalPaymentPrice}>
+          {`Tổng số tiền: ${(
+            ((bookingDetails.mainService?.service?.price || 0) + // Giá dịch vụ chính
+              bookingDetailWithPetAndServices
+                .filter(
+                  (detail) => detail.service?.serviceType === "CHILD_SERVICE"
+                ) // Lọc dịch vụ phụ
+                .reduce(
+                  (sum, detail) => sum + (detail.service?.price || 0),
+                  0
+                )) * // Cộng giá của tất cả dịch vụ phụ
+            (Math.round(
+              (new Date(otherDetails.endDate).setHours(0, 0, 0, 0) -
+                new Date(otherDetails.startDate).setHours(0, 0, 0, 0)) /
+                (1000 * 60 * 60 * 24) // Số ngày
+            ) +
+              1) *
+            Array.from(
+              new Map(
+                bookingDetailWithPetAndServices.map((detail) => [
+                  detail.pet?.id,
+                  detail.pet,
+                ])
+              )
+            ).length
+          ) // Số lượng mèo
+            .toLocaleString()}đ`}
+        </Text>
+
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.acceptButton}
@@ -344,10 +470,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   price: {
-    fontSize: 16,
-    color: "#000000",
-    fontWeight: "600",
+    fontSize: 16, // Giữ kích thước phông chữ hiện tại
+    fontWeight: "bold", // In đậm
+    color: "#000", // Màu sắc hiện tại
     textAlign: "right",
+    marginLeft: height * 0.016,
   },
   totalPaymentContainer: {
     flexDirection: "row",

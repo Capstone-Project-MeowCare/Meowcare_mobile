@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,18 +8,78 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { getData, postData, putData } from "../../../api/api";
+import CustomToast from "../../../components/CustomToast";
 
-export default function DepositWallet({ navigation }) {
+export default function DepositWallet({ navigation, route }) {
   const [amount, setAmount] = useState("");
   const [selectedMethod, setSelectedMethod] = useState("bank");
+  const { walletId } = route.params;
 
-  const handleDeposit = () => {
+  const handleAmountChange = (text) => {
+    // Loại bỏ các ký tự không phải số
+    const numericValue = text.replace(/[^0-9]/g, "");
+    // Cập nhật số tiền với định dạng dấu chấm
+    setAmount(numericValue);
+  };
+
+  const handleDeposit = async () => {
     if (!amount) {
-      Alert.alert("Thông báo", "Vui lòng nhập số tiền muốn nạp");
+      CustomToast({
+        text: "Vui lòng nhập số tiền muốn nạp",
+        position: 300,
+      });
       return;
     }
-    Alert.alert("Thông báo", `Bạn đã nạp thành công ${amount} VND`);
-    setAmount("");
+
+    const numericAmount = parseFloat(amount.replace(/[^0-9]/g, ""));
+
+    try {
+      // Lấy thông tin ví hiện tại
+      const walletResponse = await getData(`/wallets/${walletId}`);
+      if (!walletResponse?.data?.balance) {
+        CustomToast({
+          text: "Không tìm thấy số dư hiện tại.",
+          position: 300,
+        });
+        return;
+      }
+
+      const currentBalance = walletResponse.data.balance;
+
+      // Tạo payload với số dư mới
+      const payload = {
+        balance: currentBalance + numericAmount, // Cộng thêm số tiền nạp
+        updatedAt: new Date().toISOString(),
+      };
+
+      console.log("Payload chuẩn bị gửi:", payload);
+
+      // Gửi yêu cầu cập nhật ví
+      const response = await putData(`/wallets/${walletId}`, payload);
+
+      if (response?.status === 1002) {
+        CustomToast({
+          text: `Bạn đã nạp thành công ${numericAmount.toLocaleString(
+            "vi-VN"
+          )} VND`,
+          position: 300,
+        });
+        setAmount("");
+        navigation.goBack();
+      } else {
+        CustomToast({
+          text: "Không thể thực hiện nạp tiền. Vui lòng thử lại.",
+          position: 300,
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi nạp tiền:", error);
+      CustomToast({
+        text: "Đã xảy ra lỗi khi nạp tiền.",
+        position: 300,
+      });
+    }
   };
 
   return (
@@ -34,21 +94,17 @@ export default function DepositWallet({ navigation }) {
         <Text style={styles.headerTitle}>Nạp tiền</Text>
       </View>
 
-      {/* Divider */}
       <View style={styles.divider} />
 
       <View style={styles.content}>
-        {/* Deposit Amount Input */}
         <Text style={styles.label}>Số tiền muốn nạp (VND)</Text>
         <TextInput
           style={styles.input}
           placeholder="Nhập số tiền"
           keyboardType="numeric"
-          value={amount}
-          onChangeText={setAmount}
+          value={amount ? `${Number(amount).toLocaleString("vi-VN")} đ` : ""}
+          onChangeText={handleAmountChange}
         />
-
-        {/* Payment Method Selection */}
         <Text style={styles.label}>Chọn phương thức thanh toán</Text>
         <View style={styles.paymentMethods}>
           <TouchableOpacity
@@ -73,7 +129,6 @@ export default function DepositWallet({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Confirm Deposit Button */}
         <TouchableOpacity style={styles.depositButton} onPress={handleDeposit}>
           <Text style={styles.depositButtonText}>Xác nhận nạp tiền</Text>
         </TouchableOpacity>
@@ -81,7 +136,6 @@ export default function DepositWallet({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

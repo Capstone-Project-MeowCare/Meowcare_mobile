@@ -1,5 +1,5 @@
-import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -44,49 +44,78 @@ export default function Activity() {
     "Đã hủy",
   ];
 
-  useEffect(() => {
-    if (!user?.id) return;
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
 
-    const fetchBookings = async () => {
-      try {
-        const endpoint = `/booking-orders/user?id=${user.id}`;
-        const response = await getData(endpoint);
-        if (response?.data) {
-          const bookingData = response.data.map((booking) => ({
-            id: booking.id,
-            userEmail: booking.user?.email,
-            sitterEmail: booking.sitter?.email,
-            sitterName: booking.sitter?.fullName,
-            serviceName: translateServiceName(
-              booking.bookingDetailWithPetAndServices[0]?.service?.serviceName
-            ),
-            catName: booking.bookingDetailWithPetAndServices
-              .map((detail) => detail.pet?.petName)
-              .filter(Boolean)
-              .join(", "),
-            time: booking.startDate
-              ? `${new Date(booking.startDate).toLocaleString()} - ${new Date(booking.endDate).toLocaleString()}`
-              : "Unknown Time",
-            status: booking.status,
-            statusLabel: getStatusLabel(booking.status),
-            statusColor: getStatusColor(getStatusLabel(booking.status)),
-          }));
-          setBookingData(bookingData);
+      const fetchBookings = async () => {
+        try {
+          const endpoint = `/booking-orders/user?id=${user.id}`;
+          const response = await getData(endpoint);
+
+          if (response?.data) {
+            const rawData = response.data;
+
+            const formattedData = rawData.map((booking) => {
+              const uniquePets = Array.from(
+                new Map(
+                  (booking.bookingDetailWithPetAndServices || []).map(
+                    (detail) => [
+                      detail.pet?.id, // Key: ID của con mèo
+                      detail.pet, // Value: Object của con mèo
+                    ]
+                  )
+                ).values()
+              );
+
+              const mainService = booking.bookingDetailWithPetAndServices.find(
+                (detail) => detail.service?.serviceType === "Main Service"
+              );
+
+              return {
+                id: booking.id,
+                userId: booking.user?.id,
+                sitterId: booking.sitter?.id,
+                userEmail: booking.user?.email,
+                sitterEmail: booking.sitter?.email,
+                sitterName: booking.sitter?.fullName,
+                catName:
+                  uniquePets.map((pet) => pet.petName).join(", ") ||
+                  "Unknown Pet",
+                serviceName: mainService
+                  ? translateServiceName(mainService.service.serviceName)
+                  : "Unknown Service",
+                time: booking.startDate
+                  ? `${new Date(booking.startDate).toLocaleDateString(
+                      "vi-VN"
+                    )} - ${new Date(booking.endDate).toLocaleDateString(
+                      "vi-VN"
+                    )}`
+                  : "Unknown Time",
+                status: booking.status,
+                statusLabel: getStatusLabel(booking.status),
+                statusColor: getStatusColor(getStatusLabel(booking.status)),
+              };
+            });
+
+            setBookingData(formattedData);
+          }
+        } catch (error) {
+          console.error("Error fetching bookings:", error);
         }
-      } catch (error) {
-        console.error("Error fetching bookings:", error);
-      }
-    };
+      };
 
-    fetchBookings();
-  }, [user?.id]);
+      fetchBookings();
+    }, [user?.id])
+  );
+
   const filteredData =
     selectedTab === "Tất cả"
       ? bookingData
       : bookingData.filter((item) => {
           switch (selectedTab) {
             case "Chờ xác nhận":
-              return item.status === "AWAITING_PAYMENT";
+              return item.status === "AWAITING_CONFIRM";
             case "Đã xác nhận":
               return item.status === "CONFIRMED";
             case "Đang diễn ra":
@@ -103,6 +132,7 @@ export default function Activity() {
   const getStatusLabel = (status) => {
     const statusMapping = {
       AWAITING_PAYMENT: "Chờ thanh toán",
+      AWAITING_CONFIRM: "Chờ xác nhận",
       CONFIRMED: "Đã xác nhận",
       IN_PROGRESS: "Đang diễn ra",
       COMPLETED: "Hoàn thành",
@@ -110,9 +140,9 @@ export default function Activity() {
     };
     return statusMapping[status] || "Không xác định";
   };
-
   const getStatusColor = (statusLabel) => {
     const colorMapping = {
+      "Chờ xác nhận": "#9E9E9E",
       "Chờ thanh toán": "#9E9E9E",
       "Đã xác nhận": "#4CAF50",
       "Đang diễn ra": "#FFC107",
@@ -186,14 +216,19 @@ export default function Activity() {
                 <Text style={styles.time}>{item.time}</Text>
               </Text>
               <View style={styles.buttonRow}>
-                {item.status === "IN_PROGRESS" && (
+                {(item.status === "IN_PROGRESS" ||
+                  item.status === "CONFIRMED" ||
+                  item.status === "COMPLETED") && (
                   <CustomButton
                     title="Theo dõi lịch"
                     onPress={() =>
-                      navigation.navigate("CareMonitor", {
+                      navigation.navigate("CareMonitorUser", {
                         userEmail: item.userEmail,
                         sitterEmail: item.sitterEmail,
                         bookingId: item.id,
+                        userId: item.userId,
+                        sitterId: item.sitterId,
+                        mainServiceName: item.mainServiceName,
                       })
                     }
                   />
@@ -207,7 +242,7 @@ export default function Activity() {
                 {item.status === "Đã hủy" && (
                   <CustomButton
                     title="Theo dõi lịch"
-                    onPress={() => navigation.navigate("CareMonitor")}
+                    onPress={() => navigation.navigate("CareMonitorUser")}
                   />
                 )}
               </View>

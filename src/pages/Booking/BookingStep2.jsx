@@ -10,10 +10,8 @@ import {
 } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 import { Ionicons } from "@expo/vector-icons";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 import moment from "moment";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 const { width, height } = Dimensions.get("window");
 
@@ -24,20 +22,12 @@ export default function BookingStep2({
   setStep2Info,
 }) {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
-  const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
-  const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
 
-  // Kiểm tra xem người dùng đã chọn đủ thông tin chưa
   const validateForm = () => {
-    if (
-      step2Info.startDate &&
-      step2Info.endDate &&
-      step2Info.startTime &&
-      step2Info.endTime
-    ) {
-      setIsValid(true); // Nếu tất cả các giá trị đều được chọn, form hợp lệ
+    if (step2Info.startDate) {
+      setIsValid(true);
     } else {
-      setIsValid(false); // Nếu thiếu bất kỳ giá trị nào, form không hợp lệ
+      setIsValid(false);
     }
   };
 
@@ -45,11 +35,49 @@ export default function BookingStep2({
     validateForm();
   }, [step2Info]);
 
+  // const onDayPress = (day) => {
+  //   const dayString = day.dateString;
+
+  //   // Nếu startDate đã chọn và ngày được nhấn lại là startDate
+  //   if (step2Info.startDate === dayString && !step2Info.endDate) {
+  //     setStep2Info({ startDate: null, endDate: null });
+  //     return;
+  //   }
+
+  //   // Nếu startDate đã chọn và ngày được nhấn lại là endDate
+  //   if (step2Info.endDate === dayString) {
+  //     setStep2Info({ ...step2Info, endDate: null });
+  //     return;
+  //   }
+
+  //   // Nếu chưa chọn startDate hoặc đã có cả startDate và endDate
+  //   if (!step2Info.startDate || (step2Info.startDate && step2Info.endDate)) {
+  //     setStep2Info({ startDate: dayString, endDate: null });
+  //   }
+  //   // Nếu đang chọn khoảng thời gian
+  //   else if (moment(dayString).isAfter(step2Info.startDate)) {
+  //     setStep2Info({ ...step2Info, endDate: dayString });
+  //   }
+  //   // Nếu nhấn ngày trước startDate thì đặt lại startDate
+  //   else {
+  //     setStep2Info({ startDate: dayString, endDate: null });
+  //   }
+  // };
   const onDayPress = (day) => {
-    if (!step2Info.startDate || (step2Info.startDate && step2Info.endDate)) {
-      setStep2Info({ ...step2Info, startDate: day.dateString, endDate: null });
-    } else if (moment(day.dateString).isAfter(step2Info.startDate)) {
-      setStep2Info({ ...step2Info, endDate: day.dateString });
+    const dayString = day.dateString;
+
+    if (!step2Info.startDate) {
+      // Nếu chưa có ngày bắt đầu, đặt ngày đầu tiên
+      setStep2Info({ startDate: dayString, endDate: null });
+    } else if (
+      !step2Info.endDate &&
+      moment(dayString).isAfter(step2Info.startDate)
+    ) {
+      // Nếu đã có startDate và ngày mới lớn hơn startDate, đặt ngày đó làm endDate
+      setStep2Info({ ...step2Info, endDate: dayString });
+    } else {
+      // Nếu chọn ngày nhỏ hơn startDate hoặc đã có cả startDate và endDate, đặt lại startDate
+      setStep2Info({ startDate: dayString, endDate: null });
     }
   };
 
@@ -81,16 +109,6 @@ export default function BookingStep2({
     }
 
     return markedDates;
-  };
-
-  const handleStartTimeConfirm = (time) => {
-    setStep2Info({ ...step2Info, startTime: moment(time).format("HH:mm") });
-    setStartTimePickerVisible(false);
-  };
-
-  const handleEndTimeConfirm = (time) => {
-    setStep2Info({ ...step2Info, endTime: moment(time).format("HH:mm") });
-    setEndTimePickerVisible(false);
   };
 
   return (
@@ -132,45 +150,33 @@ export default function BookingStep2({
             color="#000857"
             style={styles.icon}
           />
-          <Text style={styles.containerText}>
+          {/* <Text style={styles.containerText}>
             {step2Info.startDate
-              ? ` ${moment(step2Info.startDate).format("DD/MM/YYYY")}  - `
+              ? `${moment(step2Info.startDate).format("DD/MM/YYYY")}`
               : "Chọn ngày bắt đầu dịch vụ"}
           </Text>
           <Text style={styles.containerText}>
             {step2Info.endDate
-              ? ` ${moment(step2Info.endDate).format("DD/MM/YYYY")}`
+              ? ` - ${moment(step2Info.endDate).format("DD/MM/YYYY")}`
               : ""}
+          </Text> */}
+          {/* <Text style={styles.containerText}>
+            {step2Info.startDate
+              ? `${moment(step2Info.startDate).format("DD/MM/YYYY")}`
+              : "Chọn ngày bắt đầu dịch vụ"}
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.dateContainer}
-          onPress={() => setStartTimePickerVisible(true)}
-        >
-          <MaterialCommunityIcons
-            name="clock-time-three-outline"
-            size={24}
-            color="#000857"
-            style={styles.icon}
-          />
           <Text style={styles.containerText}>
-            {step2Info.startTime || "Thời gian bắt đầu"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.dateContainer}
-          onPress={() => setEndTimePickerVisible(true)}
-        >
-          <MaterialCommunityIcons
-            name="clock-time-ten-outline"
-            size={24}
-            color="#000857"
-            style={styles.icon}
-          />
+            {step2Info.endDate
+              ? ` - ${moment(step2Info.endDate).format("DD/MM/YYYY")}`
+              : ""}
+          </Text> */}
           <Text style={styles.containerText}>
-            {step2Info.endTime || "Thời gian kết thúc"}
+            {step2Info.startDate
+              ? `${moment(step2Info.startDate).format("DD/MM/YYYY")}`
+              : "Chọn ngày bắt đầu dịch vụ"}
+            {step2Info.endDate
+              ? ` - ${moment(step2Info.endDate).format("DD/MM/YYYY")}`
+              : ""}
           </Text>
         </TouchableOpacity>
       </View>
@@ -201,19 +207,6 @@ export default function BookingStep2({
           </View>
         </View>
       </Modal>
-
-      <DateTimePickerModal
-        isVisible={isStartTimePickerVisible}
-        mode="time"
-        onConfirm={handleStartTimeConfirm}
-        onCancel={() => setStartTimePickerVisible(false)}
-      />
-      <DateTimePickerModal
-        isVisible={isEndTimePickerVisible}
-        mode="time"
-        onConfirm={handleEndTimeConfirm}
-        onCancel={() => setEndTimePickerVisible(false)}
-      />
     </GestureRecognizer>
   );
 }

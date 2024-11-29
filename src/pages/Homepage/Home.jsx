@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -13,7 +13,7 @@ import CatSitterCard from "./CatSitterCard";
 import BecomeCatSitterCard from "./BecomeCatSitterCard";
 import HomeFooter from "./HomeFooter";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { getData } from "../../api/api";
 
@@ -55,23 +55,30 @@ function FirstRoute() {
   const [parentPressEnabled, setParentPressEnabled] = useState(true);
   const [sitterData, setSitterData] = useState([]);
 
-  useEffect(() => {
-    const fetchSitterData = async () => {
-      try {
-        const response = await getData("/sitter-profiles");
-        const formattedData = response.data.map((item) => ({
-          id: item.id,
-          fullName: item.fullName,
-          location: item.location,
-        }));
-        setSitterData(formattedData);
-      } catch (error) {
-        console.error("Error fetching sitter profiles:", error);
-      }
-    };
+  const fetchSitterData = async () => {
+    try {
+      const response = await getData("/sitter-profiles");
+      console.log("Response Data:", response.data);
 
-    fetchSitterData();
-  }, []);
+      // Lấy dữ liệu đúng định dạng từ response.data
+      const formattedData = response.data.map((item) => ({
+        id: item.id, // ID cũ
+        sitterId: item.sitterId, // Sitter ID (bây giờ chính là `user.id`)
+        fullName: item.fullName,
+        location: item.location,
+      }));
+
+      setSitterData(formattedData);
+    } catch (error) {
+      console.error("Error fetching sitter profiles:", error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchSitterData();
+    }, []) // Dependencies rỗng, chạy lại khi màn hình được focus
+  );
 
   const disableParentPress = () => setParentPressEnabled(false);
   const enableParentPress = () => setParentPressEnabled(true);
@@ -88,7 +95,10 @@ function FirstRoute() {
             style={styles.catSitterItemContainer}
             onPress={() =>
               parentPressEnabled &&
-              navigation.navigate("SitterServicePage", { id: item.id })
+              navigation.navigate("SitterServicePage", {
+                sitterId: item.id, // `sitterId` cũ
+                userId: item.sitterId, // `userId` mới
+              })
             }
           >
             <CatSitterCard
@@ -101,6 +111,14 @@ function FirstRoute() {
             />
           </TouchableOpacity>
         ))}
+      </View>
+      {/* Nút Xem Tất Cả */}
+      <View style={{ alignItems: "center", marginTop: 10 }}>
+        <TouchableOpacity onPress={() => navigation.navigate("ListCatSitter")}>
+          <Text style={{ color: "#000", fontSize: 16, fontWeight: "bold" }}>
+            Xem tất cả
+          </Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -173,13 +191,15 @@ export default function Home({ navigation }) {
                   placeholder="Tìm kiếm người chăm sóc theo vị trí"
                   style={styles.searchBar}
                 />
-                <TouchableOpacity onPress={() => navigation.navigate("Yêu thích")}>
-                <FontAwesome
-                  name="heart-o"
-                  size={24}
-                  color="#000857"
-                  style={styles.searchIcon}
-                />
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Yêu thích")}
+                >
+                  <FontAwesome
+                    name="heart-o"
+                    size={24}
+                    color="#000857"
+                    style={styles.searchIcon}
+                  />
                 </TouchableOpacity>
               </View>
             </View>

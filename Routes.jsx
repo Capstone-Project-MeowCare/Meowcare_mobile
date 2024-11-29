@@ -1,5 +1,5 @@
 import React from "react";
-import { Dimensions } from "react-native";
+import { Dimensions, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -54,7 +54,6 @@ import SetupService from "./src/pages/Job/ProfileCatSitter/SetupService";
 import SetupShedule from "./src/pages/Job/ProfileCatSitter/SetupShedule";
 import SetupLocation from "./src/pages/Job/ProfileCatSitter/SetupLocation";
 import SetupProfile from "./src/pages/Job/ProfileCatSitter/SetupProfile";
-import Notification from "./src/pages/Login/Notification";
 import FavoriteCatSitter from "./src/pages/Homepage/FavoriteCatSitter";
 import LocationScreen from "./src/pages/Location/LocationScreen";
 import AddressScreen from "./src/pages/Location/AddressScreen";
@@ -63,10 +62,53 @@ import JoinScreen from "./src/pages/VideoCall/JoinScreen";
 import RoomScreen from "./src/pages/VideoCall/RoomScreen";
 import Chat from "./src/pages/Chat/Chat";
 import BookingDetailRequest from "./src/pages/Job/BookingDetailRequest";
+import ListCatSitter from "./src/pages/Homepage/ListCatSitter";
+import UserProfile from "./src/pages/Profile/UserProfile";
+import Support from "./src/pages/Profile/Support";
+import QuestionSupport from "./src/pages/Profile/QuestionSupport";
+import Payement from "./src/pages/Profile/Payment";
+import Transaction from "./src/pages/Profile/Transaction";
+import Notification from "./src/pages/Notification/Notification";
+import BookingStep3 from "./src/pages/Booking/BookingStep3";
+import CareSheduleUser from "./src/pages/ServicesUser/CareSheduleUser";
+import CareMonitorUser from "./src/pages/ServicesUser/CareMonitorUser";
+import CareMonitorCatSitter from "./src/pages/ServicesSitter/CareMonitorSitter";
+import CareScheduleCatSitter from "./src/pages/ServicesSitter/CareSheduleCatSitter";
+import PetReturn from "./src/pages/ServicesSitter/PetReturn";
+import ConfirmService from "./src/pages/ServicesSitter/ConfirmService";
+import ConfirmPayment from "./src/pages/ServicesSitter/ConfirmPayment";
+import InComeMoney from "./src/pages/Job/Wallet/IncomeMoney";
+import AdditionServicePayment from "./src/pages/ServicePayment/AdditionServicePayment";
+import CareTimeManagement from "./src/pages/Job/ProfileCatSitter/CareTimeManagement";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const { width, height } = Dimensions.get("window");
+
+const linking = {
+  prefixes: ["com.meowcare.mobile://"],
+  config: {
+    screens: {
+      ServicePaymentComplete: "payment-complete",
+    },
+  },
+  // Optional: Handle unknown URLs
+  async getInitialURL() {
+    const url = await Linking.getInitialURL();
+    return url;
+  },
+  subscribe(listener) {
+    const onReceiveURL = ({ url }) => listener(url);
+
+    // Listen for incoming links from deep linking
+    const subscription = Linking.addEventListener("url", onReceiveURL);
+
+    return () => {
+      // Clean up the event listener
+      subscription.remove(); // Updated for React Native 0.65+
+    };
+  },
+};
 
 function MyBottomNavigationBarWithHeader() {
   return (
@@ -142,7 +184,7 @@ function MyBottomNavigationBar() {
 
 export function Routes() {
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator initialRouteName="IntroSlider">
         <Stack.Screen
           name="IntroSlider"
@@ -168,6 +210,11 @@ export function Routes() {
           name="Yêu thích"
           options={{ headerLeft: null, headerShown: false }}
           component={FavoriteCatSitter}
+        />
+        <Stack.Screen
+          name="ListCatSitter"
+          options={{ headerLeft: null, headerShown: false }}
+          component={ListCatSitter}
         />
         <Stack.Screen
           name="BecomeSitter"
@@ -245,6 +292,11 @@ export function Routes() {
           component={CatSitterWallet}
         />
         <Stack.Screen
+          name="CareTimeManagement"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CareTimeManagement}
+        />
+        <Stack.Screen
           name="HistoryWallet"
           options={{ headerLeft: null, headerShown: false }}
           component={HistoryWallet}
@@ -258,6 +310,11 @@ export function Routes() {
           name="WithdrawWallet"
           options={{ headerLeft: null, headerShown: false }}
           component={WithdrawWallet}
+        />
+        <Stack.Screen
+          name="Thống kê thu nhập"
+          options={{ headerLeft: null, headerShown: false }}
+          component={InComeMoney}
         />
         <Stack.Screen
           name="CatSitterGuide"
@@ -278,6 +335,11 @@ export function Routes() {
           name="BookingStep2"
           options={{ headerLeft: null, headerShown: false }}
           component={BookingStep2}
+        />
+        <Stack.Screen
+          name="BookingStep3"
+          options={{ headerLeft: null, headerShown: false }}
+          component={BookingStep3}
         />
         <Stack.Screen
           name="SwipeStep"
@@ -335,9 +397,39 @@ export function Routes() {
           component={ServicePaymentOrderDetail}
         />
         <Stack.Screen
+          name="AdditionServicePayment"
+          options={{ headerLeft: null, headerShown: false }}
+          component={AdditionServicePayment}
+        />
+        <Stack.Screen
           name="CareMonitor"
           options={{ headerLeft: null, headerShown: false }}
           component={CareMonitor}
+        />
+        <Stack.Screen
+          name="CareMonitorUser"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CareMonitorUser}
+        />
+        <Stack.Screen
+          name="CareMonitorCatSitter"
+          options={{ headerLeft: null, headerShown: false }}
+          component={CareMonitorCatSitter}
+        />
+        <Stack.Screen
+          name="Trả mèo"
+          options={{ headerLeft: null, headerShown: false }}
+          component={PetReturn}
+        />
+        <Stack.Screen
+          name="ConfirmService"
+          options={{ headerLeft: null, headerShown: false }}
+          component={ConfirmService}
+        />
+        <Stack.Screen
+          name="ConfirmPayment"
+          options={{ headerLeft: null, headerShown: false }}
+          component={ConfirmPayment}
         />
         <Stack.Screen
           name="AdditionalServices"
@@ -347,6 +439,46 @@ export function Routes() {
         <Stack.Screen
           name="CareServiceDetails"
           component={CareServiceDetails}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="CareSheduleUser"
+          component={CareSheduleUser}
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => ({
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: current.progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0], // Hiệu ứng trượt từ phải sang trái
+                    }),
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="CareSheduleCatSitter"
+          component={CareScheduleCatSitter}
           options={{
             headerShown: false,
             gestureEnabled: true,
@@ -404,7 +536,7 @@ export function Routes() {
             }),
           }}
         />
-        {/* <Stack.Screen
+        <Stack.Screen
           name="CallScreen"
           options={{ headerLeft: null, headerShown: false }}
           component={CallScreen}
@@ -414,11 +546,7 @@ export function Routes() {
           options={{ headerLeft: null, headerShown: false }}
           component={JoinScreen}
         />
-        <Stack.Screen
-          name="RoomScreen"
-          options={{ headerLeft: null, headerShown: false }}
-          component={RoomScreen}
-        /> */}
+
         <Stack.Screen
           name="BookingDetailRequest"
           options={{ headerLeft: null, headerShown: false }}
@@ -433,6 +561,31 @@ export function Routes() {
           name="MyPets"
           options={{ headerLeft: null, headerShown: false }}
           component={Pets}
+        />
+        <Stack.Screen
+          name="Giao dịch"
+          options={{ headerLeft: null, headerShown: false }}
+          component={Transaction}
+        />
+        <Stack.Screen
+          name="Hồ sơ"
+          options={{ headerLeft: null, headerShown: false }}
+          component={UserProfile}
+        />
+        <Stack.Screen
+          name="Thanh toán"
+          options={{ headerLeft: null, headerShown: false }}
+          component={Payement}
+        />
+        <Stack.Screen
+          name="Trợ giúp"
+          options={{ headerLeft: null, headerShown: false }}
+          component={Support}
+        />
+        <Stack.Screen
+          name="Câu hỏi thường gặp"
+          options={{ headerLeft: null, headerShown: false }}
+          component={QuestionSupport}
         />
         <Stack.Screen
           name="CreatePet"

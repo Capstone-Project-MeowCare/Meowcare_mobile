@@ -1,22 +1,32 @@
-import React from "react";
-import { Text, View, StyleSheet, Dimensions, Image } from "react-native";
-import MapView from "react-native-maps";
+import axios from "axios";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Dimensions,
+  Image,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import WebView from "react-native-webview";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
-const scheduleData = [
-  {
-    time: "6:00 - 7:00 AM : ",
-    activity: "Cho mèo ăn sáng và vệ sinh khay cát",
-  },
-  { time: "7:00 - 9:00 AM :", activity: "Quan sát sức khỏe và chơi với mèo" },
-  { time: "9:00 - 11:00 AM :", activity: "Thời gian yên tĩnh và giám sát" },
-  { time: "11:00 - 12:00 PM :", activity: "Cho ăn bữa trưa và dọn dẹp" },
-  {
-    time: "12:00 - 2:00 PM :",
-    activity: "Thời gian nghỉ ngơi và giám sát sức khỏe",
-  },
-];
+// const scheduleData = [
+//   {
+//     time: "6:00 - 7:00 AM : ",
+//     activity: "Cho mèo ăn sáng và vệ sinh khay cát",
+//   },
+//   { time: "7:00 - 9:00 AM :", activity: "Quan sát sức khỏe và chơi với mèo" },
+//   { time: "9:00 - 11:00 AM :", activity: "Thời gian yên tĩnh và giám sát" },
+//   { time: "11:00 - 12:00 PM :", activity: "Cho ăn bữa trưa và dọn dẹp" },
+//   {
+//     time: "12:00 - 2:00 PM :",
+//     activity: "Thời gian nghỉ ngơi và giám sát sức khỏe",
+//   },
+// ];
 const skills = [
   "Hiểu về dinh dưỡng",
   "Đảm bảo nguồn nước sạch",
@@ -51,34 +61,136 @@ export default function CatSitterInformation({
   skill,
   environment,
   location,
+  userId,
 }) {
+  const [coordinates, setCoordinates] = useState(null);
+  const webViewRef = useRef(null);
+  const [scheduleData, setScheduleData] = useState([]);
+  const fetchCoordinates = async () => {
+    try {
+      const response = await axios.get("https://photon.komoot.io/api/", {
+        params: {
+          q: location,
+          limit: 1, // Chỉ lấy một kết quả
+        },
+      });
+
+      if (response.data?.features?.length > 0) {
+        const [lon, lat] = response.data.features[0].geometry.coordinates;
+        setCoordinates({ latitude: lat, longitude: lon });
+      } else {
+        console.warn("Không tìm thấy tọa độ cho:", location);
+      }
+    } catch (error) {
+      console.error("Lỗi khi fetch tọa độ:", error);
+    }
+  };
+
+  // Fetch lịch trình từ API
+  const fetchScheduleData = async () => {
+    try {
+      const response = await getData(`/services/sitter/${userId}`); // userId truyền vào
+      console.log("Full API Response:", response.data);
+
+      if (Array.isArray(response.data)) {
+        // Lọc và định dạng chỉ lấy CHILD_SERVICE
+        const childServices = response.data
+          .filter((service) => service.serviceType === "CHILD_SERVICE")
+          .map((service) => ({
+            time: `${service.startTime}:00 - ${service.endTime}:00`,
+            activity: service.name,
+          }));
+
+        console.log("Formatted Schedule Data:", childServices);
+        setScheduleData(childServices);
+      } else {
+        console.warn("Invalid API response format, expected an array.");
+      }
+    } catch (error) {
+      console.error("Error fetching schedule data:", error);
+      Alert.alert(
+        "Error",
+        "Không thể tải dữ liệu lịch trình. Vui lòng thử lại."
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (location) {
+      fetchCoordinates();
+    }
+    if (userId) {
+      fetchScheduleData();
+    }
+  }, [location, userId]);
+  useEffect(() => {
+    console.log("Updated scheduleData:", scheduleData);
+  }, [scheduleData]);
+  // HTML nhúng OpenStreetMap
+  const osmHTML = coordinates
+    ? `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            html, body, #map {
+              margin: 0;
+              padding: 0;
+              height: 100%;
+              width: 100%;
+            }
+          </style>
+          <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          />
+          <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+        </head>
+        <body>
+          <div id="map"></div>
+          <script>
+            var map = L.map('map').setView([${coordinates.latitude}, ${coordinates.longitude}], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              maxZoom: 19,
+            }).addTo(map);
+            L.marker([${coordinates.latitude}, ${coordinates.longitude}])
+              .addTo(map)
+              .bindPopup("<b>${location}</b>")
+              .openPopup();
+          </script>
+        </body>
+      </html>
+    `
+    : null;
+
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>Kinh nghiệm chăm sóc mèo:</Text>
-        {/* <Text style={styles.description}>
-          Tôi là Tấn, một người rất yêu thích mèo và đã gắn bó với chúng từ khi
-          còn nhỏ. Tôi bắt đầu chăm sóc bé mèo đầu tiên của mình từ khi 10 tuổi,
-          và từ đó, tình yêu dành cho loài vật đáng yêu này ngày càng lớn dần.
-          Với kinh nghiệm và sự tận tâm, tôi luôn mong muốn mang lại sự thoải
-          mái và an toàn nhất cho mỗi bé mèo mà tôi chăm sóc....{" "}
-          <Text style={styles.readMore}>Đọc thêm</Text>
-        </Text> */}
         <Text style={styles.description}>{experience}</Text>
       </View>
 
       <View style={styles.scheduleContainer}>
         <Text style={styles.scheduleTitle}>Thời gian chăm sóc:</Text>
-        {scheduleData.map((item, index) => (
-          <View key={index} style={styles.scheduleItem}>
-            <View style={styles.dotAndTime}>
-              <View style={styles.dot} />
-              <Text style={styles.scheduleTime}>{item.time}</Text>
+        {console.log("Rendering scheduleData:", scheduleData)}
+        {scheduleData.length > 0 ? (
+          scheduleData.map((item, index) => (
+            <View key={index} style={styles.scheduleItem}>
+              <View style={styles.dotAndTime}>
+                <View style={styles.dot} />
+                <Text style={styles.scheduleTime}>{item.time}</Text>
+              </View>
+              <Text style={styles.scheduleActivity}>{item.activity}</Text>
             </View>
-            <Text style={styles.scheduleActivity}>{item.activity}</Text>
-          </View>
-        ))}
+          ))
+        ) : (
+          <Text style={styles.noScheduleText}>
+            Không có dữ liệu lịch trình.
+          </Text>
+        )}
       </View>
+
       <View style={styles.skillContainer}>
         <Text style={styles.skillText}>Kỹ năng:</Text>
         <View style={styles.skillsGrid}>
@@ -120,24 +232,15 @@ export default function CatSitterInformation({
       <View style={styles.addressContainer}>
         <Text style={styles.addressTitle}>Vị trí</Text>
         <Text style={styles.addressText}>{location}</Text>
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: 10.8703,
-            longitude: 106.8035,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
-          }}
-        >
-          {/* <Marker
-            coordinate={{
-              latitude: 10.8703, // Thay đổi thành tọa độ thực tế
-              longitude: 106.8035,
-            }}
-            title="Địa chỉ của tôi"
-            description="Linh Xuân, Tp.Thủ Đức, Tp.HCM"
-          /> */}
-        </MapView>
+        {osmHTML ? (
+          <WebView
+            ref={webViewRef}
+            source={{ html: osmHTML }}
+            style={styles.map}
+          />
+        ) : (
+          <ActivityIndicator size="large" color="#000857" />
+        )}
       </View>
     </View>
   );
@@ -316,9 +419,10 @@ const styles = StyleSheet.create({
     marginTop: height * 0.01,
   },
   map: {
-    width: width * 0.9,
-    height: height * 0.25,
-    borderRadius: width * 0.03,
-    marginTop: height * 0.02,
+    width: "100%",
+    height: 300, // Đặt chiều cao cố định cho bản đồ
+    borderRadius: 10,
+    overflow: "hidden",
+    marginTop: 10,
   },
 });

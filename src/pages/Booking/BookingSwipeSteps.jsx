@@ -34,8 +34,9 @@ export default function SwipeStep({ navigation }) {
     selectedLocation: "Tỉnh/Thành phố",
     isCustomFoodChecked: false,
     customFood: "",
+    childServices: [],
   });
-
+  const [selectedExtras, setSelectedExtras] = useState([]);
   // State lưu thông tin từ Step 2
   const [step2Info, setStep2Info] = useState({
     startDate: null,
@@ -60,7 +61,17 @@ export default function SwipeStep({ navigation }) {
   // State lưu thông tin từ Step 5 (checkbox)
   const [step5Checked, setStep5Checked] = useState(false);
 
+  // const onSwipeLeft = () => {
+  //   if (currentStep < 5 && isValid) {
+  //     setCurrentStep(currentStep + 1);
+  //   }
+  // };
   const onSwipeLeft = () => {
+    if (currentStep === 2) {
+      if (step2Info.startDate && !step2Info.endDate) {
+        setStep2Info((prev) => ({ ...prev, endDate: prev.startDate })); // Gán endDate = startDate
+      }
+    }
     if (currentStep < 5 && isValid) {
       setCurrentStep(currentStep + 1);
     }
@@ -80,6 +91,9 @@ export default function SwipeStep({ navigation }) {
             step1Info={step1Info}
             setStep1Info={setStep1Info}
             setIsValid={setIsValid}
+            selectedExtras={selectedExtras}
+            setSelectedExtras={setSelectedExtras}
+            userId={sitterId}
           />
         );
       case 2:
@@ -158,6 +172,9 @@ export default function SwipeStep({ navigation }) {
               if (step5Checked) {
                 navigation.navigate("ServicePayment", {
                   step1Info,
+                  selectedExtras: selectedExtras.filter(
+                    (extra) => extra.isSelected
+                  ),
                   step2Info,
                   step3Info,
                   contactInfo,

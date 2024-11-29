@@ -9,21 +9,23 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons, Entypo } from "@expo/vector-icons";
-import MapView, { Marker } from "react-native-maps";
+import { WebView } from "react-native-webview";
 import axios from "axios";
+import { useRoute } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
 export default function AddressScreen({ navigation }) {
   const [address, setAddress] = useState("");
-  const [coordinates, setCoordinates] = useState(null);
-  const [suggestions, setSuggestions] = useState([]); // List of address suggestions
-  const [selectedLocation, setSelectedLocation] = useState({
-    province: "Thành phố Hà Nội",
-    district: "Quận Ba Đình",
-    commune: "Phường Phúc Xá",
+  const route = useRoute();
+  const [coordinates, setCoordinates] = useState({
+    latitude: 21.0285,
+    longitude: 105.8542,
   });
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState(null);
 
+  // Hàm normalize ký tự tiếng Việt
   const normalizeVietnamese = (str) => {
     return str
       .normalize("NFD")
@@ -32,6 +34,7 @@ export default function AddressScreen({ navigation }) {
       .replace(/Đ/g, "D");
   };
 
+  // Fetch địa chỉ dựa trên query
   const fetchCoordinates = async (query) => {
     try {
       const response = await axios.get("https://photon.komoot.io/api/", {
@@ -42,78 +45,100 @@ export default function AddressScreen({ navigation }) {
       });
 
       if (response.data?.features) {
-        setSuggestions(response.data.features); // Save suggestions
+        setSuggestions(response.data.features); // Lưu các gợi ý địa chỉ
       } else {
-        console.log("No suggestions found.");
+        console.log("Không tìm thấy gợi ý.");
       }
     } catch (error) {
-      console.error("Error fetching suggestions:", error);
+      console.error("Lỗi khi lấy gợi ý:", error);
     }
   };
 
-  // Update suggestions on address input change
+  // Gửi query dựa trên `selectedLocation` nếu có
+  useEffect(() => {
+    if (route.params?.selectedLocation) {
+      const { province, district, commune } = route.params.selectedLocation;
+      const defaultQuery = `${commune}, ${district}, ${province}`;
+      fetchCoordinates(defaultQuery); // Lấy địa chỉ gợi ý mặc định
+    }
+  }, [route.params?.selectedLocation]);
+
+  // Tìm kiếm khi người dùng nhập địa chỉ
   useEffect(() => {
     if (address) {
-      const query = `${address}, ${selectedLocation.commune}, ${selectedLocation.district}, ${selectedLocation.province}`;
+      const query = route.params?.selectedLocation
+        ? `${address}, ${route.params.selectedLocation.commune}, ${route.params.selectedLocation.district}, ${route.params.selectedLocation.province}`
+        : address;
       fetchCoordinates(normalizeVietnamese(query));
     } else {
-      setSuggestions([]); // Clear suggestions when address is empty
+      setSuggestions([]); // Xóa gợi ý khi không có input
     }
   }, [address]);
 
+  // Xử lý khi người dùng chọn một gợi ý
   const handleSelectSuggestion = (item) => {
     const [lon, lat] = item.geometry.coordinates;
-    setCoordinates({
-      latitude: lat,
-      longitude: lon,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    });
-    setAddress(item.properties.name);
+    setCoordinates({ latitude: lat, longitude: lon });
+    setSelectedSuggestion(item.properties.name);
     setSuggestions([]);
   };
 
+  // Xử lý khi nhấn "Chọn địa chỉ này"
+  const handleConfirmAddress = () => {
+    navigation.navigate("SetupLocation", {
+      addressDetail: selectedSuggestion, // Địa chỉ chi tiết
+      selectedLocation: route.params?.selectedLocation, // Tỉnh/Thành phố, Quận/Huyện, Phường/Xã
+    });
+  };
+
+  // Map HTML để hiển thị bản đồ
+  const mapHTML = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          html, body, #map {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+          }
+        </style>
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        />
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script>
+          var map = L.map('map').setView([${coordinates.latitude}, ${coordinates.longitude}], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+          }).addTo(map);
+          L.marker([${coordinates.latitude}, ${coordinates.longitude}]).addTo(map)
+            .bindPopup('${selectedSuggestion || "Chọn một địa chỉ"}').openPopup();
+        </script>
+      </body>
+    </html>
+  `;
+
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate("SetupLocation")}
+          onPress={() => navigation.goBack()}
         >
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Địa chỉ mới</Text>
       </View>
 
-      {/* Divider */}
       <View style={styles.divider} />
 
-      {/* Location Display */}
-      <View style={styles.inputContainer}>
-        <TouchableOpacity onPress={() => navigation.navigate("LocationScreen")}>
-          <TextInput
-            style={styles.inputWithIcon}
-            placeholder="Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
-            value={
-              selectedLocation
-                ? `${selectedLocation.province}\n${selectedLocation.district}\n${selectedLocation.commune}`
-                : ""
-            }
-            editable={false}
-            multiline={true}
-            pointerEvents="none"
-          />
-          <Entypo
-            name="chevron-right"
-            size={20}
-            color="#000857"
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Search Bar */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -133,7 +158,7 @@ export default function AddressScreen({ navigation }) {
       {suggestions.length > 0 && (
         <FlatList
           data={suggestions}
-          keyExtractor={(item, index) => `${item.properties.osm_id}-${index}`} // Tạo khóa duy nhất cho mỗi mục
+          keyExtractor={(item, index) => `${item.properties.osm_id}-${index}`} // Unique key
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => handleSelectSuggestion(item)}>
               <Text style={styles.suggestionItem}>{item.properties.name}</Text>
@@ -143,15 +168,17 @@ export default function AddressScreen({ navigation }) {
         />
       )}
 
-      {/* Map View */}
-      {coordinates && (
-        <MapView
-          style={styles.map}
-          initialRegion={coordinates}
-          region={coordinates}
+      <View style={styles.mapContainer}>
+        <WebView source={{ html: mapHTML }} style={styles.map} />
+      </View>
+
+      {selectedSuggestion && (
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirmAddress}
         >
-          <Marker coordinate={coordinates} />
-        </MapView>
+          <Text style={styles.confirmButtonText}>Chọn địa chỉ này</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -188,25 +215,6 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D3D3D3",
     borderBottomWidth: 1,
   },
-  inputContainer: {
-    position: "relative",
-    borderBottomWidth: 1,
-    borderBottomColor: "#D3D3D3",
-    marginVertical: 8,
-    paddingHorizontal: 8,
-  },
-  inputWithIcon: {
-    height: 80,
-    paddingRight: 25,
-    color: "#000",
-    fontWeight: "bold",
-    paddingTop: 10,
-  },
-  icon: {
-    position: "absolute",
-    right: 10,
-    top: 30,
-  },
   searchContainer: {
     flexDirection: "row",
     paddingHorizontal: width * 0.04,
@@ -239,7 +247,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#DDD",
   },
-  map: {
+  mapContainer: {
     flex: 1,
+    marginHorizontal: 15,
+    marginTop: 10,
+  },
+  map: {
+    width: "100%",
+    height: "100%",
+  },
+  confirmButton: {
+    backgroundColor: "#2E67D1",
+    paddingVertical: 15,
+    margin: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

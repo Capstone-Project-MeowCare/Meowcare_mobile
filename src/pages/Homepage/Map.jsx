@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -8,117 +8,23 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { WebView } from "react-native-webview";
 import { useNavigation } from "@react-navigation/native";
 import StarRating from "react-native-star-rating-widget";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import axios from "axios";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
-const catSitterData = [
-  {
-    id: "1",
-    name: "Nguyễn Lê Đức Tấn",
-    description: "I love cat",
-    address: "Địa chỉ: Linh Xuân, Tp.Thủ Đức, Tp.HCM",
-    rating: 4.5,
-    reviews: "15 đánh giá",
-    price: "150.000đ",
-    verified: "Đã cập nhật 1 ngày trước",
-    imageSource: require("../../../assets/avatar.png"),
-    isLiked: false,
-    latitude: 10.73507,
-    longitude: 106.632935,
-  },
-  {
-    id: "2",
-    name: "Nguyễn Hoài Phúc",
-    description: "I love cat",
-    address: "Địa chỉ: Hiệp Bình Chánh, Thủ Đức, Tp.HCM",
-    rating: 4.8,
-    reviews: "10 đánh giá",
-    price: "150.000đ",
-    verified: "Đã cập nhật 1 ngày trước",
-    imageSource: require("../../../assets/avatar.png"),
-    isLiked: false,
-    latitude: 10.73707,
-    longitude: 106.634935,
-  },
-  {
-    id: "3",
-    name: "Nguyễn Việt Hùng",
-    description: "I love cat",
-    address: "Địa chỉ: Phước Long A, Quận 9, Tp.HCM",
-    rating: 4.3,
-    reviews: "12 đánh giá",
-    price: "150.000đ",
-    verified: "Đã cập nhật 1 ngày trước",
-    imageSource: require("../../../assets/avatar.png"),
-    isLiked: false,
-    latitude: 10.73807,
-    longitude: 106.635935,
-  },
-  {
-    id: "4",
-    name: "Lê Trọng Đạt",
-    description: "I love cat",
-    address: "Địa chỉ: Linh Trung, Tp.Thủ Đức, Tp.HCM",
-    rating: 4.7,
-    reviews: "20 đánh giá",
-    price: "150.000đ",
-    verified: "Đã cập nhật 1 ngày trước",
-    imageSource: require("../../../assets/meoanh.png"),
-    isLiked: false,
-    latitude: 10.73907,
-    longitude: 106.636935,
-  },
-];
-
 export default function FindSitterByMap() {
-  const [region, setRegion] = useState({
-    latitude: 14.0583, // Default location in Vietnam
-    longitude: 108.2772,
-    latitudeDelta: 0.5,
-    longitudeDelta: 0.5,
-  });
-  const [location, setLocation] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [catSitters, setCatSitters] = useState(catSitterData);
+  const webViewRef = useRef(null);
   const navigation = useNavigation();
-  const [isLiked, setIsLiked] = useState(false);
-
-  useEffect(() => {
-    const requestLocationPermission = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      console.log("Permission status:", status);
-      if (status !== "granted") {
-        setErrorMsg("Permission to access location was denied");
-        return;
-      }
-
-      let currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      console.log("Current location:", currentLocation);
-
-      setLocation(currentLocation);
-
-      setRegion({
-        latitude: currentLocation.coords.latitude,
-        longitude: currentLocation.coords.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      });
-    };
-
-    requestLocationPermission();
-  }, []);
-
-  const handleRegionChangeComplete = (newRegion) => {
-    setRegion(newRegion);
-  };
-
+  const [catSitters, setCatSitters] = useState([]);
+  const [coordinatesMap, setCoordinatesMap] = useState([]);
+  const [selectedSitterId, setSelectedSitterId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const handleLikePress = (id) => {
     setCatSitters((prevCatSitters) =>
       prevCatSitters.map((sitter) =>
@@ -126,14 +32,163 @@ export default function FindSitterByMap() {
       )
     );
   };
+  const handleSitterPress = (sitter) => {
+    if (selectedSitterId === sitter.id) {
+      // Nếu đã chọn, điều hướng đến SitterServicePage
+      navigation.navigate("SitterServicePage", {
+        sitterId: sitter.id,
+        userId: sitter.sitterId,
+      });
+    } else {
+      // Nếu chưa chọn, di chuyển đến marker của sitter
+      setSelectedSitterId(sitter.id);
+      webViewRef.current.injectJavaScript(`
+        map.setView([${sitter.latitude}, ${sitter.longitude}], 15);
+      `);
+    }
+  };
 
-  let text = "Đang lấy vị trí...";
-  if (errorMsg) {
-    text = errorMsg;
-  } else if (location) {
-    text = `Vị trí hiện tại: ${location.coords.latitude}, ${location.coords.longitude}`;
-  }
+  const catSittersWithVerified = catSitters.map((sitter) => ({
+    ...sitter,
+    verified: "Đã cập nhật 1 ngày trước",
+    reviews: "10 đánh giá",
+  }));
+  // Fetch tọa độ từ location string
+  const fetchCoordinates = async (location) => {
+    try {
+      console.log(`Fetching coordinates for location: ${location}`);
+      const response = await axios.get("https://photon.komoot.io/api/", {
+        params: {
+          q: location,
+          limit: 1, // Chỉ lấy một kết quả
+        },
+      });
 
+      if (response.data?.features?.length > 0) {
+        const [lon, lat] = response.data.features[0].geometry.coordinates;
+        console.log(
+          `Coordinates for ${location}: Latitude: ${lat}, Longitude: ${lon}`
+        );
+        return { latitude: lat, longitude: lon };
+      } else {
+        console.warn(`Không tìm thấy tọa độ cho: ${location}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Lỗi khi fetch tọa độ cho: ${location}`, error);
+      return null;
+    }
+  };
+
+  const fetchUserById = async (sitterId) => {
+    try {
+      console.log(`Fetching user details for sitterId: ${sitterId}`);
+      const response = await getData(`/users/${sitterId}`);
+      if (response?.data) {
+        console.log(`User details for ${sitterId}:`, response.data);
+        return response.data;
+      } else {
+        console.warn(`Không tìm thấy user cho sitterId: ${sitterId}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(
+        `Lỗi khi fetch user details cho sitterId: ${sitterId}`,
+        error
+      );
+      return null;
+    }
+  };
+
+  // Fetch sitter profiles và kết hợp dữ liệu
+  const fetchSitterProfiles = async () => {
+    try {
+      console.log("Fetching sitter profiles...");
+      const response = await getData("/sitter-profiles");
+
+      if (!response || !response.data || !Array.isArray(response.data)) {
+        console.error("API trả về dữ liệu không hợp lệ.");
+        return;
+      }
+
+      const sitters = response.data;
+      console.log("Sitter profiles fetched:", sitters);
+
+      // Lấy chi tiết user và tọa độ
+      const sittersWithDetails = await Promise.all(
+        sitters.map(async (sitter) => {
+          const userDetails = await fetchUserById(sitter.sitterId);
+          const coordinates = await fetchCoordinates(sitter.location);
+
+          return {
+            ...sitter,
+            avatar: userDetails?.avatar || null,
+            email: userDetails?.email || null, // Thêm các field khác nếu cần
+            latitude: coordinates?.latitude || null,
+            longitude: coordinates?.longitude || null,
+          };
+        })
+      );
+
+      console.log("Sitters with details and coordinates:", sittersWithDetails);
+
+      // Lưu dữ liệu sitters
+      setCatSitters(sittersWithDetails);
+      setCoordinatesMap(
+        sittersWithDetails.filter((s) => s.latitude && s.longitude)
+      );
+    } catch (error) {
+      console.error("Lỗi khi fetch sitter profiles:", error);
+      Alert.alert("Lỗi", "Không thể tải dữ liệu. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSitterProfiles();
+  }, []);
+
+  // Tạo HTML để hiển thị bản đồ
+  const osmHTML = `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        html, body, #map {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          width: 100%;
+        }
+      </style>
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      />
+      <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    </head>
+    <body>
+      <div id="map"></div>
+      <script>
+        var map = L.map('map').setView([10.73507, 106.632935], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+        }).addTo(map);
+
+        var sitters = ${JSON.stringify(coordinatesMap)};
+        sitters.forEach(sitter => {
+          if (sitter.latitude && sitter.longitude) {
+            L.marker([sitter.latitude, sitter.longitude])
+              .addTo(map)
+              .bindPopup(\`<b>\${sitter.fullName}</b><br>\${sitter.location}<br>Rating: \${sitter.rating}\`);
+          }
+        });
+      </script>
+    </body>
+  </html>
+`;
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -147,39 +202,8 @@ export default function FindSitterByMap() {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bản đồ</Text>
-        <TouchableOpacity style={styles.filterButton}>
-          <Image
-            source={require("../../../assets/Filter.png")}
-            style={styles.backArrow}
-          />
-        </TouchableOpacity>
       </View>
-
-      <MapView
-        style={styles.map}
-        region={region}
-        onRegionChangeComplete={handleRegionChangeComplete}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
-      >
-        {catSitters.map((sitter) => (
-          <Marker
-            key={sitter.id}
-            coordinate={{
-              latitude: sitter.latitude,
-              longitude: sitter.longitude,
-            }}
-            title={sitter.name}
-            description={sitter.description}
-          >
-            <Image
-              source={sitter.imageSource}
-              style={{ width: 40, height: 40, borderRadius: 20 }}
-            />
-          </Marker>
-        ))}
-      </MapView>
-
+      <WebView ref={webViewRef} source={{ html: osmHTML }} style={styles.map} />
       <View style={styles.lowerContainer}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -192,24 +216,31 @@ export default function FindSitterByMap() {
               </TouchableOpacity>
             </View>
           </View>
-          {catSitters.map((item) => (
+          {catSittersWithVerified.map((item) => (
             <TouchableOpacity
               key={item.id}
               style={styles.infoContainer}
-              onPress={() => navigation.navigate("SitterServicePage")}
+              onPress={() => handleSitterPress(item)}
             >
-              <Image source={item.imageSource} style={styles.sitterImage} />
+              <Image
+                source={
+                  item.avatar
+                    ? { uri: item.avatar }
+                    : require("../../../assets/avatar.png")
+                }
+                style={styles.sitterImage}
+              />
               <View style={styles.textContainer}>
                 <View style={styles.headerRow}>
-                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.name}>{item.fullName}</Text>
                   <Text style={styles.priceLabel}>Giá mỗi đêm</Text>
                 </View>
                 <View style={styles.centerRow}>
-                  <Text style={styles.description}>{item.description}</Text>
-                  <Text style={styles.price}>{item.price}</Text>
+                  <Text style={styles.description}>{item.bio}</Text>
+                  <Text style={styles.price}>150.000đ</Text>
                 </View>
                 <View style={styles.addressRow}>
-                  <Text style={styles.address}>{item.address}</Text>
+                  <Text style={styles.address}>{item.location}</Text>
                 </View>
                 <View style={styles.ratingContainer}>
                   <StarRating
@@ -370,7 +401,7 @@ const styles = StyleSheet.create({
     fontSize: height * 0.025,
     color: "green",
     fontWeight: "bold",
-    marginBottom: height * 0.01,
+    marginBottom: height * 0.02,
     textAlign: "right",
   },
   description: {

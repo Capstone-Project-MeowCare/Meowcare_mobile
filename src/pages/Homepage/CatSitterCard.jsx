@@ -15,7 +15,6 @@ const CatSitterCard = ({
   sitterName,
   address,
   imageSource,
-  overlayText,
   isVerified,
   disableParentPress,
   enableParentPress,
@@ -23,39 +22,39 @@ const CatSitterCard = ({
   const [isLiked, setIsLiked] = useState(false);
 
   const handleLikePress = () => {
-    disableParentPress(); // Vô hiệu hóa tạm thời sự kiện nhấn của cha
+    disableParentPress();
     setIsLiked(!isLiked);
     setTimeout(enableParentPress, 300);
   };
 
   return (
     <View style={styles.card}>
-      <Image source={imageSource} style={styles.image} />
+      <View style={styles.imageWrapper}>
+        <Image source={imageSource} style={styles.image} />
 
-      {isVerified && (
-        <Image
-          source={require("../../../assets/Check.png")}
-          style={styles.checkIcon}
-        />
-      )}
+        <TouchableOpacity
+          style={styles.heartIconContainer}
+          onPress={handleLikePress}
+          onPressIn={disableParentPress}
+          onPressOut={enableParentPress}
+        >
+          <Ionicons
+            name={isLiked ? "heart" : "heart-outline"}
+            size={width * 0.07}
+            color={isLiked ? "#db1c07" : "grey"}
+          />
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.heartIconContainer}
-        onPress={handleLikePress}
-        onPressIn={disableParentPress}
-        onPressOut={enableParentPress}
-      >
-        <Ionicons
-          name={isLiked ? "heart" : "heart-outline"}
-          size={width * 0.07}
-          color={isLiked ? "#db1c07" : "grey"}
-        />
-      </TouchableOpacity>
+        {isVerified && (
+          <Image
+            source={require("../../../assets/Check.png")}
+            style={styles.checkIcon}
+          />
+        )}
+      </View>
 
-      <>
-        <Text style={styles.sitterName}>{sitterName}</Text>
-        <Text style={styles.address}>{address}</Text>
-      </>
+      <Text style={styles.sitterName}>{sitterName}</Text>
+      <Text style={styles.address}>{address}</Text>
     </View>
   );
 };
@@ -68,42 +67,31 @@ const styles = StyleSheet.create({
     padding: 0,
     position: "relative",
   },
-  image: {
+  imageWrapper: {
     width: "100%",
     height: width * 0.3,
     borderRadius: width * 0.02,
-    resizeMode: "cover",
+    overflow: "hidden",
+    position: "relative",
   },
-  checkIcon: {
-    position: "absolute",
-    bottom: height * 0.07,
-    right: height * 0.01,
-    width: width * 0.07,
-    height: width * 0.07,
-    resizeMode: "contain",
+  image: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   heartIconContainer: {
     position: "absolute",
-    top: height * 0.01,
-    right: height * 0.01,
+    top: width * 0.02,
+    right: width * 0.02,
+    zIndex: 1,
   },
-  overlay: {
+  checkIcon: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: width * 0.3,
-    backgroundColor: "#8726BF",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: width * 0.02,
-    opacity: 0.7,
-  },
-  overlayText: {
-    fontSize: width * 0.05,
-    color: "white",
-    fontWeight: "900",
-    textAlign: "center",
+    bottom: width * 0.02,
+    right: width * 0.02,
+    width: width * 0.07,
+    height: width * 0.07,
+    resizeMode: "contain",
   },
   sitterName: {
     fontSize: width * 0.035,
@@ -114,12 +102,10 @@ const styles = StyleSheet.create({
   },
   address: {
     fontSize: width * 0.032,
-    color: "#555",
+    color: "rgba(0, 8, 87, 0.6)",
     marginTop: width * 0.01,
     textAlign: "center",
-    color: "rgba(0, 8, 87, 0.6)",
     fontWeight: "700",
   },
 });
-
 export default CatSitterCard;

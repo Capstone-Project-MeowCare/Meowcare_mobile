@@ -1,37 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, Image, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CatSitterCalendarSetting from "./CatSitterCalendarSetting";
 import { Picker } from "@react-native-picker/picker";
+import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
-const ServiceItem = ({
-  image,
-  mainText,
-  subText,
-  price,
-  extraStyle,
-  showSubText = true,
-  useNewStyle = false, // Thêm cờ để áp dụng style mới cho các text cần đẩy lên
-}) => (
-  <View style={[styles.serviceContainer, extraStyle]}>
+const ServiceItem = ({ image, mainText, price }) => (
+  <View style={styles.serviceContainer}>
     <View style={styles.iconAndTextContainer}>
       {image && <Image source={image} style={styles.serviceImage} />}
-      <View style={styles.textContainer}>
-        <View style={styles.textAndIcon}>
-          <Text style={useNewStyle ? styles.newMainText : styles.mainText}>
-            {mainText}
-          </Text>
-          <Ionicons
-            name="information-circle-outline"
-            size={width * 0.05}
-            color="#000"
-            style={useNewStyle ? styles.newIconStyle : {}}
-          />
-        </View>
-        {showSubText && <Text style={styles.subText}>{subText}</Text>}
-      </View>
+      <Text style={styles.mainText}>{mainText}</Text>
     </View>
     <View style={styles.priceContainer}>
       <Text style={styles.price}>{price}</Text>
@@ -53,8 +33,11 @@ const ExtraServiceItem = ({ image, mainText, price }) => (
   </View>
 );
 
-export default function CatSitterAssistance({}) {
-  const [selectedOption, setSelectedOption] = useState("petSitting");
+export default function CatSitterAssistance({ id }) {
+  const [mainServices, setMainServices] = useState([]);
+  const [additionalServices, setAdditionalServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const availableDays = {
     "2024-10-01": { selected: true, selectedColor: "#BAE8C9" },
     "2024-10-02": { selected: true, selectedColor: "#BAE8C9" },
@@ -69,113 +52,124 @@ export default function CatSitterAssistance({}) {
     "2024-10-13": { selected: true, selectedColor: "#D9D9D9" },
     "2024-10-14": { selected: true, selectedColor: "#D9D9D9" },
   };
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        console.log("Fetching services for sitter id:", id);
+        const response = await getData(`/services/sitter/${id}`);
+
+        // Kiểm tra status trả về từ API
+        if (response?.status === 1000 && Array.isArray(response.data)) {
+          const services = response.data;
+
+          // Lọc và xử lý các dịch vụ
+          const mains = services
+            .filter(
+              (service) =>
+                service.serviceType === "MAIN_SERVICE" &&
+                service.status === "ACTIVE"
+            )
+            .map((service) => ({
+              name: service.name,
+              price: service.price,
+            }));
+
+          const additionals = services
+            .filter(
+              (service) =>
+                service.serviceType === "ADDITION_SERVICE" &&
+                service.status === "ACTIVE"
+            )
+            .map((service) => ({
+              name: service.name,
+              price: service.price,
+            }));
+
+          console.log("Filtered main services:", mains);
+          console.log("Filtered additional services:", additionals);
+
+          setMainServices(mains);
+          setAdditionalServices(additionals);
+        } else {
+          console.warn("Invalid API response format or status:", response);
+        }
+      } catch (error) {
+        console.error("Error fetching sitter services:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchServices();
+    } else {
+      console.warn("No sitter ID provided.");
+      setLoading(false);
+    }
+  }, [id]);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Dịch vụ</Text>
+      {loading ? (
+        <Text>Đang tải...</Text>
+      ) : (
+        <>
+          {/* Render Dịch vụ chính */}
+          <Text style={styles.text}>Dịch vụ chính</Text>
+          {mainServices.length > 0 ? (
+            mainServices.map((service, index) => (
+              <ServiceItem
+                key={index} // Vì dữ liệu chỉ chứa name và price, dùng index làm key
+                image={require("../../../assets/Vector.png")}
+                mainText={service.name}
+                price={`${service.price}đ`}
+              />
+            ))
+          ) : (
+            <Text style={styles.noDataText}>Không có dịch vụ chính</Text>
+          )}
 
-      <ServiceItem
-        image={require("../../../assets/Vector.png")}
-        mainText="Gửi thú cưng"
-        subText="Tại nhà người chăm sóc"
-        price="100.000đ"
-      />
-      <ServiceItem
-        mainText="Ngày lễ"
-        price="150.000đ"
-        extraStyle={styles.holidayContainer}
-        showSubText={false}
-        useNewStyle={true}
-      />
-      <ServiceItem
-        mainText="Thêm mèo"
-        price="+ 50.000đ"
-        extraStyle={styles.holidayContainer}
-        showSubText={false}
-        useNewStyle={true}
-      />
-      <ServiceItem
-        image={require("../../../assets/Vector1.png")}
-        mainText="Trông tại nhà"
-        subText="Tại nhà bạn"
-        price="150.000đ"
-      />
-      <ServiceItem
-        mainText="Ngày lễ"
-        price="250.000đ"
-        extraStyle={styles.holidayContainer}
-        showSubText={false}
-        useNewStyle={true}
-      />
-      <ServiceItem
-        mainText="Nhiều mèo"
-        price="+ 150.000đ"
-        extraStyle={styles.holidayContainer}
-        showSubText={false}
-        useNewStyle={true}
-      />
+          <View style={styles.separator} />
 
-      <View style={styles.separator} />
+          {/* Render Dịch vụ phụ */}
+          <Text style={styles.text1}>Dịch vụ thêm có phí</Text>
+          {additionalServices.length > 0 ? (
+            additionalServices.map((service, index) => (
+              <ExtraServiceItem
+                key={index}
+                image={require("../../../assets/Check1.png")}
+                mainText={service.name}
+                price={`${service.price}đ`}
+              />
+            ))
+          ) : (
+            <Text style={styles.noDataText}>Không có dịch vụ phụ</Text>
+          )}
 
-      <Text style={styles.text1}>Dịch vụ thêm có phí</Text>
+          <View style={styles.separator} />
 
-      <ExtraServiceItem
-        image={require("../../../assets/Check1.png")}
-        mainText="Dịch vụ đưa đón mèo"
-        price="50.000đ"
-      />
-      <ExtraServiceItem
-        image={require("../../../assets/Check1.png")}
-        mainText="Chải lông mèo"
-        price="50.000đ"
-      />
-      <ExtraServiceItem
-        image={require("../../../assets/Check1.png")}
-        mainText="Vệ sinh tai và mắt"
-        price="20.000đ"
-      />
-      <ExtraServiceItem
-        image={require("../../../assets/Check1.png")}
-        mainText="Cắt móng"
-        price="20.000đ"
-      />
-      <Text style={styles.readMoreText}>Đọc thêm</Text>
-      <View style={styles.separator} />
-      <Text style={styles.text1}>Lịch</Text>
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={selectedOption}
-          style={styles.picker}
-          onValueChange={(itemValue) => setSelectedOption(itemValue)}
-        >
-          <Picker.Item label="Gửi thú cưng" value="petSitting" />
-          <Picker.Item label="Trông tại nhà" value="homeCare" />
-          <Picker.Item label="Cắt móng" value="nailCutting" />
-          <Picker.Item label="Vệ sinh tai và mắt" value="earEyeCleaning" />
-        </Picker>
-      </View>
-      <View style={styles.legendContainer}>
-        <View style={styles.squareContainer}>
-          <View style={[styles.square, { backgroundColor: "#BAE8C9" }]} />
-          <Text style={styles.squareText}>Thời gian rảnh</Text>
-        </View>
-        <View style={styles.squareContainer}>
-          <View style={[styles.square, { backgroundColor: "#D9D9D9" }]} />
-          <Text style={styles.squareText}>Thời gian bận</Text>
-        </View>
-      </View>
-      <CatSitterCalendarSetting
-        availableDays={availableDays}
-        busyDays={busyDays}
-      />
-      <View style={styles.footerTextContainer}>
-        <Text style={styles.updateText}>Lịch được cập nhật 1 ngày trước</Text>
-        <View style={styles.policyTextContainer}>
-          <Text style={styles.policyText}>
-            Chính sách hủy lịch của MeowCare.
-          </Text>
-          <Text style={styles.readMoreText1}>Đọc thêm</Text>
-        </View>
-      </View>
+          {/* Lịch */}
+          <Text style={styles.text1}>Lịch</Text>
+          <CatSitterCalendarSetting
+            availableDays={availableDays}
+            busyDays={busyDays}
+          />
+
+          {/* Chính sách và thông tin cập nhật */}
+          <View style={styles.footerTextContainer}>
+            <Text style={styles.updateText}>
+              Lịch được cập nhật 1 ngày trước
+            </Text>
+            <View style={styles.policyTextContainer}>
+              <Text style={styles.policyText}>
+                Chính sách hủy lịch của MeowCare.
+              </Text>
+              <Text style={styles.readMoreText1}>Đọc thêm</Text>
+            </View>
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -184,85 +178,65 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFAF5",
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-    paddingHorizontal: height * 0.0,
-    paddingVertical: height * 0.01,
+    alignItems: "flex-start", // Căn giữa theo chiều ngang
+    justifyContent: "flex-start", // Căn giữa theo chiều dọc
+    marginRight: -20,
   },
   text: {
-    textAlign: "left",
+    textAlign: "center", // Đặt text chính giữa
     fontSize: width * 0.04,
     color: "#000857",
     fontWeight: "600",
-    marginTop: -height * 0.02,
+  },
+  mainText: {
+    width: 200,
+    fontSize: 16,
+    fontWeight: "600",
   },
   text1: {
-    textAlign: "left",
+    textAlign: "center", // Đặt text chính giữa
     fontSize: width * 0.04,
     color: "#000857",
     fontWeight: "600",
     marginTop: height * 0.02,
-  },
-  readMoreText: {
-    textAlign: "left",
-    fontSize: width * 0.037,
-    color: "#3060A7",
-    fontWeight: "600",
-    marginTop: height * 0.02,
-    textDecorationLine: "underline",
   },
   serviceContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start", // Đưa toàn bộ container về bên trái
     alignItems: "center",
-    marginTop: height * 0.02,
     width: "100%",
+    marginTop: height * 0.02,
   },
-  holidayContainer: {
-    paddingLeft: width * 0.13,
+
+  extraServiceContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-start", // Đưa toàn bộ container về bên trái
+    alignItems: "center",
+    width: "100%",
+    marginTop: height * 0.02,
   },
   iconAndTextContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "center", // Đảm bảo icon và text cùng hàng
+    justifyContent: "flex-start", // Đưa icon và text về bên trái
+    marginRight: 20, // Khoảng cách giữa các thành phần
   },
   serviceImage: {
     width: width * 0.1,
     height: height * 0.05,
     resizeMode: "contain",
+    MarginLeft: 20,
+  },
+  extraServiceImage: {
+    width: width * 0.1,
+    height: height * 0.05,
+    resizeMode: "contain",
     marginRight: width * 0.03,
   },
-  textContainer: {
-    flexDirection: "column",
-    justifyContent: "center",
-    minHeight: height * 0.07,
-  },
-  textAndIcon: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  mainText: {
-    fontSize: width * 0.045,
-    fontWeight: "bold",
-    color: "#000857",
-    marginRight: width * 0.02,
-  },
-  newMainText: {
-    fontSize: width * 0.045,
-    fontWeight: "bold",
-    color: "#000857",
-    marginRight: width * 0.02,
-    marginBottom: height * 0.02,
-  },
-  newIconStyle: {
-    marginBottom: height * 0.02,
-  },
-  subText: {
-    fontSize: width * 0.035,
-    color: "rgba(0, 8, 87, 0.6)",
-    fontWeight: "600",
-  },
+
   priceContainer: {
-    alignItems: "center",
+    flex: 1,
+    alignItems: "flex-end",
   },
   price: {
     fontSize: width * 0.04,
@@ -275,66 +249,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   separator: {
-    width: width * 0.9,
+    width: "90%", // Đảm bảo phần separator không tràn màn hình
     height: 1,
     backgroundColor: "#D9D9D9",
     alignSelf: "center",
     marginTop: height * 0.02,
-    right: height * 0.03,
-  },
-  extraServiceContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: height * 0.02,
-    width: "100%",
-  },
-  extraServiceImage: {
-    width: width * 0.1,
-    height: height * 0.05,
-    resizeMode: "contain",
-    marginRight: width * 0.03,
-  },
-  pickerContainer: {
-    width: width * 0.9,
-    alignSelf: "center",
-    marginTop: height * 0.01,
-    backgroundColor: "#FFF6ED",
-    borderWidth: 1,
-    borderColor: "#CCC",
-    borderRadius: 5,
-    right: height * 0.03,
-  },
-  picker: {
-    height: height * 0.05,
-    width: "100%",
-  },
-  legendContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: height * 0.02,
-    width: width * 0.9,
-    alignSelf: "center",
-    right: height * 0.03,
-  },
-  squareContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  square: {
-    width: width * 0.035,
-    height: width * 0.035,
-    marginRight: width * 0.02,
-  },
-  squareText: {
-    fontSize: width * 0.04,
-    color: "#000857",
-    fontWeight: "600",
   },
   footerTextContainer: {
-    justifyContent: "center",
-    alignItems: "center",
+    alignItems: "center", // Căn giữa nội dung trong footer
     marginTop: height * 0.03,
   },
   updateText: {
@@ -342,6 +264,7 @@ const styles = StyleSheet.create({
     color: "#000857",
     fontWeight: "500",
     marginBottom: height * 0.01,
+    textAlign: "center",
   },
   policyTextContainer: {
     flexDirection: "row",
@@ -351,12 +274,13 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
     color: "#000857",
     fontWeight: "500",
+    textAlign: "center",
   },
   readMoreText1: {
-    textAlign: "left",
     fontSize: width * 0.037,
     color: "#3060A7",
     fontWeight: "600",
     textDecorationLine: "underline",
+    textAlign: "center",
   },
 });

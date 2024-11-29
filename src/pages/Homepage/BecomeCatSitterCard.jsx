@@ -9,6 +9,7 @@ const BecomeCatSitterCard = () => {
   return (
     <View style={styles.squareView}>
       <View style={styles.textContainer}>
+      
         <Text style={styles.headingText}>Trở thành người chăm sóc mèo</Text>
         <Text style={styles.bodyText}>
           Hỗ trợ tăng thu nhập và mở ra cơ hội mới bằng cách chia sẻ không gian

@@ -16,21 +16,19 @@ import { useAuth } from "../../../auth/useAuth";
 const { width, height } = Dimensions.get("window");
 
 export default function Chat({ route, navigation }) {
-  const { conversationId } = route.params;
-  const { user } = useAuth();
+  const { conversationId, userId, sitterId } = route.params; // Lấy userId và sitterId từ route.params
+  const { user } = useAuth(); // user.id là ID của người dùng hiện tại
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const flatListRef = useRef(null);
 
   useEffect(() => {
     const unsubscribe = listenForMessages(conversationId, (newMessages) => {
-      // Sắp xếp tin nhắn từ cũ đến mới dựa trên timestamp.seconds
       const sortedMessages = newMessages.sort((a, b) => {
         const timeA = a.timestamp?.seconds || 0;
         const timeB = b.timestamp?.seconds || 0;
         return timeA - timeB;
       });
-      // console.log("Sorted Messages:", sortedMessages); // Kiểm tra lại xem log có hiển thị đúng thứ tự không
       setMessages(sortedMessages);
     });
     return () => unsubscribe();
@@ -38,12 +36,11 @@ export default function Chat({ route, navigation }) {
 
   const handleSendMessage = () => {
     if (messageText.trim() && user?.id) {
-      sendMessage(conversationId, user.id, messageText);
+      sendMessage(conversationId, user.id, messageText); // Gửi message với user.id
       setMessageText("");
-      // Cuộn đến cuối danh sách khi có tin nhắn mới
       flatListRef.current.scrollToEnd({ animated: true });
     } else {
-      console.error("User ID is undefined or invalid.");
+      // console.error("User ID is undefined or invalid.");
     }
   };
 
@@ -79,6 +76,7 @@ export default function Chat({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -93,8 +91,8 @@ export default function Chat({ route, navigation }) {
       </View>
       <View style={styles.separator} />
 
+      {/* Chat Messages */}
       <FlatList
-        showsVerticalScrollIndicator={false}
         ref={flatListRef}
         data={messages}
         keyExtractor={(item) => item.id}
@@ -105,6 +103,7 @@ export default function Chat({ route, navigation }) {
         }
       />
 
+      {/* Input Container */}
       <View style={styles.inputContainer}>
         <TextInput
           value={messageText}

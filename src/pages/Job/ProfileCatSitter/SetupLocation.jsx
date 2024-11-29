@@ -7,32 +7,126 @@ import {
   StyleSheet,
   Switch,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Entypo, Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import { getData, putData } from "../../../api/api";
+import { useAuth } from "../../../../auth/useAuth";
 
 export default function SetupLocation({ navigation }) {
+  const { user } = useAuth();
   const [isDefault, setIsDefault] = useState(false);
   const [addressType, setAddressType] = useState("Chung Cư");
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [addressDetail, setAddressDetail] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [profileId, setProfileId] = useState(null);
+  const [userData, setUserData] = useState({ fullName: "", phoneNumber: "" });
   const route = useRoute();
 
   useEffect(() => {
+    if (route.params?.addressDetail) {
+      setAddressDetail(route.params.addressDetail);
+    }
     if (route.params?.selectedLocation) {
       setSelectedLocation(route.params.selectedLocation);
     }
-  }, [route.params?.selectedLocation]);
+  }, [route.params]);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await getData(`/sitter-profiles/sitter/${user.id}`);
+        if (response?.data?.id) {
+          setProfileId(response.data.id); // Gán `id` từ response vào state
+          console.log("Profile ID fetched:", response.data.id);
+        } else {
+          console.error("Không tìm thấy Profile ID");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin profile:", error);
+      }
+    };
+
+    if (user.id) {
+      fetchProfile();
+    }
+  }, [user.id]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        console.log(`Fetching user data for userId: ${user.id}`);
+        const response = await getData(`/users/${user.id}`);
+        if (response?.data) {
+          console.log("User data fetched:", response.data);
+          setUserData({
+            fullName: response.data.fullName || "",
+            phoneNumber: response.data.phoneNumber || "", // Dữ liệu nếu có
+          });
+        } else {
+          console.warn(`Không tìm thấy thông tin user cho userId: ${user.id}`);
+        }
+      } catch (error) {
+        console.error("Lỗi khi fetch thông tin user:", error);
+      }
+    };
+
+    if (user.id) {
+      fetchUserData();
+    }
+  }, [user.id]);
   const handleToggleSwitch = () =>
     setIsDefault((previousState) => !previousState);
 
   const navigateToLocationScreen = () => {
     navigation.navigate("LocationScreen");
   };
+  const navigateToAddressScreen = () => {
+    navigation.navigate("AddressScreen", { selectedLocation });
+  };
 
   // Kiểm tra nếu nút hoàn thành được kích hoạt
-  const isCompleteEnabled = selectedLocation && isDefault;
+  const isCompleteEnabled = selectedLocation && addressDetail && isDefault;
+  const handleSaveLocation = async () => {
+    if (!selectedLocation || !addressDetail || !profileId) {
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin địa chỉ.");
+      return;
+    }
 
+    try {
+      setIsSaving(true);
+
+      // Chuỗi địa chỉ đầy đủ
+      const location = `${addressDetail}, ${selectedLocation.commune}, ${selectedLocation.district}, ${selectedLocation.province}`;
+
+      // Payload cho PUT request
+      const payload = {
+        sitterId: user.id,
+        location,
+      };
+
+      console.log("Payload gửi đến API:", JSON.stringify(payload, null, 2));
+      console.log("PUT Endpoint:", `/sitter-profiles/${profileId}`);
+
+      // PUT request để cập nhật thông tin
+      const response = await putData(`/sitter-profiles/${profileId}`, payload);
+
+      console.log("Phản hồi từ API:", response);
+      Alert.alert("Thành công", "Địa chỉ đã được cập nhật.");
+      navigation.navigate("CatSitterProfile"); // Điều hướng về trang profile
+    } catch (error) {
+      console.error("Lỗi khi cập nhật địa chỉ:", error);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+      }
+      Alert.alert("Lỗi", "Không thể lưu địa chỉ. Vui lòng thử lại sau.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -54,8 +148,18 @@ export default function SetupLocation({ navigation }) {
         <View style={styles.content}>
           <Text style={styles.sectionTitle}>Liên hệ</Text>
 
-          <TextInput style={styles.input} placeholder="Họ và tên" />
-          <TextInput style={styles.input} placeholder="Số điện thoại" />
+          <TextInput
+            style={styles.input}
+            placeholder="Họ và tên"
+            value={userData.fullName}
+            editable={false}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Số điện thoại"
+            value={userData.phoneNumber}
+            editable={false}
+          />
 
           <Text style={styles.sectionTitle}>Địa chỉ</Text>
 
@@ -84,15 +188,13 @@ export default function SetupLocation({ navigation }) {
 
           <View style={styles.inputContainer}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("AddressScreen")}
+              onPress={navigateToAddressScreen}
               disabled={!selectedLocation}
             >
               <TextInput
-                style={[
-                  styles.inputWithIcon,
-                  !selectedLocation && { color: "#ccc" },
-                ]}
+                style={styles.inputWithIcon}
                 placeholder="Tên đường, Tòa nhà, Số nhà."
+                value={addressDetail || ""}
                 editable={false}
                 pointerEvents="none"
               />
@@ -104,7 +206,6 @@ export default function SetupLocation({ navigation }) {
               />
             </TouchableOpacity>
           </View>
-
           <Text style={styles.sectionTitle}>Cài đặt</Text>
 
           <View style={styles.addressTypeContainer}>
@@ -159,9 +260,12 @@ export default function SetupLocation({ navigation }) {
               styles.completeButton,
               isCompleteEnabled && { backgroundColor: "#902C6C" },
             ]}
-            disabled={!isCompleteEnabled}
+            onPress={handleSaveLocation}
+            disabled={!isCompleteEnabled || isSaving}
           >
-            <Text style={styles.completeButtonText}>HOÀN THÀNH</Text>
+            <Text style={styles.completeButtonText}>
+              {isSaving ? "Đang lưu..." : "HOÀN THÀNH"}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

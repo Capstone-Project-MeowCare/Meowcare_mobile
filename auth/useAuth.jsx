@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState } from "react";
 import { Ability } from "@casl/ability";
 import { defineRulesFor } from "./roles";
 import { useStorage } from "../src/hooks/useLocalStorage";
+import { postData } from "../src/api/api";
+import * as Device from "expo-device";
 
 const AuthContext = createContext({});
 
@@ -12,48 +14,58 @@ export const AuthProvider = ({ children }) => {
     "accessToken",
     null
   );
-  const [expoPushToken, setExpoPushToken, removeExpoPushToken] = useStorage(
-    "expoPushToken",
-    ""
+  const [refreshToken, setRefreshToken, removeRefreshToken] = useStorage(
+    "refreshToken",
+    null
   );
 
-  const login = (userData, expoPushToken = "") => {
-    console.log("User data received:", userData);
-    console.log("Roles:", userData.roles);
+  const refreshAccessToken = async () => {
+    try {
+      const deviceId = Device.osBuildId || "unknown_deviceId";
+      const response = await postData("/auth/refresh", {
+        token: accessToken,
+        refreshToken,
+        deviceId,
+      });
 
-    const ability = new Ability(defineRulesFor(userData));
-    setUser({ ...userData });
+      if (response.status !== 1000 || !response.data.token) {
+        throw new Error("Làm mới token thất bại");
+      }
+
+      const newAccessToken = response.data.token;
+      await setAccessToken(newAccessToken);
+      return newAccessToken;
+    } catch (error) {
+      console.error("Error refreshing access token:", error);
+
+      // Xử lý khi `refreshToken` hết hạn
+      if (error?.response?.status === 401) {
+        await logout();
+        return null;
+      }
+
+      throw error;
+    }
+  };
+
+  const login = (userData, tokens) => {
+    const { token, refreshToken } = tokens;
+
+    setAccessToken(token); // Lưu accessToken
+    setRefreshToken(refreshToken); // Lưu refreshToken
+    setUser(userData); // Lưu thông tin user
 
     if (userData?.roles && userData.roles.length > 0) {
-      setRoles(userData.roles);
-      console.log("Roles set:", userData.roles); // Log các role được set
+      setRoles(userData.roles); // Lưu vai trò
     }
-
-    setExpoPushToken(expoPushToken || "");
   };
 
   const logout = async () => {
     try {
-      if (user) {
-        await removeUser();
-        setUser(null);
-      }
-
-      if (accessToken) {
-        await removeAccessToken();
-      }
-
-      if (roles && Array.isArray(roles) && roles.length > 0) {
-        await removeRoles();
-      } else {
-        console.log("Roles are null or not an array.");
-      }
-
-      if (expoPushToken) {
-        await removeExpoPushToken();
-      }
-
-      console.log("Logged out successfully!");
+      await removeUser();
+      await removeAccessToken();
+      await removeRefreshToken();
+      await removeRoles();
     } catch (error) {
       console.error("Error during logout:", error);
     }
@@ -67,15 +79,14 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         accessToken,
+        refreshAccessToken,
         roles,
-        expoPushToken,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
-
 export const useAuth = () => {
   return useContext(AuthContext);
 };

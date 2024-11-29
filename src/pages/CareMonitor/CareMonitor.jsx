@@ -12,7 +12,9 @@ import { AntDesign, Entypo, Feather } from "@expo/vector-icons";
 import StarRating from "react-native-star-rating-widget";
 import { ScrollView } from "react-native-gesture-handler";
 import { getData } from "../../api/api";
-
+import { request, PERMISSIONS } from "react-native-permissions";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../configs/firebase";
 const { width, height } = Dimensions.get("window");
 
 // Data mẫu cho các nhiệm vụ
@@ -56,7 +58,7 @@ const taskData = [
 ];
 
 export default function CareMonitor({ navigation, route }) {
-  const { userEmail, sitterEmail, bookingId } = route.params;
+  const { userEmail, sitterEmail, bookingId, userId, sitterId } = route.params;
   const [expandedStates, setExpandedStates] = useState([]);
   const [tasks, setTasks] = useState([]); // Để lưu trữ các nhiệm vụ từ API
   const [currentDate, setCurrentDate] = useState(null);
@@ -64,28 +66,92 @@ export default function CareMonitor({ navigation, route }) {
   const animatedHeights = taskData.map(
     () => useRef(new Animated.Value(height * 0.04)).current
   );
+  useEffect(() => {
+    console.log("Route params:", {
+      userEmail,
+      sitterEmail,
+      bookingId,
+      userId,
+      sitterId,
+    });
+  }, []);
   const fetchCareSchedule = async () => {
     try {
       const endpoint = `/care-schedules/booking/${bookingId}`;
       const response = await getData(endpoint);
-      setCareSchedule(response);
-      setTasks(response.tasks || []);
-      setCurrentDate(new Date(response.data.startTime));
-      console.log("Care Schedule Data:", response);
+
+      if (response?.data?.tasks) {
+        const tasks = response.data.tasks.map((task) => {
+          const startDate = new Date(task.startTime);
+          const endDate = new Date(task.endTime);
+
+          return {
+            id: task.id,
+            day: `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")}`,
+            time: `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")} - ${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`,
+            description: task.description || "Không có mô tả",
+            status: mapStatus(task.status),
+            statusColor: getStatusColor(task.status),
+          };
+        });
+
+        setTasks(tasks);
+        console.log("Tasks fetched from API:", tasks); // Log tasks để kiểm tra
+      }
+
+      if (response?.data?.startTime && response?.data?.endTime) {
+        const scheduleStart = new Date(response.data.startTime);
+        const scheduleEnd = new Date(response.data.endTime);
+
+        setCareSchedule({
+          startTime: scheduleStart,
+          endTime: scheduleEnd,
+        });
+
+        if (!currentDate) {
+          setCurrentDate(scheduleStart);
+        }
+      }
     } catch (error) {
       console.error("Error fetching care schedule:", error);
     }
   };
 
   useEffect(() => {
-    console.log("Booking ID:", bookingId);
     fetchCareSchedule();
   }, [bookingId]);
 
+  const filteredTasks = tasks.filter((task) => {
+    const currentISODate = currentDate?.toISOString().split("T")[0];
+    return (
+      task.day === currentISODate &&
+      careSchedule?.startTime <= new Date(task.day) &&
+      new Date(task.day) <= careSchedule?.endTime
+    );
+  });
+
+  const mapStatus = (status) => {
+    const statusMapping = {
+      0: "Chưa bắt đầu",
+      1: "Đang diễn ra",
+      2: "Hoàn thành",
+    };
+    return statusMapping[status] || "Không xác định";
+  };
+
+  const getStatusColor = (status) => {
+    const colorMapping = {
+      0: "#9E9E9E",
+      1: "#FFC107",
+      2: "#4CAF50",
+    };
+    return colorMapping[status] || "#000";
+  };
   const handlePreviousDay = () => {
     if (
       currentDate &&
-      new Date(currentDate) > new Date(careSchedule.data.startTime)
+      careSchedule?.startTime &&
+      currentDate > careSchedule.startTime
     ) {
       setCurrentDate((prevDate) => {
         const newDate = new Date(prevDate);
@@ -98,7 +164,8 @@ export default function CareMonitor({ navigation, route }) {
   const handleNextDay = () => {
     if (
       currentDate &&
-      new Date(currentDate) < new Date(careSchedule.data.endTime)
+      careSchedule?.endTime &&
+      currentDate < careSchedule.endTime
     ) {
       setCurrentDate((prevDate) => {
         const newDate = new Date(prevDate);
@@ -122,15 +189,61 @@ export default function CareMonitor({ navigation, route }) {
   };
   const handleChatPress = () => {
     navigation.navigate("Chat", {
-      conversationId: `${userEmail}-${sitterEmail}-${bookingId}`,
-      userEmail,
+      conversationId: `${userId}-${sitterId}-${bookingId}`, // Tạo ID cuộc hội thoại bằng userId và sitterId
+      userId,
+      sitterId,
     });
   };
-  const handleDetailPress = (status) => {
-    navigation.navigate("CareServiceDetails", {
+
+  const requestPermissions = async () => {
+    const cameraResult = await request(PERMISSIONS.ANDROID.CAMERA);
+    const micResult = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
+
+    if (cameraResult !== "granted" || micResult !== "granted") {
+      Alert.alert(
+        "Error",
+        "Camera and Microphone permissions are required for video calls."
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const handleVideoCallPress = async () => {
+    const hasPermissions = await requestPermissions();
+    if (!hasPermissions) return;
+
+    const roomRef = doc(db, "rooms", bookingId);
+    const roomSnapshot = await getDoc(roomRef);
+
+    if (roomSnapshot.exists()) {
+      // Nếu room đã tồn tại, tham gia cuộc gọi
+      console.log("Room exists. Joining call...");
+      navigation.navigate("JoinScreen", {
+        roomId: bookingId,
+        userEmail,
+        sitterEmail,
+      });
+    } else {
+      // Nếu room chưa tồn tại, tạo phòng mới
+      console.log("Room does not exist. Creating a new room...");
+      navigation.navigate("CallScreen", {
+        roomId: bookingId,
+        bookingId,
+        userEmail, // Thêm userEmail
+        sitterEmail, // Thêm sitterEmail
+      });
+    }
+  };
+
+  const handleDetailPress = (status, time, day, taskId) => {
+    navigation.navigate("CareSheduleUser", {
       status,
-      userEmail,
-      sitterEmail,
+      userId,
+      sitterId,
+      time,
+      day,
+      taskId,
     });
   };
 
@@ -146,12 +259,14 @@ export default function CareMonitor({ navigation, route }) {
             style={styles.backArrow}
           />
         </TouchableOpacity>
-        <Text style={styles.label}>Theo dõi chăm sóc</Text>
+        <Text style={styles.label}>Theo dõi thời gian chăm sóc</Text>
+        <Text style={styles.Label}>Hoàn thành</Text>
       </View>
+      
       <View style={styles.separator} />
 
       <Text style={styles.timeLabel}>Thời gian chăm sóc</Text>
-
+      
       <View style={styles.dateRow}>
         <TouchableOpacity onPress={handlePreviousDay}>
           <Entypo name="chevron-left" size={24} color="#000857" />
@@ -174,9 +289,9 @@ export default function CareMonitor({ navigation, route }) {
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {taskData.map((item, index) => (
+        {filteredTasks.map((item, index) => (
           <TouchableOpacity
-            key={index}
+            key={item.id}
             onPress={() => toggleExpansion(index)}
             activeOpacity={0.8}
           >
@@ -188,6 +303,7 @@ export default function CareMonitor({ navigation, route }) {
                 },
               ]}
             >
+              {/* Hiển thị thời gian và trạng thái */}
               <View style={styles.row}>
                 <Text style={styles.timeText}>{item.time}</Text>
                 {item.status === "Đang diễn ra" && (
@@ -210,19 +326,48 @@ export default function CareMonitor({ navigation, route }) {
               </View>
               {expandedStates[index] && (
                 <View style={styles.taskRow}>
-                  <Text style={styles.taskText}>{item.taskName}</Text>
+                  <Text style={styles.taskText}>{item.description}</Text>
                   {item.status === "Chưa bắt đầu" && (
-                    <TouchableOpacity
-                      style={styles.addServiceButton}
-                      onPress={() => navigation.navigate("AdditionalServices")}
-                    >
-                      <Text style={styles.addServiceButtonText}>
-                        Đặt thêm dịch vụ
-                      </Text>
-                    </TouchableOpacity>
+                    <View style={styles.actionButtonsContainer}>
+                      {userId && !sitterId && (
+                        <TouchableOpacity
+                          style={styles.addServiceButton}
+                          onPress={() =>
+                            navigation.navigate("AdditionalServices", {
+                              taskId: item.id,
+                              userId,
+                              bookingId,
+                            })
+                          }
+                        >
+                          <Text style={styles.addServiceButtonText}>
+                            Đặt thêm dịch vụ
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {sitterId && (
+                        <TouchableOpacity
+                          style={styles.detailButton}
+                          onPress={() =>
+                            handleDetailPress(
+                              item.status,
+                              item.time,
+                              item.day,
+                              item.id,
+                              userId,
+                              sitterId
+                            )
+                          }
+                        >
+                          <Text style={styles.detailButtonText}>
+                            Xem chi tiết
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   )}
-                  {item.status === "Hoàn thành" ||
-                  item.status === "Đang diễn ra" ? (
+                  {(item.status === "Hoàn thành" ||
+                    item.status === "Đang diễn ra") && (
                     <TouchableOpacity
                       style={styles.detailButton}
                       onPress={() =>
@@ -231,7 +376,7 @@ export default function CareMonitor({ navigation, route }) {
                     >
                       <Text style={styles.detailButtonText}>Xem chi tiết</Text>
                     </TouchableOpacity>
-                  ) : null}
+                  )}
                 </View>
               )}
             </Animated.View>
@@ -282,7 +427,11 @@ export default function CareMonitor({ navigation, route }) {
               <Feather name="phone" size={20} color="rgba(0,0,0,0.6)" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              activeOpacity={0.8}
+              onPress={handleVideoCallPress}
+            >
               <AntDesign name="videocamera" size={20} color="rgba(0,0,0,0.6)" />
             </TouchableOpacity>
           </View>
@@ -385,7 +534,27 @@ const styles = StyleSheet.create({
   taskText: {
     fontSize: 16,
     color: "#333",
-    marginTop: height * 0.01,
+    flex: 1,
+    flexWrap: "wrap",
+    marginRight: width * 0.02,
+  },
+  actionButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  detailButton: {
+    width: width * 0.25,
+    height: height * 0.03,
+    backgroundColor: "#2E67D1",
+    borderRadius: height * 0.1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailButtonText: {
+    color: "#FFFFFF",
+    fontSize: width * 0.035,
+    fontWeight: "600",
   },
   status: {
     fontSize: width * 0.035,

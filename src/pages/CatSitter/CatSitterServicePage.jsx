@@ -10,6 +10,7 @@ import CatSitterReviews from "./CatSitterReviews";
 import CatSitterAssistance from "./CatSitterAssistance";
 import { getData } from "../../api/api";
 import { ActivityIndicator } from "react-native-paper";
+import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -24,7 +25,7 @@ const catSitters = [
   },
 ];
 
-function FirstRoute({ experience, skill, environment, location }) {
+function FirstRoute({ experience, skill, environment, location, userId }) {
   return (
     <View style={styles.routeContainer}>
       <ScrollView
@@ -37,6 +38,7 @@ function FirstRoute({ experience, skill, environment, location }) {
             skill={skill}
             environment={environment}
             location={location}
+            userId={userId}
           />
         </View>
       </ScrollView>
@@ -59,7 +61,7 @@ function SecondRoute() {
   );
 }
 
-function ThirdRoute() {
+function ThirdRoute({ id }) {
   return (
     <View style={styles.routeContainer}>
       <ScrollView
@@ -67,7 +69,7 @@ function ThirdRoute() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.tabContent}>
-          <CatSitterAssistance />
+          <CatSitterAssistance id={id} />
         </View>
       </ScrollView>
     </View>
@@ -77,38 +79,41 @@ function ThirdRoute() {
 const Tab = createMaterialTopTabNavigator();
 
 export default function CatSitterServicePage({ navigation }) {
+  const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const route = useRoute();
   const [sitterDetails, setSitterDetails] = useState(null);
-  const id = route.params?.id;
-
+  const sitterId = route.params?.sitterId; // ID cũ
+  const userId = route.params?.userId; // ID mới
   const [loading, setLoading] = useState(true);
-  const images = [
-    require("../../../assets/bannerlogo2.png"),
-    require("../../../assets/catpeople.jpg"),
-    require("../../../assets/image4.png"),
-    require("../../../assets/1.jpg"),
-    require("../../../assets/Group347.png"),
-  ];
-
-  const handleLikePress = () => {
-    setIsLiked(!isLiked);
-  };
+  const [profilePictures, setProfilePictures] = useState([]);
 
   useEffect(() => {
     const fetchSitterDetails = async () => {
       try {
-        const response = await getData(`/sitter-profiles/${id}`);
+        const response = await getData(`/sitter-profiles/${sitterId}`);
+        const { profilePictures: fetchedPictures } = response.data;
+
+        setProfilePictures(
+          Array.isArray(fetchedPictures) && fetchedPictures.length > 0
+            ? fetchedPictures
+            : [{ imageUrl: "https://example.com/default-image.jpg" }]
+        );
+
         setSitterDetails(response.data);
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching sitter details:", error);
+      } finally {
         setLoading(false);
       }
     };
-    console.log("Received sitterId:", id);
-    if (id) fetchSitterDetails();
-  }, [id]);
+
+    if (sitterId) fetchSitterDetails();
+  }, [sitterId]);
+
+  const handleLikePress = () => {
+    setIsLiked(!isLiked);
+  };
 
   return (
     <ScrollView
@@ -126,7 +131,7 @@ export default function CatSitterServicePage({ navigation }) {
             style={styles.backArrow}
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chăm mèo</Text>
+        <Text style={styles.headerTitle}>Thông tin người chăm mèo</Text>
         <TouchableOpacity style={styles.filterButton} onPress={handleLikePress}>
           <Ionicons
             name={isLiked ? "heart" : "heart-outline"}
@@ -146,9 +151,12 @@ export default function CatSitterServicePage({ navigation }) {
           activeDotStyle={styles.activeDotStyle}
           paginationStyle={styles.pagination}
         >
-          {images.map((item, index) => (
+          {profilePictures.map((item, index) => (
             <View key={index} style={styles.carouselItem}>
-              <Image source={item} style={styles.carouselImage} />
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={styles.carouselImage}
+              />
             </View>
           ))}
         </Swiper>
@@ -202,15 +210,19 @@ export default function CatSitterServicePage({ navigation }) {
                 skill={sitterDetails?.skill?.split(",").map((s) => s.trim())}
                 environment={sitterDetails?.environment}
                 location={sitterDetails?.location}
+                userId={user.id}
               />
             )}
           />
-
           <Tab.Screen name="Đánh giá" component={SecondRoute} />
-          <Tab.Screen name="Dịch vụ" component={ThirdRoute} />
+          <Tab.Screen
+            name="Dịch vụ"
+            children={() => <ThirdRoute id={userId} />} // Dùng ID mới ở đây
+          />
         </Tab.Navigator>
       </View>
-      <View style={styles.fixedFooter}>
+
+      {user.id !== sitterDetails?.user?.id && (
         <TouchableOpacity
           style={styles.bookingButton}
           onPress={() =>
@@ -221,7 +233,7 @@ export default function CatSitterServicePage({ navigation }) {
         >
           <Text style={styles.bookingText}>Đặt Lịch</Text>
         </TouchableOpacity>
-      </View>
+      )}
     </ScrollView>
   );
 }
@@ -351,19 +363,22 @@ const styles = StyleSheet.create({
     paddingTop: height * 0.02,
   },
   fixedFooter: {
-    paddingTop: 10,
     backgroundColor: "#FFFAF5",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     alignItems: "center",
   },
   bookingButton: {
-    width: width * 0.9,
-    height: 40,
     backgroundColor: "#2E67D1",
+    width: width * 0.9,
+    height: 50,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
+    position: "absolute",
+    Top: height * 0.02,
+    alignSelf: "center",
   },
+
   bookingText: {
     color: "#FFF",
     fontWeight: "bold",

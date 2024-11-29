@@ -28,6 +28,7 @@ export default function SetupProfile({ navigation }) {
   const [profilePictures, setProfilePictures] = useState([]);
   const [sitterProfileId, setSitterProfileId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const renderImage = ({ item }) => (
     <View style={styles.imageContainer}>
@@ -56,24 +57,21 @@ export default function SetupProfile({ navigation }) {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newImage = result.assets[0];
         if (newImage.uri) {
-          const imageUrl = await firebaseImg(newImage.uri);
-
-          if (imageUrl) {
-            const newProfilePicture = {
-              id: new Date().getTime().toString(),
-              imageName: newImage.uri.split("/").pop(),
-              imageUrl: imageUrl,
-            };
-            setProfilePictures((prevPictures) => [
-              ...prevPictures,
-              newProfilePicture,
-            ]);
-          }
+          const newProfilePicture = {
+            id: new Date().getTime().toString(),
+            imageName: newImage.uri.split("/").pop(),
+            imageUrl: newImage.uri, // Lưu URI tạm thời, không upload ngay
+          };
+          console.log("Image selected:", newProfilePicture);
+          setProfilePictures((prevPictures) => [
+            ...prevPictures,
+            newProfilePicture,
+          ]);
         } else {
-          console.log("Invalid image URI");
+          console.error("Invalid image URI.");
         }
       } else {
-        console.log("No image selected or assets not available");
+        console.log("No image selected or assets not available.");
       }
     } catch (error) {
       console.error("Error picking image:", error);
@@ -81,23 +79,71 @@ export default function SetupProfile({ navigation }) {
   };
 
   useEffect(() => {
-    const fetchSitterProfileId = async () => {
+    const fetchSitterProfile = async () => {
       try {
+        console.log("Fetching sitter profile ID...");
         const response = await getData(`/sitter-profiles/sitter/${user.id}`);
-        if (response?.data?.id) {
-          setSitterProfileId(response.data.id);
+        console.log("Response from API:", response.data);
+
+        if (response?.data) {
+          const profileData = response.data;
+
+          // Cập nhật trạng thái với dữ liệu từ API
+          setSitterProfileId(profileData.id || null);
+          setBio(profileData.bio || "");
+          setExperience(profileData.experience || "");
+          setEnvironment(profileData.environment || "");
+          setSelectedSkills(
+            profileData.skill ? profileData.skill.split(",") : []
+          );
+          setProfilePictures(profileData.profilePictures || []);
         } else {
-          console.log("Không tìm thấy sitter profile ID");
+          console.error("Sitter profile data not found.");
         }
       } catch (error) {
-        console.error("Error fetching sitter profile ID:", error);
+        console.error("Error fetching sitter profile:", error);
+      } finally {
+        setIsLoading(false); // Đảm bảo trạng thái tải được cập nhật
       }
     };
 
     if (user?.id) {
-      fetchSitterProfileId();
+      setIsLoading(true);
+      fetchSitterProfile();
     }
   }, [user?.id]);
+
+  // const fetchSitterProfileDetails = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     if (!sitterProfileId) {
+  //       console.error("Sitter profile ID is missing.");
+  //       return;
+  //     }
+
+  //     console.log("Fetching sitter profile details...");
+  //     const response = await getData(`/sitter-profiles/${sitterProfileId}`);
+
+  //     if (response?.data) {
+  //       console.log("Sitter profile data fetched:", response.data);
+
+  //       // Cập nhật state với dữ liệu từ API
+  //       setBio(response.data.bio || "");
+  //       setExperience(response.data.experience || "");
+  //       setEnvironment(response.data.environment || "");
+  //       setSelectedSkills(
+  //         response.data.skill ? response.data.skill.split(",") : []
+  //       );
+  //       setProfilePictures(response.data.profilePictures || []);
+  //     } else {
+  //       console.error("No sitter profile data found.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching sitter profile details:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleSave = async () => {
     try {
@@ -106,28 +152,56 @@ export default function SetupProfile({ navigation }) {
         return;
       }
 
-      setIsSaving(true); // Bắt đầu hiển thị ActivityIndicator
+      console.log("==== Bắt đầu lưu hồ sơ người chăm sóc ====");
+      console.log("Danh sách ảnh hiện tại:", profilePictures);
 
+      setIsSaving(true);
+
+      // Upload ảnh lên Firebase
+      const uploadedPictures = await Promise.all(
+        profilePictures.map(async (pic) => {
+          if (!pic.imageUrl.startsWith("https://")) {
+            // Chỉ upload ảnh chưa được upload
+            console.log(`Uploading image: ${pic.imageName}`);
+            const imageUrl = await firebaseImg(pic.imageUrl);
+            return {
+              imageName: pic.imageName,
+              imageUrl,
+            };
+          }
+          return pic; // Ảnh đã upload thì giữ nguyên
+        })
+      );
+
+      console.log("Uploaded Pictures:", uploadedPictures);
+
+      // Dữ liệu payload
       const profileData = {
         sitterId: user?.id,
         bio,
         experience,
-        environment,
         skill: selectedSkills.join(","),
-        rating: 0,
-        profilePictures: profilePictures.map((pic) => ({
-          imageName: pic.imageName,
-          imageUrl: pic.imageUrl,
-        })),
+        environment,
+        maximumQuantity: 0,
+        status: 0,
+        profilePictures: uploadedPictures,
       };
 
-      const endpoint = `/sitter-profiles/${sitterProfileId}`;
-      console.log("API Endpoint:", endpoint);
-      console.log("Payload Data:", profileData);
+      console.log("Payload gửi đến API:", JSON.stringify(profileData, null, 2));
 
-      const response = await putData(endpoint, profileData, "PUT");
-      console.log("Profile Pictures:", response.data.profilePictures);
-      console.log("API Response:", response);
+      const response = await putData(
+        `/sitter-profiles/${sitterProfileId}`,
+        profileData,
+        "PUT"
+      );
+
+      console.log("Phản hồi từ API sau khi lưu:", response);
+      if (response?.data?.profilePictures) {
+        console.log(
+          "Danh sách ảnh được lưu thành công trên server:",
+          response.data.profilePictures
+        );
+      }
 
       CustomToast({
         text: "Chỉnh sửa hồ sơ thành công",
@@ -136,18 +210,23 @@ export default function SetupProfile({ navigation }) {
 
       navigation.navigate("CatSitterProfile");
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("==== Lỗi khi lưu hồ sơ ====", error);
 
       if (error.response) {
-        console.log("Error Response Data:", error.response.data);
-        console.log("Error Response Status:", error.response.status);
-        console.log("Error Response Headers:", error.response.headers);
+        console.error(
+          "Error Response Data:",
+          JSON.stringify(error.response.data, null, 2)
+        );
+        console.error("Error Response Status:", error.response.status);
+        console.error("Error Response Headers:", error.response.headers);
       } else {
-        console.log("Error Message:", error.message);
+        console.error("Error Message:", error.message);
       }
+
       Alert.alert("Lỗi", "Không thể lưu thông tin. Vui lòng thử lại sau.");
     } finally {
-      setIsSaving(false); // Kết thúc hiển thị ActivityIndicator
+      setIsSaving(false);
+      console.log("==== Kết thúc lưu hồ sơ ====");
     }
   };
 
@@ -171,7 +250,13 @@ export default function SetupProfile({ navigation }) {
       });
     }
   };
-
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#902C6C" />
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -286,6 +371,7 @@ export default function SetupProfile({ navigation }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -360,6 +446,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFAF5",
   },
   removeButton: {
     position: "absolute",
