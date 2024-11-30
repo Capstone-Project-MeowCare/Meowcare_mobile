@@ -22,8 +22,6 @@ export default function BookingStep1({
   step1Info,
   setStep1Info,
   setIsValid,
-  selectedExtras, // Nhận selectedExtras từ SwipeStep
-  setSelectedExtras, // Hàm để cập nhật danh sách dịch vụ phụ
   userId,
 }) {
   const navigation = useNavigation();
@@ -44,7 +42,7 @@ export default function BookingStep1({
         if (user && user.id) {
           const response = await getData(`/users/${user.id}`);
           if (response?.data?.address) {
-            setUserAddress(response.data.address); // Lưu địa chỉ từ API
+            setUserAddress(response.data.address);
             // Gán giá trị mặc định vào step1Info
             setStep1Info((prev) => ({
               ...prev,
@@ -73,10 +71,9 @@ export default function BookingStep1({
               id: service.id,
               name: service.name,
               price: service.price,
-              type: service.serviceType || "Additional Service", // Gắn nhãn mặc định nếu thiếu type
+              type: service.serviceType || "Additional Service",
             }));
 
-            // Phân loại dịch vụ (chỉ giữ lại Main Service và Child Service)
             setBasicServices(
               services.filter((service) => service.type === "MAIN_SERVICE")
             );
@@ -84,8 +81,6 @@ export default function BookingStep1({
             setChildServices(
               services.filter((service) => service.type === "CHILD_SERVICE")
             );
-
-            // Không cần xử lý dịch vụ phụ (Additional Service)
           }
         } else {
           console.warn("No userId provided for fetching sitter services.");
@@ -96,17 +91,6 @@ export default function BookingStep1({
     };
     fetchServices();
   }, [userId]);
-
-  // const translateServiceName = (serviceName) => {
-  //   const translations = {
-  //     "Basic Feeding": "Cho ăn cơ bản",
-  //     "Standard Grooming": "Chải lông tiêu chuẩn",
-  //     "Play Session": "Giờ chơi",
-  //     "Health Check-up": "Kiểm tra sức khỏe",
-  //     "Training Basics": "Huấn luyện cơ bản",
-  //   };
-  //   return translations[serviceName] || serviceName;
-  // };
 
   const validateForm = () => {
     let isValidForm = true;
@@ -211,7 +195,6 @@ export default function BookingStep1({
             </Picker>
           </View>
 
-          {/* Hiển thị danh sách dịch vụ con */}
           <Animated.View
             style={[styles.childServicesContainer, { height: animationHeight }]}
           >
