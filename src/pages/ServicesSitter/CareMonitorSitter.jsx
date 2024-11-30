@@ -157,6 +157,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
         // Lưu dữ liệu gốc
         originalTasksRef.current = groupedTasks;
         setTasks(groupedTasks);
+        console.log("Tasks grouped and set to state:", groupedTasks);
       } else {
         console.warn("No tasks received from API");
         setTasks([]);
@@ -182,25 +183,30 @@ export default function CareMonitorCatSitter({ navigation, route }) {
 
   useFocusEffect(
     useCallback(() => {
-      if (originalTasksRef.current.length > 0) {
-        setTasks(originalTasksRef.current); // Sử dụng dữ liệu gốc
-      } else {
+      if (originalTasksRef.current.length === 0) {
         fetchCareSchedule();
-        fetchUserProfile();
       }
+      fetchUserProfile();
     }, [fetchCareSchedule, fetchUserProfile])
   );
 
   const groupTasks = (tasks) => {
+    console.log("Tasks trước khi group: ", tasks);
+
     const taskMap = new Map();
 
     tasks.forEach((task) => {
       const key = `${task.day}-${task.time}`;
+      const existingGroup = taskMap.get(key);
 
-      if (!taskMap.has(key)) {
+      if (!existingGroup) {
         taskMap.set(key, { time: task.time, day: task.day, tasks: [task] });
       } else {
-        taskMap.get(key).tasks.push(task);
+        // Kiểm tra trùng lặp trước khi thêm
+        const isDuplicate = existingGroup.tasks.some((t) => t.id === task.id);
+        if (!isDuplicate) {
+          existingGroup.tasks.push(task);
+        }
       }
     });
 
@@ -522,46 +528,58 @@ export default function CareMonitorCatSitter({ navigation, route }) {
                     nestedScrollEnabled={true}
                     showsVerticalScrollIndicator={false}
                   >
-                    {group.tasks.map((task) => (
-                      <View key={task.id} style={styles.taskItem}>
-                        {/* Hiển thị tên pet */}
-                        {task.petProfile && (
-                          <Text style={styles.petName}>
-                            {task.petProfile.petName || "Không tên"}
-                          </Text>
-                        )}
+                    {group.tasks
+                      .slice() // Tạo bản sao để không thay đổi dữ liệu gốc
+                      .sort((a, b) => {
+                        // Sắp xếp dựa trên thời gian bắt đầu của task
+                        const aTime = new Date(
+                          `1970-01-01T${a.time.split(" - ")[0]}:00`
+                        );
+                        const bTime = new Date(
+                          `1970-01-01T${b.time.split(" - ")[0]}:00`
+                        );
+                        return aTime - bTime;
+                      })
+                      .map((task) => (
+                        <View key={task.id} style={styles.taskItem}>
+                          {/* Hiển thị tên pet */}
+                          {task.petProfile && (
+                            <Text style={styles.petName}>
+                              {task.petProfile.petName || "Không tên"}
+                            </Text>
+                          )}
 
-                        {/* Hiển thị mô tả task */}
-                        <Text
-                          style={[
-                            styles.taskDescription,
-                            task.haveEvidence && {
-                              color: "#2CA12C", // Màu xanh lá cây
-                              fontWeight: "bold", // In đậm
-                            },
-                          ]}
-                        >
-                          {task.description || "Không có mô tả"}
-                        </Text>
-
-                        {/* Nút xem chi tiết */}
-                        <TouchableOpacity
-                          style={styles.detailButton}
-                          onPress={() =>
-                            handleDetailPress(
-                              task.status,
-                              task.time,
-                              task.day,
-                              task.id
-                            )
-                          }
-                        >
-                          <Text style={styles.detailButtonText}>
-                            Xem chi tiết
+                          {/* Hiển thị mô tả task */}
+                          <Text
+                            style={[
+                              styles.taskDescription,
+                              task.haveEvidence && {
+                                color: "#2CA12C", // Màu xanh lá cây
+                                fontWeight: "bold", // In đậm
+                              },
+                            ]}
+                          >
+                            {task.description || "Không có mô tả"}
                           </Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
+
+                          {/* Nút xem chi tiết */}
+                          <TouchableOpacity
+                            style={styles.detailButton}
+                            onPress={() =>
+                              handleDetailPress(
+                                task.status,
+                                task.time,
+                                task.day,
+                                task.id
+                              )
+                            }
+                          >
+                            <Text style={styles.detailButtonText}>
+                              Xem chi tiết
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ))}
                   </ScrollView>
                 )}
               </Animated.View>

@@ -39,10 +39,10 @@ export default function Service() {
   const [selectedTab, setSelectedTab] = useState("Tất cả");
   const [bookingData, setBookingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
-  const [pageSize, setPageSize] = useState(10); // Kích thước mỗi trang
-  const [totalPages, setTotalPages] = useState(0); // Tổng số trang
-  const [isLoadingMore, setIsLoadingMore] = useState(false); // Đang tải thêm dữ liệu
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const tabs = [
     "Tất cả",
@@ -403,7 +403,7 @@ export default function Service() {
             isLoadingMore && <ActivityIndicator size="medium" color="#A94B84" />
           }
           onEndReached={loadMoreData}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.1}
           contentContainerStyle={{ paddingBottom: height * 0.5 }}
           ListEmptyComponent={
             <View style={styles.emptyStateContainer}>
