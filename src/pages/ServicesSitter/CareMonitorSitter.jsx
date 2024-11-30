@@ -72,6 +72,8 @@ export default function CareMonitorCatSitter({ navigation, route }) {
   const [animatedHeights, setAnimatedHeights] = useState([]);
   const [careSchedule, setCareSchedule] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const originalTasksRef = useRef([]);
+
   useEffect(() => {
     console.log("Route params:", {
       userEmail,
@@ -151,6 +153,9 @@ export default function CareMonitorCatSitter({ navigation, route }) {
           .filter((task) => task !== null);
 
         const groupedTasks = groupTasks(tasks);
+
+        // Lưu dữ liệu gốc
+        originalTasksRef.current = groupedTasks;
         setTasks(groupedTasks);
       } else {
         console.warn("No tasks received from API");
@@ -177,8 +182,12 @@ export default function CareMonitorCatSitter({ navigation, route }) {
 
   useFocusEffect(
     useCallback(() => {
-      fetchCareSchedule();
-      fetchUserProfile();
+      if (originalTasksRef.current.length > 0) {
+        setTasks(originalTasksRef.current); // Sử dụng dữ liệu gốc
+      } else {
+        fetchCareSchedule();
+        fetchUserProfile();
+      }
     }, [fetchCareSchedule, fetchUserProfile])
   );
 
@@ -404,6 +413,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
       time,
       day,
       taskId,
+      tasksState: tasks,
     });
   };
 
