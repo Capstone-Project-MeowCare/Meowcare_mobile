@@ -63,26 +63,26 @@ export default function InComeStatistics({ navigation }) {
 
       {/* Thống kê chi tiết */}
       <ScrollView style={styles.detailsContainer}>
-        <View style={styles.item}>
-          <Text style={styles.itemLabel}>Tổng giá trị:</Text>
-          <Text style={styles.itemValue}>{incomeData.totalValue} đ</Text>
-        </View>
-        <View style={styles.item}>
-          <Text style={styles.itemLabel}>Doanh số:</Text>
-          <Text style={styles.itemValue}>{incomeData.revenue} đ</Text>
-        </View>
-        <View style={styles.item}>
-          <Text style={styles.itemLabel}>Chiết khấu + Thuế:</Text>
-          <Text style={styles.itemValue}>-{incomeData.discountTax} đ</Text>
-        </View>
-        <View style={styles.item}>
-          <Text style={styles.itemLabel}>Thu nhập ròng:</Text>
-          <Text style={styles.itemValue}>{incomeData.netIncome} đ</Text>
-        </View>
-        <View style={styles.item}>
-          <Text style={styles.itemLabel}>Tổng số đặt lịch:</Text>
+      <View style={styles.item}>
+          <Text style={styles.itemLabel}>Tổng số đặt lịch</Text>
           <Text style={styles.itemValue}>{incomeData.totalBookings} Đơn đặt lịch</Text>
         </View>
+        <View style={styles.divid} />
+        <View style={styles.item}>
+          <Text style={styles.itemLabel}>Tổng giá trị</Text>
+          <Text style={styles.itemValue}>{incomeData.totalValue}đ</Text>
+        </View>
+        <View style={styles.divid} />
+        <View style={styles.item}>
+          <Text style={styles.itemLabel}>Chiết khấu + Thuế</Text>
+          <Text style={styles.itemValue}>-{incomeData.discountTax}đ</Text>
+        </View>
+        <View style={styles.divid} />
+        <View style={styles.item}>
+          <Text style={styles.itemLabel}>Thu nhập ròng</Text>
+          <Text style={styles.itemValue}>{incomeData.netIncome}đ</Text>
+        </View>
+       
       </ScrollView>
     </View>
     </View>
@@ -160,5 +160,10 @@ selectedMonthText: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#000857",
+  },
+  divid: {
+    borderBottomColor: "#D3D3D3",
+    borderBottomWidth: 1,
+    marginBottom:10,
   },
 });
