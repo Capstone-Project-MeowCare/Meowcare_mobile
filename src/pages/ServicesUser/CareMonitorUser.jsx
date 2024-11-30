@@ -92,85 +92,95 @@ export default function CareMonitorUser({ navigation, route }) {
       setAnimatedHeights(heights);
     }
   }, [tasks]);
+  const groupTasks = (tasks) => {
+    const taskMap = new Map();
+
+    tasks.forEach((task) => {
+      const key = `${task.day}-${task.time}`;
+
+      if (!taskMap.has(key)) {
+        taskMap.set(key, { time: task.time, day: task.day, tasks: [task] });
+      } else {
+        const existingTasks = taskMap.get(key).tasks;
+        const isDuplicate = existingTasks.some((t) => t.id === task.id);
+        if (!isDuplicate) {
+          existingTasks.push(task);
+        }
+      }
+    });
+
+    // Sắp xếp theo ngày và thời gian
+    return Array.from(taskMap.values()).sort((a, b) => {
+      const aDate = new Date(`${a.day}T${a.time.split(" - ")[0]}:00`);
+      const bDate = new Date(`${b.day}T${b.time.split(" - ")[0]}:00`);
+
+      return aDate - bDate;
+    });
+  };
+
   useFocusEffect(
     useCallback(() => {
-      const fetchCareSchedule = async () => {
-        try {
-          const endpoint = `/care-schedules/booking/${bookingId}`;
-          const response = await getData(endpoint);
+      if (tasks.length === 0) {
+        const fetchCareSchedule = async () => {
+          try {
+            const endpoint = `/care-schedules/booking/${bookingId}`;
+            const response = await getData(endpoint);
 
-          if (response?.data?.tasks && Array.isArray(response.data.tasks)) {
-            const tasks = response.data.tasks
-              .map((task) => {
-                if (!task.startTime || !task.endTime) {
-                  console.warn("Task missing time fields:", task);
-                  return null; // Bỏ qua task nếu thiếu thời gian
-                }
+            if (response?.data?.tasks && Array.isArray(response.data.tasks)) {
+              const tasks = response.data.tasks
+                .map((task) => {
+                  if (!task.startTime || !task.endTime) return null;
 
-                const startDate = new Date(task.startTime);
-                const endDate = new Date(task.endTime);
+                  const startDate = new Date(task.startTime);
+                  const endDate = new Date(task.endTime);
 
-                // Kiểm tra nếu thời gian là UTC
-                const isUTC = startDate.getUTCHours() === startDate.getHours();
-                if (isUTC) {
-                  startDate.setHours(startDate.getHours() + 7); // Chuyển sang giờ Việt Nam
-                  endDate.setHours(endDate.getHours() + 7); // Chuyển sang giờ Việt Nam
-                }
+                  const isUTC =
+                    startDate.getUTCHours() === startDate.getHours();
+                  if (isUTC) {
+                    startDate.setHours(startDate.getHours() + 7);
+                    endDate.setHours(endDate.getHours() + 7);
+                  }
 
-                return {
-                  id: task.id,
-                  day: `${startDate.getFullYear()}-${String(
-                    startDate.getMonth() + 1
-                  ).padStart(
-                    2,
-                    "0"
-                  )}-${String(startDate.getDate()).padStart(2, "0")}`,
-                  time: `${String(startDate.getHours()).padStart(
-                    2,
-                    "0"
-                  )}:${String(startDate.getMinutes()).padStart(
-                    2,
-                    "0"
-                  )} - ${String(endDate.getHours()).padStart(
-                    2,
-                    "0"
-                  )}:${String(endDate.getMinutes()).padStart(2, "0")}`,
-                  description: task.description || "Không có mô tả",
-                  status: mapStatus(task.status),
-                  statusColor: getStatusColor(task.status),
-                  petProfile: task.petProfile || null,
-                  haveEvidence: task.haveEvidence || false, // Thêm field haveEvidence
-                };
-              })
-              .filter((task) => task !== null); // Loại bỏ task bị null
+                  return {
+                    id: task.id,
+                    day: `${startDate.getFullYear()}-${String(
+                      startDate.getMonth() + 1
+                    ).padStart(
+                      2,
+                      "0"
+                    )}-${String(startDate.getDate()).padStart(2, "0")}`,
+                    time: `${String(startDate.getHours()).padStart(2, "0")}:${String(
+                      startDate.getMinutes()
+                    ).padStart(
+                      2,
+                      "0"
+                    )} - ${String(endDate.getHours()).padStart(2, "0")}:${String(
+                      endDate.getMinutes()
+                    ).padStart(2, "0")}`,
+                    description: task.description || "Không có mô tả",
+                    status: mapStatus(task.status),
+                    statusColor: getStatusColor(task.status),
+                    petProfile: task.petProfile || null,
+                    haveEvidence: task.haveEvidence || false,
+                  };
+                })
+                .filter((task) => task !== null);
 
-            const groupedTasks = groupTasks(tasks);
-            setTasks(groupedTasks);
-          } else {
-            console.warn("No tasks received from API");
-            setTasks([]);
-          }
-
-          if (response?.data?.startTime && response?.data?.endTime) {
-            const scheduleStart = new Date(response.data.startTime);
-            const scheduleEnd = new Date(response.data.endTime);
-
-            setCareSchedule({
-              startTime: scheduleStart,
-              endTime: scheduleEnd,
-            });
-
-            if (!currentDate) {
-              setCurrentDate(scheduleStart);
+              const groupedTasks = groupTasks(tasks);
+              console.log("Tasks grouped:", groupedTasks);
+              setTasks(groupedTasks);
+            } else {
+              console.warn("No tasks received from API");
+              setTasks([]);
             }
+          } catch (error) {
+            console.error("Error fetching care schedule:", error);
           }
-        } catch (error) {
-          console.error("Error fetching care schedule:", error);
-        }
-      };
+        };
 
-      fetchCareSchedule();
-    }, [bookingId, currentDate])
+        fetchCareSchedule();
+      }
+    }, [tasks, bookingId])
   );
 
   useFocusEffect(
@@ -195,39 +205,6 @@ export default function CareMonitorUser({ navigation, route }) {
       }
     }, [sitterId])
   );
-
-  const groupTasks = (tasks) => {
-    const taskMap = new Map();
-
-    tasks.forEach((task) => {
-      const key = `${task.day}-${task.time}`;
-
-      if (!taskMap.has(key)) {
-        taskMap.set(key, { time: task.time, day: task.day, tasks: [task] });
-      } else {
-        taskMap.get(key).tasks.push(task);
-      }
-    });
-
-    return Array.from(taskMap.values()).sort((a, b) => {
-      const [aStartHour, aStartMinute] = a.time
-        .split(" - ")[0]
-        .split(":")
-        .map(Number);
-      const [bStartHour, bStartMinute] = b.time
-        .split(" - ")[0]
-        .split(":")
-        .map(Number);
-
-      const aTime = new Date();
-      aTime.setHours(aStartHour, aStartMinute);
-
-      const bTime = new Date();
-      bTime.setHours(bStartHour, bStartMinute);
-
-      return aTime - bTime;
-    });
-  };
 
   const filteredTasks = tasks.filter((group) => {
     const currentISODate = currentDate?.toISOString().split("T")[0];
