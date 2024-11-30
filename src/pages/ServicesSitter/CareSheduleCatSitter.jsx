@@ -60,7 +60,7 @@ export default function CareScheduleSitter({ navigation, route }) {
 
   const handleAddMedia = async (isVideo = false) => {
     if (viewMode) return;
-
+  
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: isVideo
@@ -69,52 +69,56 @@ export default function CareScheduleSitter({ navigation, route }) {
         allowsEditing: false,
         quality: 1,
       });
-
+  
       if (!result.canceled) {
         const localUri = result.assets[0].uri;
-
-        // Tải lên Firebase
-        const uploadedUri = await firebaseTask(localUri, isVideo);
-        if (!uploadedUri) {
-          Alert.alert("Lỗi", "Không thể tải lên tệp. Vui lòng thử lại.");
-          return;
-        }
-
-        // Kiểm tra nếu media đã tồn tại
-        const mediaExists = isVideo
-          ? videoList.some((video) => video.uri === uploadedUri)
-          : photoList.some((photo) => photo.uri === uploadedUri);
-
-        if (mediaExists) {
-          Alert.alert("Thông báo", "Media này đã tồn tại trong danh sách.");
-          return;
-        }
-
-        // Kiểm tra giới hạn video (nếu thêm video)
+  
+        // Tạm thời thêm media với trạng thái loading
+        const loadingMedia = {
+          id: `loading-${Date.now()}`,
+          uri: null,
+          isVideo,
+          isLoading: true,
+        };
+  
         if (isVideo) {
-          if (videoList.length >= 1) {
-            Alert.alert("Thông báo", "Chỉ có thể thêm một video.");
-            return;
-          }
-
-          // Thêm video mới vào danh sách
-          setVideoList((prev) => [
-            ...prev,
-            { id: Date.now().toString(), uri: uploadedUri, isVideo },
-          ]);
+          setVideoList((prev) => [...prev, loadingMedia]);
         } else {
-          // Thêm ảnh mới vào danh sách
-          setPhotoList((prev) => [
-            ...prev,
-            { id: Date.now().toString(), uri: uploadedUri, isVideo },
-          ]);
+          setPhotoList((prev) => [...prev, loadingMedia]);
         }
-
-        // Thêm vào danh sách media mới
-        setNewMediaList((prev) => [
-          ...prev,
-          { id: Date.now().toString(), uri: uploadedUri, isVideo },
-        ]);
+  
+        // Mô phỏng render ảnh/video
+        setTimeout(() => {
+          const newMedia = {
+            id: Date.now().toString(),
+            uri: localUri,
+            isVideo,
+          };
+  
+          if (isVideo) {
+            setVideoList((prev) =>
+              prev.map((media) =>
+                media.id === loadingMedia.id ? newMedia : media
+              )
+            );
+          } else {
+            setPhotoList((prev) =>
+              prev.map((media) =>
+                media.id === loadingMedia.id ? newMedia : media
+              )
+            );
+          }
+  
+          // Cập nhật danh sách `newMediaList`
+          setNewMediaList((prev) => [
+            ...prev,
+            {
+              photoUrl: isVideo ? null : localUri,
+              videoUrl: isVideo ? localUri : null,
+              evidenceType: isVideo ? "VIDEO" : "PHOTO",
+            },
+          ]);
+        }, 1000); // Giả lập thời gian xử lý
       }
     } catch (error) {
       console.error("Lỗi khi thêm phương tiện:", error);
@@ -124,7 +128,7 @@ export default function CareScheduleSitter({ navigation, route }) {
       );
     }
   };
-
+  
   useEffect(() => {
     const fetchTaskEvidence = async () => {
       setLoading(true);
@@ -224,7 +228,7 @@ export default function CareScheduleSitter({ navigation, route }) {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-
+  
       // Xóa media từ server trước
       for (const taskEvidenceId of mediaToDelete) {
         const deleteUrl = `/task-evidences/${taskEvidenceId}`;
@@ -244,26 +248,20 @@ export default function CareScheduleSitter({ navigation, route }) {
           );
         }
       }
-
-      // Thêm media mới
-      const allPayloads = newMediaList.map((media) => ({
-        photoUrl: media.isVideo ? null : media.uri,
-        videoUrl: media.isVideo ? media.uri : null,
-        evidenceType: media.isVideo ? "VIDEO" : "PHOTO",
-      }));
-
-      console.log("Payloads gửi lên API:", allPayloads);
-
-      if (allPayloads.length > 0) {
+  
+      // Gửi payload với danh sách `newMediaList`
+      if (newMediaList.length > 0) {
         const url = `/task-evidences/list?taskId=${taskId}`;
-        const response = await postData(url, allPayloads);
-
+        const response = await postData(url, newMediaList);
+  
         if (response.status !== 1000) {
           Alert.alert("Lỗi", "Không thể lưu dịch vụ. Vui lòng thử lại.");
           return;
         }
       }
-
+  
+      console.log("Payloads gửi lên API:", newMediaList);
+  
       // Thành công -> Reset danh sách
       setMediaToDelete([]);
       setNewMediaList([]);
@@ -277,6 +275,7 @@ export default function CareScheduleSitter({ navigation, route }) {
       setIsSaving(false);
     }
   };
+  
 
   const handleDelete = async () => {
     try {
@@ -365,8 +364,12 @@ export default function CareScheduleSitter({ navigation, route }) {
           <ScrollView contentContainerStyle={styles.mediaGrid}>
             {photoList.map((photo) => (
               <View key={photo.id} style={styles.mediaContainer}>
-                <Image source={{ uri: photo.uri }} style={styles.media} />
-                {!viewMode && (
+                {photo.isLoading ? (
+                  <ActivityIndicator size="large" color="#902C6C" />
+                ) : (
+                  <Image source={{ uri: photo.uri }} style={styles.media} />
+                )}
+                {!viewMode && !photo.isLoading && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => handleRemoveMedia(photo.id, false)}
@@ -386,28 +389,34 @@ export default function CareScheduleSitter({ navigation, route }) {
             <Text style={styles.emptyMediaText}>Chưa có ảnh nào</Text>
           </View>
         )}
-        {!viewMode && photoList.length < 3 && (
-          <TouchableOpacity
-            style={styles.mediaButton}
-            onPress={() => handleAddMedia(false)}
-          >
-            <Ionicons name="image-outline" size={30} color="#902C6C" />
-            <Text style={styles.mediaButtonText}>Thêm ảnh</Text>
-          </TouchableOpacity>
-        )}
+        {!viewMode &&
+          photoList.filter((media) => media.isLoading).length === 0 && // Ẩn nếu đang có media loading
+          photoList.length < 3 && (
+            <TouchableOpacity
+              style={styles.mediaButton}
+              onPress={() => handleAddMedia(false)}
+            >
+              <Ionicons name="image-outline" size={30} color="#902C6C" />
+              <Text style={styles.mediaButtonText}>Thêm ảnh</Text>
+            </TouchableOpacity>
+          )}
 
         <Text style={styles.mediaTitle}>Video:</Text>
         {videoList.length > 0 ? (
           <ScrollView contentContainerStyle={styles.mediaGrid}>
             {videoList.map((video) => (
               <View key={video.id} style={styles.mediaContainer}>
-                <Video
-                  source={{ uri: video.uri }}
-                  style={styles.media}
-                  useNativeControls
-                  resizeMode="cover"
-                />
-                {!viewMode && (
+                {video.isLoading ? (
+                  <ActivityIndicator size="large" color="#902C6C" />
+                ) : (
+                  <Video
+                    source={{ uri: video.uri }}
+                    style={styles.media}
+                    useNativeControls
+                    resizeMode="cover"
+                  />
+                )}
+                {!viewMode && !video.isLoading && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => handleRemoveMedia(video.id, true)}
@@ -427,15 +436,17 @@ export default function CareScheduleSitter({ navigation, route }) {
             <Text style={styles.emptyMediaText}>Chưa có video nào</Text>
           </View>
         )}
-        {!viewMode && videoList.length < 1 && (
-          <TouchableOpacity
-            style={styles.mediaButton}
-            onPress={() => handleAddMedia(true)}
-          >
-            <Ionicons name="videocam-outline" size={30} color="#902C6C" />
-            <Text style={styles.mediaButtonText}>Thêm video</Text>
-          </TouchableOpacity>
-        )}
+        {!viewMode &&
+          videoList.filter((media) => media.isLoading).length === 0 && // Ẩn nếu đang có media loading
+          videoList.length < 1 && (
+            <TouchableOpacity
+              style={styles.mediaButton}
+              onPress={() => handleAddMedia(true)}
+            >
+              <Ionicons name="videocam-outline" size={30} color="#902C6C" />
+              <Text style={styles.mediaButtonText}>Thêm video</Text>
+            </TouchableOpacity>
+          )}
 
         {/* {status !== "Hoàn thành" && !viewMode && (
           <View style={styles.mediaButtons}>
