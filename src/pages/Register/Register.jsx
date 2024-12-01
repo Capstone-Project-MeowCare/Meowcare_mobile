@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Keyboard,
   StyleSheet,
@@ -39,14 +39,18 @@ export default function Register() {
       .trim()
       .required("Email là bắt buộc")
       .email("Email không hợp lệ"),
-    phoneNumber: yup
-      .string()
-      .trim()
-      .matches(/^[0-9]+$/, "Số điện thoại không hợp lệ")
-      .min(10, "Số điện thoại phải có ít nhất 10 chữ số")
-      .max(11, "Số điện thoại không được quá 11 chữ số")
-      .required("Số điện thoại là bắt buộc"),
+    // phoneNumber: yup
+    //   .string()
+    //   .trim()
+    //   .matches(/^[0-9]+$/, "Số điện thoại không hợp lệ")
+    //   .min(10, "Số điện thoại phải có ít nhất 10 chữ số")
+    //   .max(11, "Số điện thoại không được quá 11 chữ số")
+    //   .required("Số điện thoại là bắt buộc"),
     password: yup.string().trim().required("Mật khẩu là bắt buộc"),
+    confirmPassword: yup
+      .string()
+      .oneOf([yup.ref('password'), null], 'Mật khẩu và xác nhận mật khẩu không khớp')
+      .required('Xác nhận mật khẩu là bắt buộc'),
   });
 
   const methods = useForm({
@@ -55,7 +59,8 @@ export default function Register() {
       fullName: "",
       email: "",
       password: "",
-      phoneNumber: "",
+      // phoneNumber: "",
+      confirmPassword: "",
     },
   });
 
@@ -118,7 +123,7 @@ export default function Register() {
         email: data.email,
         password: data.password,
         fullName: data.fullName,
-        phoneNumber: data.phoneNumber,
+        // phoneNumber: data.phoneNumber,
       });
 
       // Kiểm tra phản hồi từ API
@@ -127,12 +132,12 @@ export default function Register() {
         throw new Error("API response is missing required user information");
       }
 
-      const { id: apiUserId, email, fullName, phoneNumber } = response.data;
+      const { id: apiUserId, email, fullName } = response.data;
       console.log("Thông tin người dùng nhận được từ API:", {
         apiUserId,
         email,
         fullName,
-        phoneNumber,
+        // phoneNumber,
       });
 
       // Gửi thông báo chào mừng (nếu cần)
@@ -243,8 +248,23 @@ export default function Register() {
                   </Text>
                 )}
               </View>
-
               <View style={styles.halfTextInputContainer}>
+                <TextInput
+                  label="Nhập lại mật khẩu"
+                  mode="outlined"
+                  style={styles.halfTextInput}
+                  onChangeText={(text) => methods.setValue("confirmPassword", text)}
+                  secureTextEntry
+                  error={!!errors.confirmPassword}
+                  value={methods.watch("confirmPassword")}
+                />
+                {errors.confirmPassword?.message && (
+                  <Text style={styles.errorText}>* {errors.confirmPassword.message}</Text>
+                )}
+              </View>
+              
+
+              {/* <View style={styles.halfTextInputContainer}>
                 <TextInput
                   label="Số điện thoại"
                   mode="outlined"
@@ -260,7 +280,7 @@ export default function Register() {
                     * {errors.phoneNumber.message}
                   </Text>
                 )}
-              </View>
+              </View> */}
             </View>
 
             <View style={{ margin: height * 0.01 }} />
