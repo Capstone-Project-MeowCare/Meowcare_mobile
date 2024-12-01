@@ -7,12 +7,14 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../../auth/useAuth";
-import { getData } from "../../api/api";
+import CustomToast from "../../components/CustomToast";
+import { getData, putData } from "../../api/api";
 
 export default function CatSitterProfile({ navigation }) {
   const { user } = useAuth(); // Lấy thông tin người dùng
@@ -21,6 +23,7 @@ export default function CatSitterProfile({ navigation }) {
     avatar: "",
     sitterId: "",
     sitterProfileId: "",
+    status: "",
   });
 
   // Gọi API lấy thông tin user
@@ -34,6 +37,7 @@ export default function CatSitterProfile({ navigation }) {
           avatar: sitterProfile?.avatar || null, // Sử dụng null nếu không có avatar
           sitterId: id || "",
           sitterProfileId: sitterProfile?.id || "",
+          status: sitterProfile?.status,
         });
       } else {
         console.error("Invalid response:", response);
@@ -47,6 +51,68 @@ export default function CatSitterProfile({ navigation }) {
   useEffect(() => {
     fetchUserProfile();
   }, []);
+  const getStatusStyle = () => {
+    if (sitterInfo.status === "ACTIVE") {
+      return { color: "#4CAF50", text: "Đang hoạt động" }; // Màu xanh lá
+    }
+    return { color: "#FF4343", text: "Không hoạt động" }; // Màu đỏ
+  };
+
+  const statusStyle = getStatusStyle();
+  const handleToggleBusiness = async () => {
+    const newStatus = sitterInfo.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"; // Xác định trạng thái mới
+    const actionText =
+      newStatus === "ACTIVE"
+        ? "Bắt đầu kinh doanh dịch vụ"
+        : "Tắt kinh doanh dịch vụ";
+
+    Alert.alert(
+      "Xác nhận",
+      `Bạn có chắc muốn ${actionText.toLowerCase()}?`,
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Có",
+          onPress: async () => {
+            try {
+              console.log("Sitter Profile ID:", sitterInfo.sitterProfileId);
+
+              const endpoint = `/sitter-profiles/status/${sitterInfo.sitterProfileId}?status=${newStatus}`;
+
+              const response = await putData(endpoint);
+
+              if (response?.status === 1002) {
+                // Cập nhật trạng thái mới
+                setSitterInfo((prev) => ({ ...prev, status: newStatus }));
+
+                // Hiển thị thông báo
+                CustomToast({
+                  text: `${actionText} thành công`,
+                  position: 300,
+                });
+              } else {
+                Alert.alert(
+                  "Thất bại",
+                  `Không thể ${actionText.toLowerCase()}. Vui lòng thử lại sau.`
+                );
+                console.error("Failed to update status:", response);
+              }
+            } catch (error) {
+              console.error("Lỗi khi cập nhật trạng thái:", error);
+              Alert.alert(
+                "Lỗi",
+                `Không thể ${actionText.toLowerCase()}. Vui lòng thử lại.`
+              );
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -80,7 +146,17 @@ export default function CatSitterProfile({ navigation }) {
           <Text style={styles.profileName}>{sitterInfo.fullName}</Text>
           {/* <Text style={styles.editProfile}>Chỉnh sửa hồ sơ</Text> */}
         </View>
-
+        <View style={styles.statusContainer}>
+          <View
+            style={[
+              styles.statusCircle,
+              { backgroundColor: statusStyle.color },
+            ]}
+          />
+          <Text style={[styles.statusText, { color: statusStyle.color }]}>
+            {statusStyle.text}
+          </Text>
+        </View>
         {/* Các mục chọn */}
         <TouchableOpacity
           style={styles.menuItem}
@@ -132,8 +208,15 @@ export default function CatSitterProfile({ navigation }) {
         </TouchableOpacity>
       </ScrollView>
       {/* Nút Tôi đồng ý */}
-      <TouchableOpacity style={styles.agreeButton}>
-        <Text style={styles.agreeText}>Bắt đầu kinh doanh dịch vụ</Text>
+      <TouchableOpacity
+        style={styles.agreeButton}
+        onPress={handleToggleBusiness}
+      >
+        <Text style={styles.agreeText}>
+          {sitterInfo.status === "ACTIVE"
+            ? "Tắt kinh doanh dịch vụ"
+            : "Bắt đầu kinh doanh dịch vụ"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -189,6 +272,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#888888",
     marginTop: 5,
+  },
+  statusContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  statusCircle: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: "bold",
   },
   menuItem: {
     flexDirection: "row",
