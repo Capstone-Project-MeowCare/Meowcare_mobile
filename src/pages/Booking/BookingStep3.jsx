@@ -240,7 +240,6 @@ const styles = StyleSheet.create({
     marginVertical: height * 0.02,
   },
   loadingContainer: {
-    // Style for ActivityIndicator container
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
