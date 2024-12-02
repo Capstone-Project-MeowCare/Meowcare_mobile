@@ -87,6 +87,33 @@ export default function BookingDetailRequest({ navigation }) {
 
   const { user, sitter, bookingDetailWithPetAndServices, ...otherDetails } =
     bookingDetails;
+  const daysBooked =
+    Math.round(
+      (new Date(otherDetails.endDate).setHours(0, 0, 0, 0) -
+        new Date(otherDetails.startDate).setHours(0, 0, 0, 0)) /
+        (1000 * 60 * 60 * 24)
+    ) + 1 || 1;
+
+  // Tính toán số lượng mèo
+  const petCount = Array.from(
+    new Map(
+      bookingDetailWithPetAndServices.map((detail) => [
+        detail.pet?.id,
+        detail.pet,
+      ])
+    )
+  ).length;
+
+  const dailyPrice = bookingDetails.mainService?.service?.price || 0;
+
+  // Tính giá theo số ngày
+  const pricePerDay = dailyPrice * daysBooked;
+
+  // Tính giá dựa trên số lượng mèo
+  const pricePerPet = dailyPrice * petCount;
+
+  // Tổng số tiền
+  const totalPrice = pricePerDay + pricePerPet;
 
   return (
     <View style={styles.container}>
@@ -128,7 +155,6 @@ export default function BookingDetailRequest({ navigation }) {
             </View>
           </View>
 
-          {/* Thêm thông tin dịch vụ và thời gian ngay bên dưới ảnh đại diện */}
           <View style={styles.additionalInfoContainer}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Dịch vụ:</Text>
@@ -139,14 +165,13 @@ export default function BookingDetailRequest({ navigation }) {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Thời gian:</Text>
               <Text style={styles.detailValue}>
-                {new Date(otherDetails.startDate).toLocaleString()} -{" "}
-                {new Date(otherDetails.endDate).toLocaleString()}
+                {new Date(otherDetails.startDate).toLocaleDateString("vi-VN")} -{" "}
+                {new Date(otherDetails.endDate).toLocaleDateString("vi-VN")}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Chi tiết mèo và dịch vụ */}
         <View style={styles.section}>
           <Text style={styles.petLabel}>Thông tin thú cưng:</Text>
           {Array.from(
@@ -217,19 +242,25 @@ export default function BookingDetailRequest({ navigation }) {
           <Text style={styles.petLabel}>Dịch vụ khách đã chọn:</Text>
 
           {/* Liệt kê Main Service */}
-          <View style={styles.dotTextContainer}>
+          {/* <View style={styles.dotTextContainer}>
             <View style={styles.textWrapper}>
-              <Text style={styles.dot}>•</Text>
+             
               <Text style={styles.dotText}>
-                {` ${bookingDetails.mainService?.service?.name || "Không xác định"}`}
+                {` _${bookingDetails.mainService?.service?.name || "Không xác định"}`}
               </Text>
             </View>
             <Text style={styles.price}>
               {`${bookingDetails.mainService?.service?.price.toLocaleString() || 0}đ`}
             </Text>
+          </View> */}
+          <View style={styles.mainServiceContainer}>
+            <Text style={styles.serviceName}>
+              {`_ ${bookingDetails.mainService?.service?.name || "Không xác định"}`}
+            </Text>
+            <Text style={styles.price}>
+              {`${dailyPrice.toLocaleString()}đ`}
+            </Text>
           </View>
-
-          {/* Liệt kê Child Services */}
           {bookingDetailWithPetAndServices
             .filter((detail) => detail.service?.serviceType === "CHILD_SERVICE")
             .map((childService, index) => (
@@ -237,76 +268,36 @@ export default function BookingDetailRequest({ navigation }) {
                 <View style={styles.textWrapper}>
                   <Text style={styles.dot}>•</Text>
                   <Text style={styles.dotText}>
-                    {`Dịch vụ con: ${childService.service?.name || "Không xác định"}`}
+                    {`${childService.service?.name || "Không xác định"}`}
                   </Text>
                 </View>
-                <Text style={styles.price}>
-                  {`${childService.service?.price.toLocaleString() || 0}đ`}
-                </Text>
               </View>
             ))}
-
-          {/* Số ngày đã đặt */}
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Số ngày đã đặt:</Text>
-            <Text style={styles.detailValue}>
-              {`${
-                Math.round(
-                  (new Date(otherDetails.endDate).setHours(0, 0, 0, 0) -
-                    new Date(otherDetails.startDate).setHours(0, 0, 0, 0)) /
-                    (1000 * 60 * 60 * 24)
-                ) + 1 || 1
-              } ngày`}
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>
+              Giá mỗi ngày ({daysBooked} ngày):
+            </Text>
+            <Text style={styles.priceValue}>
+              {`${(dailyPrice * daysBooked).toLocaleString()}đ`}
             </Text>
           </View>
 
-          {/* Số lượng mèo */}
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Số lượng mèo:</Text>
-            <Text style={styles.detailValue}>
-              {`${
-                Array.from(
-                  new Map(
-                    bookingDetailWithPetAndServices.map((detail) => [
-                      detail.pet?.id,
-                      detail.pet,
-                    ])
-                  )
-                ).length
-              } mèo`}
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>
+              Giá dựa trên số lượng mèo ({petCount} mèo):
+            </Text>
+            <Text style={styles.priceValue}>
+              {`${pricePerPet.toLocaleString()}đ`}
             </Text>
           </View>
         </View>
 
-        {/* Tổng thanh toán */}
-        <Text style={styles.totalPaymentPrice}>
-          {`Tổng số tiền: ${(
-            ((bookingDetails.mainService?.service?.price || 0) + // Giá dịch vụ chính
-              bookingDetailWithPetAndServices
-                .filter(
-                  (detail) => detail.service?.serviceType === "CHILD_SERVICE"
-                ) // Lọc dịch vụ phụ
-                .reduce(
-                  (sum, detail) => sum + (detail.service?.price || 0),
-                  0
-                )) * // Cộng giá của tất cả dịch vụ phụ
-            (Math.round(
-              (new Date(otherDetails.endDate).setHours(0, 0, 0, 0) -
-                new Date(otherDetails.startDate).setHours(0, 0, 0, 0)) /
-                (1000 * 60 * 60 * 24) // Số ngày
-            ) +
-              1) *
-            Array.from(
-              new Map(
-                bookingDetailWithPetAndServices.map((detail) => [
-                  detail.pet?.id,
-                  detail.pet,
-                ])
-              )
-            ).length
-          ) // Số lượng mèo
-            .toLocaleString()}đ`}
-        </Text>
+        <View style={styles.totalPaymentContainer}>
+          <Text style={styles.priceLabel1}>Tổng số tiền:</Text>
+          <Text
+            style={styles.priceValue1}
+          >{`${totalPrice.toLocaleString()}đ`}</Text>
+        </View>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -402,6 +393,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: "#000857",
+    paddingBottom: height * 0.03,
   },
   petInfoContainer: {
     flexDirection: "row",
@@ -469,12 +461,54 @@ const styles = StyleSheet.create({
     color: "#902C6C",
     fontWeight: "bold",
   },
+  mainServiceContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingRight: width * 0.05,
+  },
+  serviceName: {
+    flex: 1,
+    fontSize: width * 0.035,
+    fontWeight: "600",
+    color: "#000857",
+  },
   price: {
-    fontSize: 16, // Giữ kích thước phông chữ hiện tại
-    fontWeight: "bold", // In đậm
-    color: "#000", // Màu sắc hiện tại
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
     textAlign: "right",
     marginLeft: height * 0.016,
+  },
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: height * 0.01,
+  },
+  priceLabel: {
+    fontSize: width * 0.04,
+    fontWeight: "600",
+    color: "#000857",
+    flex: 1,
+  },
+  priceLabel1: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#000857",
+    flex: 1,
+  },
+  priceValue: {
+    fontSize: width * 0.035,
+    fontWeight: "600",
+    color: "#000",
+    textAlign: "right",
+  },
+  priceValue1: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#000",
+    textAlign: "right",
   },
   totalPaymentContainer: {
     flexDirection: "row",

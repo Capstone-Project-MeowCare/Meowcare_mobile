@@ -60,7 +60,7 @@ export default function CareScheduleSitter({ navigation, route }) {
 
   const handleAddMedia = async (isVideo = false) => {
     if (viewMode) return;
-  
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: isVideo
@@ -69,10 +69,10 @@ export default function CareScheduleSitter({ navigation, route }) {
         allowsEditing: false,
         quality: 1,
       });
-  
+
       if (!result.canceled) {
         const localUri = result.assets[0].uri;
-  
+
         // Tạm thời thêm media với trạng thái loading
         const loadingMedia = {
           id: `loading-${Date.now()}`,
@@ -80,13 +80,13 @@ export default function CareScheduleSitter({ navigation, route }) {
           isVideo,
           isLoading: true,
         };
-  
+
         if (isVideo) {
           setVideoList((prev) => [...prev, loadingMedia]);
         } else {
           setPhotoList((prev) => [...prev, loadingMedia]);
         }
-  
+
         // Mô phỏng render ảnh/video
         setTimeout(() => {
           const newMedia = {
@@ -94,7 +94,7 @@ export default function CareScheduleSitter({ navigation, route }) {
             uri: localUri,
             isVideo,
           };
-  
+
           if (isVideo) {
             setVideoList((prev) =>
               prev.map((media) =>
@@ -108,7 +108,7 @@ export default function CareScheduleSitter({ navigation, route }) {
               )
             );
           }
-  
+
           // Cập nhật danh sách `newMediaList`
           setNewMediaList((prev) => [
             ...prev,
@@ -128,7 +128,7 @@ export default function CareScheduleSitter({ navigation, route }) {
       );
     }
   };
-  
+
   useEffect(() => {
     const fetchTaskEvidence = async () => {
       setLoading(true);
@@ -228,7 +228,7 @@ export default function CareScheduleSitter({ navigation, route }) {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-  
+
       // Xóa media từ server trước
       for (const taskEvidenceId of mediaToDelete) {
         const deleteUrl = `/task-evidences/${taskEvidenceId}`;
@@ -248,24 +248,27 @@ export default function CareScheduleSitter({ navigation, route }) {
           );
         }
       }
-  
+
       // Gửi payload với danh sách `newMediaList`
       if (newMediaList.length > 0) {
         const url = `/task-evidences/list?taskId=${taskId}`;
         const response = await postData(url, newMediaList);
-  
+
         if (response.status !== 1000) {
           Alert.alert("Lỗi", "Không thể lưu dịch vụ. Vui lòng thử lại.");
           return;
         }
       }
-  
+
       console.log("Payloads gửi lên API:", newMediaList);
-  
+
       // Thành công -> Reset danh sách
       setMediaToDelete([]);
       setNewMediaList([]);
-      Alert.alert("Thành công", "Dịch vụ đã được lưu!");
+      CustomToast({
+        text: "Cập nhật nhiệm vụ thành công ",
+        position: 300,
+      });
       setViewMode(true); // Chuyển sang chế độ xem
       navigation.goBack();
     } catch (error) {
@@ -275,7 +278,6 @@ export default function CareScheduleSitter({ navigation, route }) {
       setIsSaving(false);
     }
   };
-  
 
   const handleDelete = async () => {
     try {
@@ -470,7 +472,10 @@ export default function CareScheduleSitter({ navigation, route }) {
 
       {status !== "Hoàn thành" && (
         <TouchableOpacity
-          style={[styles.saveButton, viewMode && { backgroundColor: "blue" }]} // Đổi màu nếu là "Chỉnh sửa"
+          style={[
+            styles.saveButton,
+            viewMode && { backgroundColor: "#2E67D1" },
+          ]} // Đổi màu nếu là "Chỉnh sửa"
           onPress={viewMode ? handleEditToggle : handleSave} // Gọi handleEditToggle khi viewMode = true
         >
           {isSaving ? (

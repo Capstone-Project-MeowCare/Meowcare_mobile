@@ -20,16 +20,7 @@ const CustomButton = ({ title, onPress }) => (
     <Text style={styles.buttonText}>{title}</Text>
   </TouchableOpacity>
 );
-const translateServiceName = (serviceName) => {
-  const serviceTranslations = {
-    "Basic Feeding": "Cho ăn cơ bản",
-    "Standard Grooming": "Chải lông tiêu chuẩn",
-    "Play Session": "Giờ chơi",
-    "Health Check-up": "Kiểm tra sức khỏe",
-    "Training Basics": "Huấn luyện cơ bản",
-  };
-  return serviceTranslations[serviceName] || serviceName;
-};
+
 export default function CatSitterService({ navigation }) {
   const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
@@ -104,13 +95,11 @@ export default function CatSitterService({ navigation }) {
 
             // Tìm Main Service
             const mainService = booking.bookingDetailWithPetAndServices.find(
-              (detail) => detail.service?.serviceType === "Main Service"
+              (detail) => detail.service?.serviceType === "MAIN_SERVICE"
             );
 
             // Ưu tiên hiển thị Main Service
-            const serviceName = mainService
-              ? translateServiceName(mainService.service?.serviceName)
-              : "Unknown Service";
+            const serviceName = mainService?.service?.name || "Unknown Service";
 
             // Map trạng thái API về trạng thái hiển thị
             const statusLabel = getStatusLabel(booking.status);

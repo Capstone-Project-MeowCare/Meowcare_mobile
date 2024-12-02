@@ -18,23 +18,17 @@ const CustomButton = ({ title, onPress }) => (
     <Text style={styles.buttonText}>{title}</Text>
   </TouchableOpacity>
 );
-const translateServiceName = (serviceName) => {
-  const serviceTranslations = {
-    "Basic Feeding": "Cho ăn cơ bản",
-    "Standard Grooming": "Chải lông tiêu chuẩn",
-    "Play Session": "Giờ chơi",
-    "Health Check-up": "Kiểm tra sức khỏe",
-    "Training Basics": "Huấn luyện cơ bản",
-  };
-  return serviceTranslations[serviceName] || serviceName;
-};
 
 export default function Activity() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState("Tất cả");
   const [bookingData, setBookingData] = useState([]);
-
+  const [loading, setLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
   const tabs = [
     "Tất cả",
     "Chờ xác nhận",
@@ -44,71 +38,110 @@ export default function Activity() {
     "Đã hủy",
   ];
 
+  const fetchBookings = async (page = 1, size = 10) => {
+    setLoading(page === 1); // Hiển thị loading nếu là trang đầu tiên
+    setIsLoadingMore(page > 1);
+
+    if (!user?.id) {
+      console.log("User ID is undefined, skipping API call.");
+      return;
+    }
+
+    try {
+      console.log(`Calling API with params: page=${page}, size=${size}`);
+
+      const sort = "createdAt";
+      const direction = "DESC";
+
+      const response = await getData(
+        `/booking-orders/user/pagination?id=${user.id}&page=${page}&size=${size}&sort=${sort}&direction=${direction}`
+      );
+
+      if (response?.data?.content) {
+        const currentDate = new Date();
+        const bookings = response.data.content;
+
+        console.log(`Fetched ${bookings.length} bookings for page ${page}`);
+
+        let formattedData = bookings.map((booking) => {
+          const isInProgress =
+            booking.status === "CONFIRMED" &&
+            new Date(booking.startDate) <= currentDate &&
+            currentDate <= new Date(booking.endDate);
+
+          const finalStatus = isInProgress ? "IN_PROGRESS" : booking.status;
+
+          const uniquePets = Array.from(
+            new Map(
+              booking.bookingDetailWithPetAndServices.map((detail) => [
+                detail.pet?.id,
+                detail.pet,
+              ])
+            ).values()
+          );
+
+          const mainService = booking.bookingDetailWithPetAndServices.find(
+            (detail) => detail.service?.serviceType === "MAIN_SERVICE"
+          );
+
+          return {
+            id: booking.id,
+            userId: booking.user?.id,
+            sitterId: booking.sitter?.id,
+            userEmail: booking.user?.email,
+            sitterEmail: booking.sitter?.email,
+            sitterName: booking.sitter?.fullName,
+            catName:
+              uniquePets.map((pet) => pet.petName).join(", ") || "Unknown Pet",
+            pets: uniquePets,
+            serviceName: mainService?.service?.name || "Unknown Service",
+            time: booking.startDate
+              ? `${new Date(booking.startDate).toLocaleDateString(
+                  "vi-VN"
+                )} - ${new Date(booking.endDate).toLocaleDateString("vi-VN")}`
+              : "Unknown Time",
+            status: finalStatus,
+            statusLabel: getStatusLabel(finalStatus),
+            statusColor: getStatusColor(getStatusLabel(finalStatus)),
+            createdAt: new Date(booking.createdAt),
+          };
+        });
+
+        formattedData.sort((a, b) => b.createdAt - a.createdAt);
+
+        console.log("Đã filter ok!", formattedData);
+
+        setBookingData((prevData) =>
+          page === 1 ? formattedData : [...prevData, ...formattedData]
+        );
+
+        setTotalPages(response.data.totalPages);
+        console.log("Total Pages:", response.data.totalPages);
+      } else {
+        console.log("No data returned from API");
+        setBookingData((prevData) => (page === 1 ? [] : prevData));
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    } finally {
+      setLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  const loadMoreData = () => {
+    if (currentPage < totalPages && !isLoadingMore) {
+      setIsLoadingMore(true);
+      fetchBookings(currentPage + 1, pageSize);
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
-      if (!user?.id) return;
-
-      const fetchBookings = async () => {
-        try {
-          const endpoint = `/booking-orders/user?id=${user.id}`;
-          const response = await getData(endpoint);
-
-          if (response?.data) {
-            const rawData = response.data;
-
-            const formattedData = rawData.map((booking) => {
-              const uniquePets = Array.from(
-                new Map(
-                  (booking.bookingDetailWithPetAndServices || []).map(
-                    (detail) => [
-                      detail.pet?.id, // Key: ID của con mèo
-                      detail.pet, // Value: Object của con mèo
-                    ]
-                  )
-                ).values()
-              );
-
-              const mainService = booking.bookingDetailWithPetAndServices.find(
-                (detail) => detail.service?.serviceType === "Main Service"
-              );
-
-              return {
-                id: booking.id,
-                userId: booking.user?.id,
-                sitterId: booking.sitter?.id,
-                userEmail: booking.user?.email,
-                sitterEmail: booking.sitter?.email,
-                sitterName: booking.sitter?.fullName,
-                catName:
-                  uniquePets.map((pet) => pet.petName).join(", ") ||
-                  "Unknown Pet",
-                serviceName: mainService
-                  ? translateServiceName(mainService.service.serviceName)
-                  : "Unknown Service",
-                time: booking.startDate
-                  ? `${new Date(booking.startDate).toLocaleDateString(
-                      "vi-VN"
-                    )} - ${new Date(booking.endDate).toLocaleDateString(
-                      "vi-VN"
-                    )}`
-                  : "Unknown Time",
-                status: booking.status,
-                statusLabel: getStatusLabel(booking.status),
-                statusColor: getStatusColor(getStatusLabel(booking.status)),
-              };
-            });
-
-            setBookingData(formattedData);
-          }
-        } catch (error) {
-          console.error("Error fetching bookings:", error);
-        }
-      };
-
-      fetchBookings();
+      fetchBookings(1, pageSize);
     }, [user?.id])
   );
-
   const filteredData =
     selectedTab === "Tất cả"
       ? bookingData
@@ -341,12 +374,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   serviceName: {
+    flex: 1,
     fontSize: width * 0.036,
     fontWeight: "bold",
     color: "rgba(43,118,79,0.8)",
+    marginRight: 8,
+    lineHeight: height * 0.03,
   },
   label: {
     fontSize: width * 0.036,
@@ -369,9 +405,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   status: {
+    flexShrink: 0,
     fontSize: width * 0.036,
     fontWeight: "bold",
-    alignSelf: "flex-end",
+    alignSelf: "flex-start",
+    marginTop: height * 0.003,
   },
   buttonRow: {
     flexDirection: "row",
