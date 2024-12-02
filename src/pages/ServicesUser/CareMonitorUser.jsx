@@ -843,6 +843,7 @@ const styles = StyleSheet.create({
     color: "rgba(43,118,79,0.8)",
     marginTop: height * 0.005,
     fontWeight: "600",
+    maxWidth: width * 0.7,
   },
   actionsContainer: {
     flexDirection: "row",

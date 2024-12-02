@@ -181,9 +181,8 @@ export default function CareMonitorCatSitter({ navigation, route }) {
 
   useFocusEffect(
     useCallback(() => {
-      if (originalTasksRef.current.length === 0) {
-        fetchCareSchedule();
-      }
+      // Khi màn hình được focus, gọi lại API để làm mới dữ liệu
+      fetchCareSchedule();
       fetchUserProfile();
     }, [fetchCareSchedule, fetchUserProfile])
   );
@@ -890,6 +889,7 @@ const styles = StyleSheet.create({
     color: "rgba(43,118,79,0.8)",
     marginTop: height * 0.005,
     fontWeight: "600",
+    maxWidth: width * 0.7,
   },
   actionsContainer: {
     flexDirection: "row",

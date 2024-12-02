@@ -22,16 +22,7 @@ const CustomButton = ({ title, onPress }) => (
     <Text style={styles.buttonText}>{title}</Text>
   </TouchableOpacity>
 );
-const translateServiceName = (serviceName) => {
-  const serviceTranslations = {
-    "Basic Feeding": "Cho ăn cơ bản",
-    "Standard Grooming": "Chải lông tiêu chuẩn",
-    "Play Session": "Giờ chơi",
-    "Health Check-up": "Kiểm tra sức khỏe",
-    "Training Basics": "Huấn luyện cơ bản",
-  };
-  return serviceTranslations[serviceName] || serviceName;
-};
+
 export default function Service() {
   const { roles, user } = useAuth();
   const Stack = createStackNavigator();
@@ -127,7 +118,7 @@ export default function Service() {
           );
 
           const mainService = booking.bookingDetailWithPetAndServices.find(
-            (detail) => detail.service?.serviceType === "Main Service"
+            (detail) => detail.service?.serviceType === "MAIN_SERVICE"
           );
 
           return {
@@ -145,9 +136,7 @@ export default function Service() {
             catName:
               uniquePets.map((pet) => pet.petName).join(", ") || "Unknown Pet",
             pets: uniquePets, // Thêm danh sách thú cưng
-            serviceName: mainService
-              ? translateServiceName(mainService.service.serviceName)
-              : "Unknown Service",
+            serviceName: mainService?.service?.name || "Unknown Service",
             status: finalStatus,
             statusColor: getStatusColor(getStatusLabel(finalStatus)),
             createdAt: new Date(booking.createdAt), // Ensure createdAt is a Date object
