@@ -115,7 +115,7 @@ export default function Transaction({ navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#000857" />
       </View>
     );
@@ -304,5 +304,11 @@ const styles = StyleSheet.create({
   },
   expense: {
     color: "#FF5722",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFAF5",
   },
 });
