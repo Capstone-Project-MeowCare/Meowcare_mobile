@@ -76,6 +76,8 @@ export default function CareMonitorUser({ navigation, route }) {
   const [careSchedule, setCareSchedule] = useState(null); // Để lưu trữ toàn bộ thông tin từ API
   const [animatedHeights, setAnimatedHeights] = useState([]);
   const [sitterProfile, setSitterProfile] = useState(null);
+  const originalTasksRef = useRef([]);
+
   useEffect(() => {
     console.log("Route params:", {
       userEmail,
@@ -86,12 +88,127 @@ export default function CareMonitorUser({ navigation, route }) {
       mainServiceName,
     });
   }, []);
+
   useEffect(() => {
     if (tasks.length > 0) {
       const heights = tasks.map(() => new Animated.Value(height * 0.04));
       setAnimatedHeights(heights);
     }
   }, [tasks]);
+
+  useEffect(() => {
+    if (currentDate) {
+      console.log(
+        "Current Date (Local):",
+        currentDate.toLocaleDateString("vi-VN")
+      );
+      console.log(
+        "Filtered Tasks for Current Date:",
+        JSON.stringify(filteredTasks, null, 2)
+      );
+    }
+  }, [currentDate, filteredTasks]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCareSchedule = async () => {
+        try {
+          const endpoint = `/care-schedules/booking/${bookingId}`;
+          const response = await getData(endpoint);
+
+          if (response?.data?.tasks && Array.isArray(response.data.tasks)) {
+            const tasks = response.data.tasks
+              .map((task) => {
+                if (!task.startTime || !task.endTime) return null;
+
+                // Chuyển đổi thời gian từ UTC sang giờ địa phương
+                const startDate = new Date(task.startTime);
+                const endDate = new Date(task.endTime);
+
+                const isUTC = startDate.getUTCHours() === startDate.getHours();
+                if (isUTC) {
+                  startDate.setHours(startDate.getHours() + 7);
+                  endDate.setHours(endDate.getHours() + 7);
+                }
+
+                return {
+                  id: task.id,
+                  day: `${startDate.getFullYear()}-${String(
+                    startDate.getMonth() + 1
+                  ).padStart(
+                    2,
+                    "0"
+                  )}-${String(startDate.getDate()).padStart(2, "0")}`,
+                  time: `${String(startDate.getHours()).padStart(2, "0")}:${String(
+                    startDate.getMinutes()
+                  ).padStart(2, "0")} - ${String(endDate.getHours()).padStart(
+                    2,
+                    "0"
+                  )}:${String(endDate.getMinutes()).padStart(2, "0")}`,
+                  description: task.description || "Không có mô tả",
+                  status: mapStatus(task.status),
+                  statusColor: getStatusColor(task.status),
+                  petProfile: task.petProfile || null,
+                  haveEvidence: task.haveEvidence || false,
+                };
+              })
+              .filter((task) => task !== null);
+
+            const groupedTasks = groupTasks(tasks);
+            originalTasksRef.current = groupedTasks;
+            setTasks(groupedTasks);
+          } else {
+            console.warn("No tasks received from API");
+            setTasks([]);
+          }
+
+          if (response?.data?.startTime && response?.data?.endTime) {
+            const scheduleStart = new Date(response.data.startTime);
+            const scheduleEnd = new Date(response.data.endTime);
+
+            scheduleStart.setHours(scheduleStart.getHours() + 7);
+            scheduleEnd.setHours(scheduleEnd.getHours() + 7);
+
+            setCareSchedule({
+              startTime: scheduleStart,
+              endTime: scheduleEnd,
+            });
+
+            if (!currentDate) {
+              setCurrentDate(scheduleStart);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching care schedule:", error);
+        }
+      };
+
+      fetchCareSchedule();
+    }, [bookingId, currentDate])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchSitterProfile = async () => {
+        try {
+          const endpoint = `/sitter-profiles/sitter/${sitterId}`;
+          const response = await getData(endpoint);
+
+          if (response?.status === 1000 && response.data) {
+            setSitterProfile(response.data);
+          } else {
+            console.warn("Failed to fetch sitter profile:", response?.message);
+          }
+        } catch (error) {
+          console.error("Error fetching sitter profile:", error);
+        }
+      };
+
+      if (sitterId) {
+        fetchSitterProfile();
+      }
+    }, [sitterId])
+  );
   const groupTasks = (tasks) => {
     const taskMap = new Map();
 
@@ -118,103 +235,10 @@ export default function CareMonitorUser({ navigation, route }) {
     });
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      if (tasks.length === 0) {
-        const fetchCareSchedule = async () => {
-          try {
-            const endpoint = `/care-schedules/booking/${bookingId}`;
-            const response = await getData(endpoint);
-
-            if (response?.data?.tasks && Array.isArray(response.data.tasks)) {
-              const tasks = response.data.tasks
-                .map((task) => {
-                  if (!task.startTime || !task.endTime) return null;
-
-                  const startDate = new Date(task.startTime);
-                  const endDate = new Date(task.endTime);
-
-                  const isUTC =
-                    startDate.getUTCHours() === startDate.getHours();
-                  if (isUTC) {
-                    startDate.setHours(startDate.getHours() + 7);
-                    endDate.setHours(endDate.getHours() + 7);
-                  }
-
-                  return {
-                    id: task.id,
-                    day: `${startDate.getFullYear()}-${String(
-                      startDate.getMonth() + 1
-                    ).padStart(
-                      2,
-                      "0"
-                    )}-${String(startDate.getDate()).padStart(2, "0")}`,
-                    time: `${String(startDate.getHours()).padStart(2, "0")}:${String(
-                      startDate.getMinutes()
-                    ).padStart(
-                      2,
-                      "0"
-                    )} - ${String(endDate.getHours()).padStart(2, "0")}:${String(
-                      endDate.getMinutes()
-                    ).padStart(2, "0")}`,
-                    description: task.description || "Không có mô tả",
-                    status: mapStatus(task.status),
-                    statusColor: getStatusColor(task.status),
-                    petProfile: task.petProfile || null,
-                    haveEvidence: task.haveEvidence || false,
-                  };
-                })
-                .filter((task) => task !== null);
-
-              const groupedTasks = groupTasks(tasks);
-              console.log("Tasks grouped:", groupedTasks);
-              setTasks(groupedTasks);
-            } else {
-              console.warn("No tasks received from API");
-              setTasks([]);
-            }
-          } catch (error) {
-            console.error("Error fetching care schedule:", error);
-          }
-        };
-
-        fetchCareSchedule();
-      }
-    }, [tasks, bookingId])
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchSitterProfile = async () => {
-        try {
-          const endpoint = `/sitter-profiles/sitter/${sitterId}`;
-          const response = await getData(endpoint);
-
-          if (response?.status === 1000 && response.data) {
-            setSitterProfile(response.data);
-          } else {
-            console.warn("Failed to fetch sitter profile:", response?.message);
-          }
-        } catch (error) {
-          console.error("Error fetching sitter profile:", error);
-        }
-      };
-
-      if (sitterId) {
-        fetchSitterProfile();
-      }
-    }, [sitterId])
-  );
-
   const filteredTasks = tasks.filter((group) => {
-    const currentISODate = currentDate?.toISOString().split("T")[0];
-
-    if (!Array.isArray(group.tasks)) {
-      console.warn("Group tasks is not an array:", group);
-      return false;
-    }
-
-    return group.tasks.some((task) => task.day === currentISODate);
+    if (!currentDate) return false;
+    const currentISODate = currentDate.toISOString().split("T")[0];
+    return group.day === currentISODate;
   });
 
   const mapStatus = (status) => {
@@ -236,6 +260,7 @@ export default function CareMonitorUser({ navigation, route }) {
     };
     return colorMapping[status] || "#000";
   };
+
   const handlePreviousDay = () => {
     if (
       currentDate &&
@@ -369,6 +394,7 @@ export default function CareMonitorUser({ navigation, route }) {
               })
             : ""}
         </Text>
+
         <TouchableOpacity onPress={handleNextDay}>
           <Entypo name="chevron-right" size={24} color="#000857" />
         </TouchableOpacity>
