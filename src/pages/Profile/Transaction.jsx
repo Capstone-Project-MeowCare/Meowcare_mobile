@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -7,9 +7,12 @@ import {
   FlatList,
   Dimensions,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
+import { getData } from "../../api/api";
+import { useAuth } from "../../../auth/useAuth";
 
 const transactions = [
   {
@@ -36,11 +39,54 @@ const transactions = [
 ];
 
 export default function Transaction({ navigation }) {
-  const [filteredTransactions, setFilteredTransactions] = useState(transactions);
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState([]);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Gọi API để lấy danh sách giao dịch
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const endpoint = `/transactions/user/${user.id}`;
+        const response = await getData(endpoint);
+
+        if (response.status === 1000) {
+          const transformedTransactions = response.data.map((item) => {
+            const isExpense = item.fromUserId === user.id;
+            return {
+              id: item.id,
+              title:
+                item.transactionType === "PAYMENT"
+                  ? "Thanh toán dịch vụ"
+                  : "Tiền chiết khấu ",
+              amount: `${
+                isExpense ? "-" : "+"
+              }${item.amount.toLocaleString()} ${item.currency}`,
+              date: new Date(item.createdAt).toISOString().split("T")[0],
+              type: isExpense ? "expense" : "income",
+            };
+          });
+          setTransactions(transformedTransactions);
+          setFilteredTransactions(transformedTransactions);
+        } else {
+          console.warn("Failed to fetch transactions:", response.message);
+        }
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchTransactions();
+    }
+  }, [user]);
 
   const filterTransactions = () => {
     const filtered = transactions.filter((item) => {
@@ -67,6 +113,13 @@ export default function Transaction({ navigation }) {
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#000857" />
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       {/* Header */}

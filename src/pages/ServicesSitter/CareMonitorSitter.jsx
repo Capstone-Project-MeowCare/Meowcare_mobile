@@ -84,6 +84,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
       serviceName,
     });
   }, []);
+
   useEffect(() => {
     if (tasks.length > 0) {
       const heights = tasks.map(() => new Animated.Value(height * 0.04));
@@ -94,7 +95,6 @@ export default function CareMonitorCatSitter({ navigation, route }) {
   const fetchUserProfile = useCallback(async () => {
     try {
       const response = await getData(`/users/${userId}`);
-
       if (response?.status === 1000) {
         setUserProfile(response.data);
       } else {
@@ -113,14 +113,13 @@ export default function CareMonitorCatSitter({ navigation, route }) {
       if (response?.data?.tasks && Array.isArray(response.data.tasks)) {
         const tasks = response.data.tasks
           .map((task) => {
-            if (!task.startTime || !task.endTime) {
-              console.warn("Task missing time fields:", task);
-              return null;
-            }
+            if (!task.startTime || !task.endTime) return null;
 
+            // Chuyển đổi thời gian từ UTC sang giờ địa phương
             const startDate = new Date(task.startTime);
             const endDate = new Date(task.endTime);
 
+            // Tự động nhận diện nếu thời gian là UTC
             const isUTC = startDate.getUTCHours() === startDate.getHours();
             if (isUTC) {
               startDate.setHours(startDate.getHours() + 7);
@@ -137,12 +136,10 @@ export default function CareMonitorCatSitter({ navigation, route }) {
               )}-${String(startDate.getDate()).padStart(2, "0")}`,
               time: `${String(startDate.getHours()).padStart(2, "0")}:${String(
                 startDate.getMinutes()
-              ).padStart(
+              ).padStart(2, "0")} - ${String(endDate.getHours()).padStart(
                 2,
                 "0"
-              )} - ${String(endDate.getHours()).padStart(2, "0")}:${String(
-                endDate.getMinutes()
-              ).padStart(2, "0")}`,
+              )}:${String(endDate.getMinutes()).padStart(2, "0")}`,
               description: task.description || "Không có mô tả",
               status: mapStatus(task.status),
               statusColor: getStatusColor(task.status),
@@ -154,18 +151,19 @@ export default function CareMonitorCatSitter({ navigation, route }) {
 
         const groupedTasks = groupTasks(tasks);
 
-        // Lưu dữ liệu gốc
         originalTasksRef.current = groupedTasks;
         setTasks(groupedTasks);
-        console.log("Tasks grouped and set to state:", groupedTasks);
       } else {
-        console.warn("No tasks received from API");
         setTasks([]);
       }
 
       if (response?.data?.startTime && response?.data?.endTime) {
         const scheduleStart = new Date(response.data.startTime);
         const scheduleEnd = new Date(response.data.endTime);
+
+        // Chuyển đổi thời gian của lịch trình
+        scheduleStart.setHours(scheduleStart.getHours() + 7);
+        scheduleEnd.setHours(scheduleEnd.getHours() + 7);
 
         setCareSchedule({
           startTime: scheduleStart,
@@ -191,44 +189,33 @@ export default function CareMonitorCatSitter({ navigation, route }) {
   );
 
   const groupTasks = (tasks) => {
-    console.log("Tasks trước khi group: ", tasks);
-
     const taskMap = new Map();
 
     tasks.forEach((task) => {
       const key = `${task.day}-${task.time}`;
-      const existingGroup = taskMap.get(key);
-
-      if (!existingGroup) {
+      if (!taskMap.has(key)) {
         taskMap.set(key, { time: task.time, day: task.day, tasks: [task] });
       } else {
-        // Kiểm tra trùng lặp trước khi thêm
-        const isDuplicate = existingGroup.tasks.some((t) => t.id === task.id);
+        const existingTasks = taskMap.get(key).tasks;
+        const isDuplicate = existingTasks.some((t) => t.id === task.id);
         if (!isDuplicate) {
-          existingGroup.tasks.push(task);
+          existingTasks.push(task);
         }
       }
     });
 
     return Array.from(taskMap.values()).sort((a, b) => {
-      const [aStartHour, aStartMinute] = a.time
-        .split(" - ")[0]
-        .split(":")
-        .map(Number);
-      const [bStartHour, bStartMinute] = b.time
-        .split(" - ")[0]
-        .split(":")
-        .map(Number);
-
-      const aTime = new Date();
-      aTime.setHours(aStartHour, aStartMinute);
-
-      const bTime = new Date();
-      bTime.setHours(bStartHour, bStartMinute);
-
-      return aTime - bTime;
+      const aDate = new Date(`${a.day}T${a.time.split(" - ")[0]}:00`);
+      const bDate = new Date(`${b.day}T${b.time.split(" - ")[0]}:00`);
+      return aDate - bDate;
     });
   };
+
+  const filteredTasks = tasks.filter((group) => {
+    if (!currentDate) return false;
+    const currentISODate = currentDate.toISOString().split("T")[0];
+    return group.day === currentISODate;
+  });
 
   const handleCompleteBooking = async () => {
     try {
@@ -257,49 +244,6 @@ export default function CareMonitorCatSitter({ navigation, route }) {
       Alert.alert("Lỗi", "Có lỗi xảy ra khi cập nhật trạng thái.");
     }
   };
-  // const filteredTasks = tasks
-  //   .filter((task) => {
-  //     const currentISODate = currentDate?.toISOString().split("T")[0];
-  //     return (
-  //       task.day === currentISODate &&
-  //       careSchedule?.startTime <= new Date(task.day) &&
-  //       new Date(task.day) <= careSchedule?.endTime
-  //     );
-  //   })
-  //   .sort((a, b) => {
-  //     if (!a.time || !b.time) {
-  //       console.warn("Task missing time for sorting:", a, b);
-  //       return 0; // Nếu thiếu `time`, bỏ qua so sánh
-  //     }
-
-  //     const [aStartHour, aStartMinute] = a.time
-  //       .split(" - ")[0]
-  //       .split(":")
-  //       .map(Number);
-  //     const [bStartHour, bStartMinute] = b.time
-  //       .split(" - ")[0]
-  //       .split(":")
-  //       .map(Number);
-
-  //     const aTime = new Date(currentDate);
-  //     aTime.setHours(aStartHour, aStartMinute);
-
-  //     const bTime = new Date(currentDate);
-  //     bTime.setHours(bStartHour, bStartMinute);
-
-  //     return aTime - bTime;
-  //   });
-  const filteredTasks = tasks.filter((group) => {
-    const currentISODate = currentDate?.toISOString().split("T")[0];
-
-    if (!Array.isArray(group.tasks)) {
-      console.warn("Group tasks is not an array:", group);
-      return false;
-    }
-
-    return group.tasks.some((task) => task.day === currentISODate);
-  });
-
   const mapStatus = (status) => {
     const statusMapping = {
       0: "Chưa bắt đầu",
@@ -319,6 +263,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
     };
     return colorMapping[status] || "#000";
   };
+
   const handlePreviousDay = () => {
     if (
       currentDate &&
