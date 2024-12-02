@@ -53,7 +53,7 @@ export default function PetReturn({ navigation, route }) {
       <TouchableOpacity
         style={styles.confirmButton}
         onPress={() => {
-          alert("Xác nhận thành công! Thú cưng đã được trả lại.");
+          // alert("Xác nhận thành công! Thú cưng đã được trả lại.");
           navigation.navigate("ConfirmService", { bookingId });
         }}
       >

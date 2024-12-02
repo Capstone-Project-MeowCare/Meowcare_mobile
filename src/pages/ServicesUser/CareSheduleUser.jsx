@@ -11,24 +11,30 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Video } from "expo-av";
+import ImageViewing from "react-native-image-viewing";
 import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CareSheduleUser({ navigation, route }) {
   const { status, taskId, time, day } = route.params;
-
   const [noteText, setNoteText] = useState("");
   const [photoList, setPhotoList] = useState([]); // Chứa các ảnh
   const [videoList, setVideoList] = useState([]); // Chứa các video
   const [loading, setLoading] = useState(true);
-
+  const [isImageViewVisible, setImageViewVisible] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const statusColor =
     status === "Hoàn thành"
       ? "#4CAF50"
       : status === "Đang diễn ra"
         ? "#FFC107"
         : "#000857";
+
+  const openMediaViewer = (index) => {
+    setCurrentIndex(index);
+    setImageViewVisible(true);
+  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -143,10 +149,14 @@ export default function CareSheduleUser({ navigation, route }) {
         <Text style={styles.mediaTitle}>Hình ảnh:</Text>
         {photoList.length > 0 ? (
           <ScrollView contentContainerStyle={styles.mediaGrid}>
-            {photoList.map((photo) => (
-              <View key={photo.id} style={styles.mediaContainer}>
+            {photoList.map((photo, index) => (
+              <TouchableOpacity
+                key={photo.id}
+                style={styles.mediaContainer}
+                onPress={() => openMediaViewer(index)}
+              >
                 <Image source={{ uri: photo.uri }} style={styles.media} />
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         ) : (
@@ -184,7 +194,12 @@ export default function CareSheduleUser({ navigation, route }) {
           </View>
         )}
       </ScrollView>
-
+      <ImageViewing
+        images={photoList.map((photo) => ({ uri: photo.uri }))}
+        imageIndex={currentIndex}
+        visible={isImageViewVisible}
+        onRequestClose={() => setImageViewVisible(false)}
+      />
       <View style={styles.separatorThin} />
       <TouchableOpacity style={styles.requestButton}>
         <Text style={styles.buttonText}>Yêu cầu thông tin</Text>

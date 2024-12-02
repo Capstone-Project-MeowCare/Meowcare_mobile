@@ -55,7 +55,7 @@ export default function ConfirmService({ navigation, route }) {
       <TouchableOpacity
         style={styles.confirmButton}
         onPress={() => {
-          alert("Dịch vụ đã được xác nhận hoàn thành.");
+          // alert("Dịch vụ đã được xác nhận hoàn thành.");
           navigation.navigate("ConfirmPayment", { bookingId });
         }}
       >

@@ -13,15 +13,12 @@ const { width, height } = Dimensions.get("window");
 
 export default function ConfirmPayment({ navigation, route }) {
   const { bookingId } = route.params;
-  console.log("Booking ID received:", bookingId);
   const [bookingDetails, setBookingDetails] = useState(null);
+
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
-        console.log("Fetching booking details for ID:", bookingId);
         const response = await getData(`/booking-orders/${bookingId}`);
-        console.log("API Response:", response);
-
         if (response?.status === 1000) {
           setBookingDetails(response.data);
         } else {
@@ -36,59 +33,43 @@ export default function ConfirmPayment({ navigation, route }) {
       fetchBookingDetails();
     }
   }, [bookingId]);
+
+  // Hàm loại bỏ trùng lặp dựa trên service.id
+  const uniqueMainServices = (services) => {
+    return Array.from(
+      new Map(
+        services
+          .filter((detail) => detail.service?.serviceType === "MAIN_SERVICE")
+          .map((detail) => [detail.service.id, detail])
+      ).values()
+    );
+  };
+
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        {/* <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="chevron-back-outline" size={30} color="#000857" />
-        </TouchableOpacity> */}
         <Text style={styles.headerTitle}>Thanh toán</Text>
       </View>
-      {/* Divider */}
       <View style={styles.divider} />
 
-      {/* Payment Details Section */}
       <View style={styles.contentContainer}>
-        <Text style={styles.paymentTitle}>Chi tiết thanh toán</Text>
         <View style={styles.paymentDetails}>
-          <Text style={styles.sectionTitle}>Tổng giá dịch vụ:</Text>
-          <Text style={styles.itemText}>
-            • Dịch vụ chính:{" "}
-            <Text style={styles.boldText}>
-              {bookingDetails?.bookingDetailWithPetAndServices
-                .filter(
-                  (detail) => detail.service?.serviceType === "MAIN_SERVICE"
-                )
-                .map(
-                  (mainService) => mainService.service?.name || "Không xác định"
-                )
-                .join(", ")}
+          {/* Dịch vụ chính */}
+          <View style={styles.row}>
+            <Text style={styles.itemText}>• Dịch vụ chính:</Text>
+            <Text style={styles.priceText}>
+              {`${uniqueMainServices(
+                bookingDetails?.bookingDetailWithPetAndServices || []
+              )
+                .reduce((sum, detail) => sum + (detail.service?.price || 0), 0)
+                .toLocaleString()}đ`}
             </Text>
-          </Text>
-          {bookingDetails?.bookingDetailWithPetAndServices
-            .filter((detail) => detail.service?.serviceType === "CHILD_SERVICE")
-            .map((childService, index) => (
-              <Text key={index} style={styles.itemText}>
-                • {childService.service?.name || "Dịch vụ con"}:{" "}
-                <Text style={styles.boldText}>
-                  {`${childService.service?.price.toLocaleString()}đ`}
-                </Text>
-              </Text>
-            ))}
-          {/* <Text style={styles.itemText}>
-            • Dịch vụ đưa đón mèo: <Text style={styles.boldText}>50.000đ</Text>
-          </Text>
-          <Text style={styles.itemText}>
-            • Thức ăn đã chọn (2 ngày x 50.000đ):{" "}
-            <Text style={styles.boldText}>100.000đ</Text>
-          </Text> */}
-          <Text style={styles.itemText}>
-            • Số ngày đặt:{" "}
-            <Text style={styles.boldText}>
+          </View>
+
+          {/* Số ngày đặt */}
+          <View style={styles.row}>
+            <Text style={styles.itemText}>
+              • Số ngày đặt:{" "}
               {Math.round(
                 (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
                   new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
@@ -96,10 +77,27 @@ export default function ConfirmPayment({ navigation, route }) {
               ) + 1 || 1}{" "}
               ngày
             </Text>
-          </Text>
-          <Text style={styles.itemText}>
-            • Số lượng mèo:{" "}
-            <Text style={styles.boldText}>
+            <Text style={styles.priceText}>
+              {`${(
+                uniqueMainServices(
+                  bookingDetails?.bookingDetailWithPetAndServices || []
+                ).reduce(
+                  (sum, detail) => sum + (detail.service?.price || 0),
+                  0
+                ) *
+                (Math.round(
+                  (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
+                    new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
+                    (1000 * 60 * 60 * 24)
+                ) + 1 || 1)
+              ).toLocaleString()}đ`}
+            </Text>
+          </View>
+
+          {/* Số lượng mèo */}
+          <View style={styles.row}>
+            <Text style={styles.itemText}>
+              • Số lượng mèo:{" "}
               {
                 Array.from(
                   new Map(
@@ -111,79 +109,147 @@ export default function ConfirmPayment({ navigation, route }) {
               }{" "}
               mèo
             </Text>
-          </Text>
-          <Text style={styles.sectionTitle}>Tổng tiền:</Text>
-          <Text style={styles.totalText}>
-            {`${(
-              bookingDetails?.bookingDetailWithPetAndServices.reduce(
-                (sum, detail) => sum + (detail.service?.price || 0),
-                0
-              ) *
-              (Math.round(
-                (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-                  new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
-                  (1000 * 60 * 60 * 24)
-              ) + 1 || 1) *
-              Array.from(
-                new Map(
-                  bookingDetails?.bookingDetailWithPetAndServices.map(
-                    (detail) => [detail.pet?.id, detail.pet]
+            <Text style={styles.priceText}>
+              {`${(
+                uniqueMainServices(
+                  bookingDetails?.bookingDetailWithPetAndServices || []
+                ).reduce(
+                  (sum, detail) => sum + (detail.service?.price || 0),
+                  0
+                ) *
+                Array.from(
+                  new Map(
+                    bookingDetails?.bookingDetailWithPetAndServices.map(
+                      (detail) => [detail.pet?.id, detail.pet]
+                    )
                   )
-                )
-              ).length
-            ).toLocaleString()}đ`}
-          </Text>
+                ).length
+              ).toLocaleString()}đ`}
+            </Text>
+          </View>
 
-          {/* 
-          <Text style={styles.sectionTitle}>Tiền cọc đã thanh toán:</Text>
-          <Text style={styles.depositText}>-150.000đ</Text> */}
-
-          {/* <Text style={styles.sectionTitle}>Dịch vụ thêm:</Text>
-          <Text style={styles.itemText}>
-            • Chải lông mèo: <Text style={styles.boldText}>20.000đ</Text>
-          </Text>
-          <Text style={styles.itemText}>
-            • Cắt móng: <Text style={styles.boldText}>20.000đ</Text>
-          </Text> */}
-
-          <Text style={styles.sectionTitle}>
-            Tổng số tiền thanh toán còn lại:
-          </Text>
-          <Text style={styles.remainingText}>
-            {`${(
-              bookingDetails?.bookingDetailWithPetAndServices.reduce(
-                (sum, detail) => sum + (detail.service?.price || 0),
-                0
-              ) *
-              (Math.round(
-                (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-                  new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
-                  (1000 * 60 * 60 * 24)
-              ) + 1 || 1) *
-              Array.from(
-                new Map(
-                  bookingDetails?.bookingDetailWithPetAndServices.map(
-                    (detail) => [detail.pet?.id, detail.pet]
+          {/* Tổng tiền */}
+          <View style={styles.row}>
+            <Text style={styles.sectionTitle}>Tổng tiền:</Text>
+            <Text style={styles.totalText}>
+              {`${(
+                uniqueMainServices(
+                  bookingDetails?.bookingDetailWithPetAndServices || []
+                ).reduce(
+                  (sum, detail) => sum + (detail.service?.price || 0),
+                  0
+                ) *
+                (Math.round(
+                  (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
+                    new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
+                    (1000 * 60 * 60 * 24)
+                ) + 1 || 1) *
+                Array.from(
+                  new Map(
+                    bookingDetails?.bookingDetailWithPetAndServices.map(
+                      (detail) => [detail.pet?.id, detail.pet]
+                    )
                   )
-                )
-              ).length
-            ).toLocaleString()}đ`}
-          </Text>
+                ).length
+              ).toLocaleString()}đ`}
+            </Text>
+          </View>
+
+          {/* Tiền chiết khấu */}
+          <View style={styles.row}>
+            <Text style={styles.sectionTitle}>Tiền chiết khấu (10%):</Text>
+            <Text style={styles.discountText}>
+              {`-${(
+                uniqueMainServices(
+                  bookingDetails?.bookingDetailWithPetAndServices || []
+                ).reduce(
+                  (sum, detail) => sum + (detail.service?.price || 0),
+                  0
+                ) *
+                (Math.round(
+                  (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
+                    new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
+                    (1000 * 60 * 60 * 24)
+                ) + 1 || 1) *
+                Array.from(
+                  new Map(
+                    bookingDetails?.bookingDetailWithPetAndServices.map(
+                      (detail) => [detail.pet?.id, detail.pet]
+                    )
+                  )
+                ).length *
+                0.1
+              ).toLocaleString()}đ`}
+            </Text>
+          </View>
+
+          {/* Tổng số tiền nhận được */}
+          <View style={styles.row}>
+            <Text style={styles.sectionTitle}>Tổng số tiền nhận được:</Text>
+            <Text style={styles.remainingText}>
+              {`${(
+                uniqueMainServices(
+                  bookingDetails?.bookingDetailWithPetAndServices || []
+                ).reduce(
+                  (sum, detail) => sum + (detail.service?.price || 0),
+                  0
+                ) *
+                  (Math.round(
+                    (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
+                      new Date(bookingDetails?.startDate).setHours(
+                        0,
+                        0,
+                        0,
+                        0
+                      )) /
+                      (1000 * 60 * 60 * 24)
+                  ) + 1 || 1) *
+                  Array.from(
+                    new Map(
+                      bookingDetails?.bookingDetailWithPetAndServices.map(
+                        (detail) => [detail.pet?.id, detail.pet]
+                      )
+                    )
+                  ).length -
+                uniqueMainServices(
+                  bookingDetails?.bookingDetailWithPetAndServices || []
+                ).reduce(
+                  (sum, detail) => sum + (detail.service?.price || 0),
+                  0
+                ) *
+                  (Math.round(
+                    (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
+                      new Date(bookingDetails?.startDate).setHours(
+                        0,
+                        0,
+                        0,
+                        0
+                      )) /
+                      (1000 * 60 * 60 * 24)
+                  ) + 1 || 1) *
+                  Array.from(
+                    new Map(
+                      bookingDetails?.bookingDetailWithPetAndServices.map(
+                        (detail) => [detail.pet?.id, detail.pet]
+                      )
+                    )
+                  ).length *
+                  0.1
+              ).toLocaleString()}đ`}
+            </Text>
+          </View>
         </View>
       </View>
 
-      {/* Confirm Button */}
       <TouchableOpacity
         style={styles.confirmButton}
         onPress={() => {
           alert("Thanh toán thành công! Dịch vụ đã hoàn tất.");
-          navigation.navigate("CatSitterWallet");
+          navigation.navigate("Giao dịch");
         }}
       >
         <Text style={styles.confirmButtonText}>Xác nhận thanh toán</Text>
       </TouchableOpacity>
-
-      {/* Report Issue Button */}
       <TouchableOpacity
         style={styles.reportButton}
         onPress={() => {
@@ -236,12 +302,38 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 15,
   },
+  // paymentDetails: {
+  //   // backgroundColor: "#FFF",
+  //   padding: 15,
+  //   borderRadius: 10,
+  //   elevation: 2,
+  // },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  priceText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000",
+    textAlign: "right",
+  },
+  discountText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "red",
+    textAlign: "right",
+  },
   paymentDetails: {
-    backgroundColor: "#FFF",
     padding: 15,
     borderRadius: 10,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#000",
+    // backgroundColor: "#FFF",
   },
+
   sectionTitle: {
     fontSize: 16,
     fontWeight: "bold",
