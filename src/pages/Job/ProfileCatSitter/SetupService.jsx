@@ -147,6 +147,7 @@ export default function SetupService({ navigation }) {
               return matchedService
                 ? {
                     ...service,
+                    id: matchedService.id, // Dùng id thực tế từ sitter-services
                     enabled: true,
                     price: matchedService.price.toString(),
                     description: matchedService.actionDescription || "",
@@ -170,13 +171,17 @@ export default function SetupService({ navigation }) {
   };
 
   const handlePredefinedServiceToggle = (id) => {
-    setPredefinedServices((prevServices) => {
-      const updatedServices = prevServices.map((service) =>
-        service.id === id ? { ...service, enabled: !service.enabled } : service
-      );
-      markServiceAsEdited(id);
-      return updatedServices;
-    });
+    setPredefinedServices((prevServices) =>
+      prevServices.map((service) =>
+        service.id === id
+          ? {
+              ...service,
+              enabled: !service.enabled,
+              status: !service.enabled ? "ACTIVE" : "INACTIVE",
+            }
+          : service
+      )
+    );
   };
 
   const handlePredefinedServicePriceChange = (id, price) => {
@@ -352,6 +357,10 @@ export default function SetupService({ navigation }) {
       (service) => service.enabled
     );
 
+    const disabledAdditionalServices = predefinedServices.filter(
+      (service) => !service.enabled && service.status === "INACTIVE"
+    );
+
     try {
       const allEnabledServices = [];
 
@@ -370,6 +379,7 @@ export default function SetupService({ navigation }) {
       if (atHomeService) allEnabledServices.push(atHomeService);
       if (boardingService) allEnabledServices.push(boardingService);
 
+      // Thêm các dịch vụ `ACTIVE`
       for (const service of enabledAdditionalServices) {
         const enteredPrice = parseFloat(service.price.replace(/\D/g, ""));
         const configService = predefinedServices.find(
@@ -384,6 +394,7 @@ export default function SetupService({ navigation }) {
             text: `Giá của ${service.name} phải nằm trong khoảng từ ${configService.floorPrice} đến ${configService.ceilPrice}.`,
             position: 300,
           });
+          setIsSubmitting(false);
           return;
         }
 
@@ -392,15 +403,33 @@ export default function SetupService({ navigation }) {
           serviceName: service.name,
           price: enteredPrice,
           serviceType: "ADDITION_SERVICE",
-          status: 0,
+          status: "ACTIVE", // Cập nhật trạng thái `ACTIVE`
+        });
+      }
+
+      // Thêm các dịch vụ `INACTIVE`
+      for (const service of disabledAdditionalServices) {
+        allEnabledServices.push({
+          id: service.id || null,
+          serviceName: service.name,
+          price: service.price || 0,
+          serviceType: "ADDITION_SERVICE",
+          status: "INACTIVE", // Cập nhật trạng thái `INACTIVE`
         });
       }
 
       for (const service of allEnabledServices) {
         try {
-          if (service.id) {
+          // Kiểm tra nếu ID từ config-service (không hợp lệ cho PUT)
+          const isFromConfigService = !predefinedServices.find(
+            (predefined) => predefined.id === service.id
+          );
+
+          if (service.id && !isFromConfigService) {
+            // ID hợp lệ từ sitter-service => PUT
             await putData(`/services/${service.id}`, service, accessToken);
           } else {
+            // ID không hợp lệ => POST
             await postData("/services", service, accessToken);
           }
         } catch (error) {
@@ -425,6 +454,7 @@ export default function SetupService({ navigation }) {
       setIsSubmitting(false);
     }
   };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -553,48 +583,31 @@ export default function SetupService({ navigation }) {
             {service.enabled && (
               <View style={styles.pricingContainerWrapper}>
                 <TextInput
-                  style={styles.input}
-                  placeholder="Mô tả hoạt động"
-                  value={service.description}
-                  onChangeText={(text) =>
-                    updateServiceActivity(index, "description", text)
+                  style={styles.childServicePriceInput}
+                  placeholder="Nhập giá tiền"
+                  keyboardType="numeric"
+                  value={
+                    service.price
+                      ? `${parseInt(service.price.replace(/\D/g, ""), 10).toLocaleString("vi-VN")} đ/ngày`
+                      : " đ/ngày"
                   }
+                  onChangeText={(price) => {
+                    const numericPrice = price.replace(/[^\d]/g, ""); // Chỉ giữ số
+                    const formattedPrice = numericPrice
+                      ? `${parseInt(numericPrice, 10).toLocaleString("vi-VN")}`
+                      : "";
+                    handlePredefinedServicePriceChange(
+                      service.id,
+                      formattedPrice
+                    );
+                  }}
                 />
-                <View style={styles.childServiceRow}>
-                  <Text style={styles.childServiceName}>Giá:</Text>
-                  <TextInput
-                    style={[
-                      styles.childServicePriceInput,
-                      { textAlign: "right" },
-                    ]}
-                    placeholder="Nhập giá tiền"
-                    keyboardType="numeric"
-                    value={
-                      service.price
-                        ? `${parseInt(service.price.replace(/\D/g, ""), 10).toLocaleString("vi-VN")} đ/ngày`
-                        : " đ/ngày"
-                    }
-                    onChangeText={(price) => {
-                      const numericPrice = price.replace(/[^\d]/g, ""); // Chỉ giữ số
-                      const formattedPrice = numericPrice
-                        ? `${parseInt(numericPrice, 10).toLocaleString("vi-VN")}`
-                        : "";
-                      handlePredefinedServicePriceChange(
-                        service.id,
-                        formattedPrice
-                      );
-                    }}
-                    onKeyPress={({ nativeEvent }) => {
-                      if (
-                        nativeEvent.key === "Backspace" &&
-                        service.price &&
-                        service.price.endsWith("đ/ngày")
-                      ) {
-                        return false;
-                      }
-                    }}
-                  />
-                </View>
+                <TouchableOpacity
+                  style={styles.trashIcon}
+                  onPress={() => handleDeleteService(service.id)}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#FF3D00" />
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -743,13 +756,13 @@ const styles = StyleSheet.create({
     marginVertical: height * 0.01,
   },
   addButtonActivity: {
-    backgroundColor: "#4CAF50", // Green color similar to the first image
+    backgroundColor: "#4CAF50",
     paddingVertical: height * 0.01,
     paddingHorizontal: height * 0.02,
     alignItems: "center",
-    borderRadius: 20, // Rounded corners
+    borderRadius: 20,
     marginVertical: height * 0.016,
-    alignSelf: "center", // Center the button
+    alignSelf: "center",
     flexDirection: "row",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -790,23 +803,33 @@ const styles = StyleSheet.create({
     width: width * 0.26,
   },
   pricingContainerWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "#D3D3D3",
     borderRadius: 8,
     padding: height * 0.01,
     marginTop: height * 0.01,
   },
+  trashIcon: {
+    marginLeft: height * 0.01,
+  },
   pricingContainer: {
     marginTop: height * 0.01,
   },
   priceInput: {
-    height: height * 0.05,
+    flex: 1,
+    height: height * 0.06,
     borderWidth: 1,
     borderColor: "#D3D3D3",
     borderRadius: 5,
     paddingHorizontal: height * 0.01,
+    fontSize: 14,
+    color: "#333",
     marginVertical: height * 0.007,
   },
+
   additionalService: {
     flexDirection: "row",
     alignItems: "center",
@@ -866,11 +889,8 @@ const styles = StyleSheet.create({
   },
   childServicePriceInput: {
     flex: 1,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#D3D3D3",
-    borderRadius: 5,
-    paddingHorizontal: height * 0.01,
+    paddingHorizontal: 10,
+    fontSize: 14,
     color: "#333",
   },
   completeButtonText: {
