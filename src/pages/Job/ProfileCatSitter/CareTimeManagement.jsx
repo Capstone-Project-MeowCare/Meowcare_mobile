@@ -12,7 +12,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { useAuth } from "../../../../auth/useAuth";
-import { getData, postData } from "../../../api/api";
+import { getData, postData, putData } from "../../../api/api";
+import CustomToast from "../../../components/CustomToast";
 
 const { width, height } = Dimensions.get("window");
 
@@ -37,7 +38,20 @@ export default function CareTimeManagement({ navigation }) {
             endTime: `${service.endTime}:00`,
           }));
 
-        setAdditionalServices(childServices);
+        // Loại bỏ các dịch vụ trùng lặp theo `name`
+        const uniqueServices = [];
+        const seenNames = new Set();
+
+        for (const service of childServices) {
+          if (!seenNames.has(service.name)) {
+            seenNames.add(service.name);
+            uniqueServices.push(service);
+          }
+        }
+
+        console.log("Danh sách dịch vụ không trùng lặp:", uniqueServices);
+
+        setAdditionalServices(uniqueServices);
       } else {
         console.error("Invalid response format:", response);
       }
@@ -121,20 +135,31 @@ export default function CareTimeManagement({ navigation }) {
           name: service.name,
           startTime: parseInt(service.startTime.split(":")[0], 10),
           endTime: parseInt(service.endTime.split(":")[0], 10),
-          serviceType: "CHILD_SERVICE",
-          status: "ACTIVE",
         };
 
-        console.log("Payload gửi lên:", payload);
-
-        // Gọi API với accessToken
-        await postData("/services", payload, accessToken);
+        if (service.id) {
+          // Nếu dịch vụ đã tồn tại, sử dụng putData để cập nhật
+          await putData(`/services/${service.id}`, payload, accessToken);
+          console.log(`Dịch vụ cập nhật với ID: ${service.id}`, payload);
+        } else {
+          // Nếu dịch vụ mới, sử dụng postData để tạo mới
+          const newPayload = {
+            ...payload,
+            serviceType: "CHILD_SERVICE",
+            status: "ACTIVE",
+          };
+          await postData("/services", newPayload, accessToken);
+          console.log("Dịch vụ mới được tạo:", newPayload);
+        }
       }
-      Alert.alert("Thành công", "Dịch vụ đã được thêm!");
+      CustomToast({
+        text: `Cập nhật dịch vụ thành công`,
+        position: 300,
+      });
       navigation.goBack();
     } catch (error) {
-      console.error("Lỗi khi thêm dịch vụ:", error);
-      Alert.alert("Lỗi", "Không thể thêm dịch vụ. Vui lòng thử lại.");
+      console.error("Lỗi khi lưu dịch vụ:", error);
+      Alert.alert("Lỗi", "Không thể lưu dịch vụ. Vui lòng thử lại.");
     }
   };
 
