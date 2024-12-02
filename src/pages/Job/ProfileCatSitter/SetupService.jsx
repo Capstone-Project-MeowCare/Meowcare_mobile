@@ -57,32 +57,81 @@ export default function SetupService({ navigation }) {
   const handleComplete = async () => {
     setIsSubmitting(true);
     try {
+      // Chuẩn bị danh sách các dịch vụ
       const allServices = [...mainServices, ...additionalServices].map(
         (service) => ({
           id: service.id,
-          serviceName: service.name,
+          name: service.name,
           price: parseFloat(service.price),
-          serviceType: service.serviceType,
-          status: service.status,
+          serviceType: service.serviceType || "ADDITION_SERVICE",
+          status: service.enabled ? "ACTIVE" : "INACTIVE",
+          deleted: false,
         })
       );
+
+      console.log("Danh sách dịch vụ chuẩn bị gửi:", allServices);
+
       for (const service of allServices) {
-        if (service.id) {
+        if (service.id && /^[0-9a-fA-F-]{36}$/.test(service.id)) {
+          // Nếu ID hợp lệ (UUID), sử dụng PUT
+          console.log(`Cập nhật dịch vụ ID ${service.id}:`, service);
           await putData(`/services/${service.id}`, service, accessToken);
         } else {
-          await postData("/services", service, accessToken);
+          // Nếu dịch vụ mới, sử dụng POST và bỏ qua ID
+          const payload = {
+            name: service.name,
+            price: service.price,
+            status: "ACTIVE",
+            serviceType: "ADDITION_SERVICE",
+            deleted: false,
+          };
+          console.log("Tạo dịch vụ mới:", payload);
+          await postData("/services", payload, accessToken);
         }
       }
-      Alert.alert("Thành công", "Cập nhật dịch vụ thành công.");
+
+      CustomToast({
+        text: `Cập nhật dịch vụ thành công`,
+        position: 300,
+      });
       navigation.goBack();
     } catch (error) {
       console.error("Error saving services:", error);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response headers:", error.response.headers);
+      }
       Alert.alert("Lỗi", "Không thể lưu dịch vụ.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const addNewAdditionalService = () => {
+    setAdditionalServices((prev) => [
+      ...prev,
+      {
+        name: "",
+        price: "",
+        enabled: true,
+      },
+    ]);
+  };
+
+  const deleteAdditionalService = (id) => {
+    setAdditionalServices((prev) =>
+      prev.filter((service) => service.id !== id)
+    );
+  };
+
+  const updateAdditionalService = (id, field, value) => {
+    setAdditionalServices((prev) =>
+      prev.map((service) =>
+        service.id === id ? { ...service, [field]: value } : service
+      )
+    );
+  };
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -108,16 +157,16 @@ export default function SetupService({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.sectionTitle}>Dịch vụ chính</Text>
-        {mainServices.map((service) => (
-          <View key={service.id} style={styles.serviceOption}>
+        {mainServices.map((service, index) => (
+          <View key={service.id || index} style={styles.serviceOption}>
             <View style={styles.headerRow}>
               <Text style={styles.optionLabel}>{service.name}</Text>
               <Switch
                 value={service.enabled || false}
                 onValueChange={(value) =>
                   setMainServices((prev) =>
-                    prev.map((s) =>
-                      s.id === service.id ? { ...s, enabled: value } : s
+                    prev.map((s, i) =>
+                      i === index ? { ...s, enabled: value } : s
                     )
                   )
                 }
@@ -125,35 +174,31 @@ export default function SetupService({ navigation }) {
             </View>
             {service.enabled && (
               <View style={styles.pricingContainerWrapper}>
-                <TextInput
-                  style={styles.childServicePriceInput}
-                  placeholder="Nhập giá tiền"
-                  keyboardType="numeric"
-                  value={
-                    service.price
-                      ? `${new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                          minimumFractionDigits: 0,
-                        })
-                          .format(service.price)
-                          .replace("₫", "đ")}`
-                      : "0 đ"
-                  }
-                  onChangeText={(price) => {
-                    const numericPrice = price.replace(/[^\d]/g, ""); // Chỉ giữ lại số
-                    setAdditionalServices((prev) =>
-                      prev.map((s) =>
-                        s.id === service.id ? { ...s, price: numericPrice } : s
-                      )
-                    );
-                  }}
-                />
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.childServicePriceInput}
+                    placeholder="Nhập giá tiền"
+                    keyboardType="numeric"
+                    value={
+                      service.price
+                        ? Number(service.price).toLocaleString("vi-VN")
+                        : ""
+                    }
+                    onChangeText={(price) => {
+                      const numericPrice = price.replace(/[^\d]/g, "");
+                      setMainServices((prev) =>
+                        prev.map((s, i) =>
+                          i === index ? { ...s, price: numericPrice } : s
+                        )
+                      );
+                    }}
+                  />
+                  <Text style={styles.unitText}>đ/ngày</Text>
+                </View>
               </View>
             )}
           </View>
         ))}
-
         <TouchableOpacity
           style={styles.addServiceButton}
           onPress={() => navigation.navigate("CareTimeManagement")}
@@ -163,72 +208,57 @@ export default function SetupService({ navigation }) {
             Quản lý thời gian chăm sóc
           </Text>
         </TouchableOpacity>
-
         <Text style={styles.sectionTitle}>Dịch vụ thêm</Text>
-        {additionalServices.map((service) => (
-          <View key={service.id} style={styles.serviceOption}>
+        {additionalServices.map((service, index) => (
+          <View key={service.id || index} style={styles.serviceOption}>
             <View style={styles.headerRow}>
-              <Text style={styles.optionLabel}>{service.name}</Text>
+              <TextInput
+                style={styles.optionLabel}
+                placeholder="Nhập tên dịch vụ"
+                value={service.name}
+                onChangeText={(name) =>
+                  setAdditionalServices((prev) =>
+                    prev.map((s, i) => (i === index ? { ...s, name } : s))
+                  )
+                }
+              />
               <Switch
                 value={service.enabled || false}
-                onValueChange={(value) => {
-                  // Cập nhật trạng thái `enabled` trong state
+                onValueChange={(value) =>
                   setAdditionalServices((prev) =>
-                    prev.map((s) =>
-                      s.id === service.id ? { ...s, enabled: value } : s
+                    prev.map((s, i) =>
+                      i === index ? { ...s, enabled: value } : s
                     )
-                  );
-
-                  // Cập nhật trạng thái `status` trên API
-                  try {
-                    putData(
-                      `/services/${service.id}`,
-                      {
-                        ...service,
-                        status: value ? "ACTIVE" : "INACTIVE", // Chuyển đổi trạng thái dựa trên Switch
-                      },
-                      accessToken
-                    );
-                  } catch (error) {
-                    console.error("Error updating service status:", error);
-                  }
-                }}
+                  )
+                }
               />
             </View>
             {service.enabled && (
               <View style={styles.pricingContainerWrapper}>
-                <TextInput
-                  style={styles.childServicePriceInput}
-                  placeholder="Nhập giá tiền"
-                  keyboardType="numeric"
-                  value={
-                    service.price
-                      ? `${new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                          minimumFractionDigits: 0,
-                        })
-                          .format(service.price)
-                          .replace("₫", "đ")}`
-                      : "0 đ"
-                  }
-                  onChangeText={(price) => {
-                    const numericPrice = price.replace(/[^\d]/g, ""); // Chỉ giữ lại số
-                    setAdditionalServices((prev) =>
-                      prev.map((s) =>
-                        s.id === service.id ? { ...s, price: numericPrice } : s
-                      )
-                    );
-                  }}
-                />
-
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.childServicePriceInput}
+                    placeholder="Nhập giá tiền"
+                    keyboardType="numeric"
+                    value={
+                      service.price
+                        ? Number(service.price).toLocaleString("vi-VN")
+                        : ""
+                    }
+                    onChangeText={(price) => {
+                      const numericPrice = price.replace(/[^\d]/g, "");
+                      setAdditionalServices((prev) =>
+                        prev.map((s, i) =>
+                          i === index ? { ...s, price: numericPrice } : s
+                        )
+                      );
+                    }}
+                  />
+                  <Text style={styles.unitText}>đ/dịch vụ</Text>
+                </View>
                 <TouchableOpacity
                   style={styles.trashIcon}
-                  onPress={() =>
-                    setAdditionalServices((prev) =>
-                      prev.filter((s) => s.id !== service.id)
-                    )
-                  }
+                  onPress={() => deleteAdditionalService(service.id)}
                 >
                   <Ionicons name="trash-outline" size={20} color="#FF3D00" />
                 </TouchableOpacity>
@@ -239,18 +269,7 @@ export default function SetupService({ navigation }) {
 
         <TouchableOpacity
           style={styles.addServiceButton}
-          onPress={() =>
-            setAdditionalServices((prev) => [
-              ...prev,
-              {
-                id: Date.now(),
-                name: "",
-                price: "",
-                serviceType: "ADDITION_SERVICE",
-                enabled: true,
-              },
-            ])
-          }
+          onPress={addNewAdditionalService}
         >
           <Ionicons name="add-circle-outline" size={24} color="#902C6C" />
           <Text style={styles.addServiceButtonText}>Tạo mới dịch vụ thêm</Text>
@@ -264,7 +283,7 @@ export default function SetupService({ navigation }) {
           {isSubmitting ? (
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
-            <Text style={styles.completeButtonText}>HOÀN THÀNH</Text>
+            <Text style={styles.completeButtonText}>Lưu thay đổi</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -418,6 +437,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: height * 0.01,
     marginTop: height * 0.01,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  childServicePriceInput: {
+    flex: 1,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    fontSize: 16,
+    color: "#333",
+  },
+  unitText: {
+    fontSize: 16,
+    color: "#555",
+    marginLeft: 5,
+    flexShrink: 0,
   },
   trashIcon: {
     marginLeft: height * 0.01,
