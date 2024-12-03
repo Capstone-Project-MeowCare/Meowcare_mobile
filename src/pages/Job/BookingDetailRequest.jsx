@@ -104,16 +104,16 @@ export default function BookingDetailRequest({ navigation }) {
     )
   ).length;
 
-  const dailyPrice = bookingDetails.mainService?.service?.price || 0;
-
-  // Tính giá theo số ngày
-  const pricePerDay = dailyPrice * daysBooked;
-
-  // Tính giá dựa trên số lượng mèo
+  // Tính tổng giá trị
+  const dailyPrice = bookingDetails.mainService?.service?.price || 0; // Giá dịch vụ chính mỗi ngày
+  const pricePerDay = dailyPrice * daysBooked; // Giá theo số ngày đã đặt
   const pricePerPet = dailyPrice * petCount;
 
-  // Tổng số tiền
-  const totalPrice = pricePerDay + pricePerPet;
+  // Giá mỗi ngày cho tất cả mèo
+  const pricePerDayForAllPets = dailyPrice * petCount * daysBooked;
+
+  // Tổng số tiền (bao gồm số lượng mèo và số ngày đã đặt)
+  const totalPrice = pricePerDayForAllPets;
 
   return (
     <View style={styles.container}>
@@ -241,26 +241,17 @@ export default function BookingDetailRequest({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.petLabel}>Dịch vụ khách đã chọn:</Text>
 
-          {/* Liệt kê Main Service */}
-          {/* <View style={styles.dotTextContainer}>
-            <View style={styles.textWrapper}>
-             
-              <Text style={styles.dotText}>
-                {` _${bookingDetails.mainService?.service?.name || "Không xác định"}`}
-              </Text>
-            </View>
-            <Text style={styles.price}>
-              {`${bookingDetails.mainService?.service?.price.toLocaleString() || 0}đ`}
-            </Text>
-          </View> */}
+          {/* Hiển thị dịch vụ chính */}
           <View style={styles.mainServiceContainer}>
             <Text style={styles.serviceName}>
-              {`_ ${bookingDetails.mainService?.service?.name || "Không xác định"}`}
+              {`${bookingDetails.mainService?.service?.name || "Không xác định"}`}
             </Text>
-            <Text style={styles.price}>
-              {`${dailyPrice.toLocaleString()}đ`}
-            </Text>
+            {/* <Text style={styles.price}>
+              {`${dailyPrice.toLocaleString()}đ / ngày`}
+            </Text> */}
           </View>
+
+          {/* Hiển thị các dịch vụ con */}
           {bookingDetailWithPetAndServices
             .filter((detail) => detail.service?.serviceType === "CHILD_SERVICE")
             .map((childService, index) => (
@@ -273,30 +264,24 @@ export default function BookingDetailRequest({ navigation }) {
                 </View>
               </View>
             ))}
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>
-              Giá mỗi ngày ({daysBooked} ngày):
-            </Text>
-            <Text style={styles.priceValue}>
-              {`${(dailyPrice * daysBooked).toLocaleString()}đ`}
-            </Text>
-          </View>
 
+          {/* Hiển thị giá chi tiết */}
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>
-              Giá dựa trên số lượng mèo ({petCount} mèo):
+              Giá mỗi ngày ({daysBooked} ngày) x Số lượng mèo ({petCount} mèo):
             </Text>
             <Text style={styles.priceValue}>
-              {`${pricePerPet.toLocaleString()}đ`}
+              {`${pricePerDayForAllPets.toLocaleString()}đ`}
             </Text>
           </View>
         </View>
 
+        {/* Tổng số tiền */}
         <View style={styles.totalPaymentContainer}>
           <Text style={styles.priceLabel1}>Tổng số tiền:</Text>
-          <Text
-            style={styles.priceValue1}
-          >{`${totalPrice.toLocaleString()}đ`}</Text>
+          <Text style={styles.priceValue1}>
+            {`${totalPrice.toLocaleString()}đ`}
+          </Text>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -487,7 +472,7 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.01,
   },
   priceLabel: {
-    fontSize: width * 0.04,
+    fontSize: width * 0.035,
     fontWeight: "600",
     color: "#000857",
     flex: 1,

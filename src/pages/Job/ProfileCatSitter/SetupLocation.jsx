@@ -13,6 +13,7 @@ import { Entypo, Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import { getData, putData } from "../../../api/api";
 import { useAuth } from "../../../../auth/useAuth";
+import CustomToast from "../../../components/CustomToast";
 
 export default function SetupLocation({ navigation }) {
   const { user } = useAuth();
@@ -114,7 +115,10 @@ export default function SetupLocation({ navigation }) {
       const response = await putData(`/sitter-profiles/${profileId}`, payload);
 
       console.log("Phản hồi từ API:", response);
-      Alert.alert("Thành công", "Địa chỉ đã được cập nhật.");
+      CustomToast({
+        text: `Cập nhật địa chỉ thành công`,
+        position: 300,
+      });
       navigation.navigate("CatSitterProfile"); // Điều hướng về trang profile
     } catch (error) {
       console.error("Lỗi khi cập nhật địa chỉ:", error);
