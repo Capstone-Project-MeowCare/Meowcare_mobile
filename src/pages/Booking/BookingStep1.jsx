@@ -67,19 +67,36 @@ export default function BookingStep1({
         if (userId) {
           const response = await getData(`/services/sitter/${userId}`);
           if (response?.data) {
-            const services = response.data.map((service) => ({
-              id: service.id,
-              name: service.name,
-              price: service.price,
-              type: service.serviceType || "Additional Service",
-            }));
+            const services = response.data;
 
+            // Lọc và gán các MAIN_SERVICE đang hoạt động
             setBasicServices(
-              services.filter((service) => service.type === "MAIN_SERVICE")
+              services
+                .filter(
+                  (service) =>
+                    service.serviceType === "MAIN_SERVICE" &&
+                    service.status === "ACTIVE"
+                )
+                .map((service) => ({
+                  id: service.id,
+                  name: service.name,
+                  price: service.price,
+                  type: service.serviceType || "Additional Service",
+                }))
             );
 
+            // Lọc và gán các CHILD_SERVICE đang hoạt động
             setChildServices(
-              services.filter((service) => service.type === "CHILD_SERVICE")
+              services
+                .filter(
+                  (service) =>
+                    service.serviceType === "CHILD_SERVICE" &&
+                    service.status === "ACTIVE"
+                )
+                .map((service) => ({
+                  id: service.id,
+                  name: service.name,
+                }))
             );
           }
         } else {
@@ -89,6 +106,7 @@ export default function BookingStep1({
         console.error("Error fetching sitter services:", error);
       }
     };
+
     fetchServices();
   }, [userId]);
 

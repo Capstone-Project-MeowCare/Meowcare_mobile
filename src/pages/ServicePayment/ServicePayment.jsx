@@ -89,13 +89,13 @@ export default function ServicePayment() {
       // Dịch vụ chính
       if (step1Info.selectedServiceId) {
         selectedServices.push({
-          name: step1Info.selectedService || "Không xác định", // Kiểm tra nếu thiếu name
-          price: step1Info.price * days * numberOfCats || 0,
+          name: step1Info.selectedService || "Không xác định",
+          price: (step1Info.price || 0) * days * numberOfCats,
           type: "MAIN_SERVICE",
         });
       }
 
-      // Dịch vụ con (CHILD_SERVICE) - chỉ lấy name
+      // Dịch vụ con (CHILD_SERVICE)
       if (
         Array.isArray(step1Info.childServices) &&
         step1Info.childServices.length > 0
@@ -103,6 +103,7 @@ export default function ServicePayment() {
         step1Info.childServices.forEach((child) => {
           selectedServices.push({
             name: child.name || "Dịch vụ con không xác định",
+            price: (child.price || 0) * days * numberOfCats, // Giá phải có giá trị
             type: "CHILD_SERVICE",
           });
         });
@@ -112,7 +113,7 @@ export default function ServicePayment() {
       selectedExtras.forEach((extra) => {
         selectedServices.push({
           name: extra.name || "Dịch vụ thêm không xác định",
-          price: extra.price * days * numberOfCats || 0,
+          price: (extra.price || 0) * days * numberOfCats, // Giá phải có giá trị
           type: extra.type || "ADDITIONAL_SERVICE",
         });
       });
@@ -120,10 +121,11 @@ export default function ServicePayment() {
       // Thêm log để kiểm tra dịch vụ
       console.log("Selected Services:", selectedServices);
 
-      // Tính tổng giá trị (chỉ tính MAIN_SERVICE và ADDITIONAL_SERVICE)
-      const total = selectedServices
-        .filter((service) => service.type !== "CHILD_SERVICE")
-        .reduce((sum, service) => sum + (service.price || 0), 0);
+      // Tính tổng giá trị
+      const total = selectedServices.reduce(
+        (sum, service) => sum + (service.price || 0), // Kiểm tra giá trị `price` trước khi cộng
+        0
+      );
 
       setTotalPrice(total);
       setServices(selectedServices);
@@ -296,13 +298,19 @@ export default function ServicePayment() {
   const handlePayment = async () => {
     setIsLoading(true);
 
-    // Chỉ lấy các dịch vụ thuộc loại MAIN_SERVICE
     const bookingPayload = {
-      bookingDetails: step3Info.selectedCats.map((cat) => ({
-        quantity: 1,
-        petProfileId: cat.id,
-        serviceId: step1Info.selectedServiceId,
-      })),
+      bookingDetails: step3Info.selectedCats.flatMap((cat) => [
+        {
+          quantity: 1,
+          petProfileId: cat.id,
+          serviceId: step1Info.selectedServiceId,
+        },
+        ...step1Info.childServices.map((child) => ({
+          quantity: 1,
+          petProfileId: cat.id,
+          serviceId: child.id,
+        })),
+      ]),
       sitterId,
       time: new Date().toISOString(),
       startDate: new Date(step2Info.startDate).toISOString(),
@@ -314,36 +322,31 @@ export default function ServicePayment() {
       note: contactInfo.note,
     };
 
-    console.log("=== START: Creating Booking ===");
-    console.log("Booking Payload:", JSON.stringify(bookingPayload, null, 2));
-
     try {
+      console.log("=== START: Creating Booking ===");
       const bookingResponse = await postData(
         "/booking-orders/with-details",
         bookingPayload
       );
-
       console.log("Booking Response:", bookingResponse);
 
       if (bookingResponse.status === 1000 && bookingResponse.data?.id) {
         const bookingId = bookingResponse.data.id;
+
         console.log("Booking created successfully with ID:", bookingId);
 
         // Gửi thông báo đến sitter
-        try {
-          await sendNotification({
-            userId: sitterId,
-            title: "Yêu cầu booking mới",
-            message: `Bạn nhận được yêu cầu chăm sóc từ ${contactInfo.name}.`,
-            relatedId: bookingId,
-            relatedType: "BOOKING",
-            type: "REQUEST_BOOKING",
-            status: "NEW",
-          });
-          console.log("Thông báo đã gửi đến sitter:", sitterId);
-        } catch (notificationError) {
-          console.error("Error sending notification:", notificationError);
-        }
+        await sendNotification({
+          userId: sitterId, // Gửi thông báo đến sitter
+          title: "Yêu cầu booking mới",
+          message: `Bạn nhận được yêu cầu chăm sóc từ ${contactInfo.name}.`,
+          relatedId: bookingId,
+          relatedType: "BOOKING",
+          type: "REQUEST_BOOKING",
+          status: "NEW",
+        });
+
+        console.log("Thông báo đã gửi đến sitter:", sitterId);
 
         // Thanh toán
         const redirectUrl = encodeURIComponent(
@@ -362,48 +365,32 @@ export default function ServicePayment() {
             const { payUrl, deeplink, applink } = paymentResponse.data;
 
             if (payUrl) {
-              console.log("Opening payUrl:", payUrl);
               Linking.openURL(payUrl);
             } else if (deeplink) {
-              console.log("Opening deeplink:", deeplink);
               Linking.openURL(deeplink);
             } else if (applink) {
-              console.log("Opening applink:", applink);
               Linking.openURL(applink);
             } else {
-              console.error("No valid payment URL provided.");
               Alert.alert(
                 "Lỗi thanh toán",
                 "Không thể mở liên kết thanh toán. Vui lòng thử lại sau."
               );
             }
           } else {
-            console.error("Invalid Payment Response:", paymentResponse);
             Alert.alert(
               "Lỗi thanh toán",
               "Không thể tạo liên kết thanh toán. Vui lòng thử lại sau."
             );
           }
-        } catch (paymentError) {
-          console.error("Payment Error:", paymentError);
-          if (paymentError.response) {
-            console.error("Payment Error Details:", paymentError.response.data);
-          }
+        } catch (error) {
+          console.error("Payment Error:", error);
           Alert.alert("Lỗi thanh toán", "Không thể xử lý thanh toán.");
         }
       } else {
-        console.error("Invalid Booking Response:", bookingResponse);
         Alert.alert("Lỗi", "Không thể tạo booking. Vui lòng thử lại sau.");
       }
-    } catch (bookingError) {
-      console.error("Booking Error:", bookingError);
-
-      if (bookingError.response) {
-        console.error("Booking Error Response:", bookingError.response.data);
-      } else {
-        console.error("Error Details:", bookingError.message);
-      }
-
+    } catch (error) {
+      console.error("Booking Error:", error);
       Alert.alert("Lỗi", "Đặt lịch thất bại.");
     } finally {
       setIsLoading(false);
@@ -455,12 +442,9 @@ export default function ServicePayment() {
                   {service.name || "Dịch vụ không xác định"}:
                 </Text>
               </View>
-              {service.type !== "CHILD_SERVICE" &&
-                service.price !== undefined && (
-                  <Text style={styles.price}>
-                    {`${service.price.toLocaleString("vi-VN")} đ`}
-                  </Text>
-                )}
+              <Text style={styles.price}>
+                {`${service.price.toLocaleString()}đ`}
+              </Text>
             </View>
           ))}
 
