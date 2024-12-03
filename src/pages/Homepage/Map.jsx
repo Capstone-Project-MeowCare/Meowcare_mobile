@@ -49,11 +49,19 @@ export default function FindSitterByMap() {
     }
   };
 
+  // const catSittersWithVerified = catSitters.map((sitter) => ({
+  //   ...sitter,
+  //   verified: "Đã cập nhật 1 ngày trước",
+  //   reviews: "10 đánh giá",
+  // }));
   const catSittersWithVerified = catSitters.map((sitter) => ({
     ...sitter,
-    verified: "Đã cập nhật 1 ngày trước",
-    reviews: "10 đánh giá",
+    verified: sitter.verified || "Chưa cập nhật",
+    reviews: sitter.reviews || "0 đánh giá",
+    rating: sitter.rating || 0, // Giá trị mặc định cho rating
+    price: sitter.price || 0, // Giá trị mặc định cho giá
   }));
+
   // Fetch tọa độ từ location string
   const fetchCoordinates = async (location) => {
     try {
@@ -237,8 +245,18 @@ export default function FindSitterByMap() {
                   <Text style={styles.priceLabel}>Giá mỗi đêm</Text>
                 </View>
                 <View style={styles.centerRow}>
-                  <Text style={styles.description}>{item.bio}</Text>
-                  <Text style={styles.price}>150.000đ</Text>
+                  {/* <Text style={styles.description}>{item.bio}</Text>
+                  <Text style={styles.price}>150.000đ</Text> */}
+                  {item.bio ? (
+                    <Text style={styles.description}>{item.bio}</Text>
+                  ) : null}
+                  {item.price ? (
+                    <Text
+                      style={styles.price}
+                    >{`${item.price.toString()}đ`}</Text>
+                  ) : (
+                    <Text style={styles.price}>Chưa có giá</Text>
+                  )}
                 </View>
                 <View style={styles.addressRow}>
                   <Text style={styles.address}>{item.location}</Text>
@@ -251,7 +269,13 @@ export default function FindSitterByMap() {
                     starSize={16}
                     fullStarColor={"#F8B816"}
                   />
-                  <Text style={styles.ratingText}>{item.rating}</Text>
+                  {/* <Text style={styles.ratingText}>{item.rating}</Text> */}
+                  <Text style={styles.ratingText}>
+                    {item.rating !== undefined && item.rating !== null
+                      ? item.rating.toString()
+                      : "Chưa có đánh giá"}
+                  </Text>
+
                   <View style={styles.dotAndReviewContainer}>
                     <View style={styles.dot} />
                     <Text style={styles.reviews}>{item.reviews}</Text>
