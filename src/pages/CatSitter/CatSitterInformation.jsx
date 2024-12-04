@@ -420,9 +420,10 @@ const styles = StyleSheet.create({
   },
   map: {
     width: "100%",
-    height: 300, // Đặt chiều cao cố định cho bản đồ
+    height: 300,
     borderRadius: 10,
     overflow: "hidden",
     marginTop: 10,
+    alignSelf: "center",
   },
 });
