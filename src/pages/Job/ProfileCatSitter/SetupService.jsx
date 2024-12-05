@@ -156,8 +156,8 @@ export default function SetupService({ navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Dịch vụ chính</Text>
-        {mainServices.map((service, index) => (
+        <Text style={styles.sectionTitle}>Loại hình dịch vụ</Text>
+        {/* {mainServices.map((service, index) => (
           <View key={service.id || index} style={styles.serviceOption}>
             <View style={styles.headerRow}>
               <Text style={styles.optionLabel}>{service.name}</Text>
@@ -198,6 +198,111 @@ export default function SetupService({ navigation }) {
               </View>
             )}
           </View>
+        ))} */}
+        {mainServices.map((service, index) => (
+          <TouchableOpacity
+            key={service.id || index}
+            style={styles.serviceWrapper}
+            onPress={() =>
+              navigation.navigate("CareTimeManagement", {
+                serviceId: service.id,
+              })
+            }
+          >
+            <View style={styles.serviceOption}>
+              <View style={styles.headerRow}>
+                <Text style={styles.optionLabel}>{service.name}</Text>
+                <Switch
+                  value={service.enabled || false}
+                  onValueChange={(value) =>
+                    setMainServices((prev) =>
+                      prev.map((s, i) =>
+                        i === index ? { ...s, enabled: value } : s
+                      )
+                    )
+                  }
+                />
+              </View>
+              {service.enabled && (
+                <>
+                  <TextInput
+                    style={styles.childServicePriceInput}
+                    placeholder="Nhập giá tiền"
+                    keyboardType="numeric"
+                    value={
+                      service.price
+                        ? Number(service.price).toLocaleString("vi-VN")
+                        : ""
+                    }
+                    editable={service.isEditing || false}
+                    onChangeText={(price) => {
+                      const numericPrice = price.replace(/[^\d]/g, "");
+                      setMainServices((prev) =>
+                        prev.map((s, i) =>
+                          i === index ? { ...s, price: numericPrice } : s
+                        )
+                      );
+                    }}
+                  />
+                  <View style={styles.buttonRow}>
+                    {!service.isEditing ? (
+                      <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() =>
+                          setMainServices((prev) =>
+                            prev.map((s, i) =>
+                              i === index
+                                ? {
+                                    ...s,
+                                    isEditing: true,
+                                    originalPrice: s.price,
+                                  }
+                                : s
+                            )
+                          )
+                        }
+                      >
+                        <Text style={styles.editButtonText}>Chỉnh giá</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <>
+                        <TouchableOpacity
+                          style={styles.saveButton}
+                          onPress={() =>
+                            setMainServices((prev) =>
+                              prev.map((s, i) =>
+                                i === index ? { ...s, isEditing: false } : s
+                              )
+                            )
+                          }
+                        >
+                          <Text style={styles.saveButtonText}>Lưu</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.cancelButton}
+                          onPress={() =>
+                            setMainServices((prev) =>
+                              prev.map((s, i) =>
+                                i === index
+                                  ? {
+                                      ...s,
+                                      isEditing: false,
+                                      price: s.originalPrice,
+                                    }
+                                  : s
+                              )
+                            )
+                          }
+                        >
+                          <Text style={styles.cancelButtonText}>Hủy bỏ</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </View>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
         ))}
         <TouchableOpacity
           style={styles.addServiceButton}
@@ -407,6 +512,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: height * 0.01,
   },
+  serviceListContainer: {
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 10,
+  },
+  serviceWrapper: {
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 10,
+  },
+
   serviceOption: {
     marginVertical: height * 0.01,
   },
@@ -444,11 +564,59 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   childServicePriceInput: {
-    flex: 1,
-    paddingVertical: 5,
+    width: "50%",
+    borderWidth: 1,
+    borderColor: "#D3D3D3",
     paddingHorizontal: 10,
-    fontSize: 16,
+    fontSize: 14,
     color: "#333",
+  },
+  editButton: {
+    marginTop: 10,
+    backgroundColor: "#902C6C",
+    paddingVertical: 8,
+    borderRadius: 8,
+    width: 100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  editButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginTop: 10,
+    gap: 8,
+  },
+  saveButton: {
+    backgroundColor: "#902C6C",
+    paddingVertical: 8,
+    borderRadius: 8,
+    width: 100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#FF3D00",
+    paddingVertical: 8,
+    borderRadius: 8,
+    width: 100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    textAlign: "center",
   },
   unitText: {
     fontSize: 16,
@@ -532,10 +700,15 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   childServicePriceInput: {
-    flex: 1,
+    width: "40%",
+    maxWidth: 150,
+    borderWidth: 1,
+    borderColor: "#D3D3D3",
     paddingHorizontal: 10,
     fontSize: 14,
     color: "#333",
+    borderRadius: 5,
+    height: 40,
   },
   completeButtonText: {
     color: "#FFFFFF",
