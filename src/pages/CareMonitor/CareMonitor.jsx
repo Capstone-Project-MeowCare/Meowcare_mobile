@@ -259,13 +259,13 @@ export default function CareMonitor({ navigation, route }) {
             style={styles.backArrow}
           />
         </TouchableOpacity>
-        <Text style={styles.label}>Theo dõi thời gian chăm sóc</Text>
+        <Text style={styles.label}>Theo dõi lịch trình chăm sóc dự kiến</Text>
         <Text style={styles.Label}>Hoàn thành</Text>
       </View>
       
       <View style={styles.separator} />
 
-      <Text style={styles.timeLabel}>Thời gian chăm sóc</Text>
+      <Text style={styles.timeLabel}>Lịch trình chăm sóc dự kiến</Text>
       
       <View style={styles.dateRow}>
         <TouchableOpacity onPress={handlePreviousDay}>

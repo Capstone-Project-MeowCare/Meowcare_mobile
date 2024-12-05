@@ -173,7 +173,7 @@ export default function CareTimeManagement({ navigation }) {
         >
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Quản lý thời gian chăm sóc</Text>
+        <Text style={styles.headerTitle}>Quản lý lịch trình chăm sóc dự kiến</Text>
       </View>
 
       <View style={styles.divider} />
