@@ -80,7 +80,7 @@ export default function ServicePaymentOrderDetail() {
           <Text style={styles.highlightedText}>{step1Info.selectedFood}</Text>
         </Text> */}
         <Text style={styles.boldInfoText}>
-          Thời gian chăm sóc:{" "}
+          Lịch trình chăm sóc dự kiến:{" "}
           <Text style={styles.highlightedText}>
             {" "}
             {new Date(

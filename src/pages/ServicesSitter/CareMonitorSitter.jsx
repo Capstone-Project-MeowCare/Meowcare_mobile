@@ -336,7 +336,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
         >
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thời gian chăm sóc</Text>
+        <Text style={styles.headerTitle}>Lịch trình chăm sóc</Text>
         <TouchableOpacity
           style={styles.completeButton}
           onPress={handleCompleteBooking}
@@ -352,7 +352,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <Text style={styles.timeLabel}>Thời gian chăm sóc</Text>
+          <Text style={styles.timeLabel}>Lịch trình chăm sóc dự kiến</Text>
           <TouchableOpacity
             style={styles.petProfileButton}
             onPress={() =>
@@ -519,10 +519,10 @@ export default function CareMonitorCatSitter({ navigation, route }) {
                 <Text style={styles.reviews}>Đánh giá</Text>
               </View> */}
             </View>
-            <Text style={styles.addressText}>
-              Địa chỉ: {userProfile?.address}
+            <Text style={styles.addressText} numberOfLines={2} ellipsizeMode="tail">
+              Địa chỉ: {userProfile?.address} 
             </Text>
-            <Text style={styles.serviceText}> Dịch vụ: {serviceName}</Text>
+            <Text style={styles.serviceText} numberOfLines={1} ellipsizeMode="tail"> Dịch vụ: {serviceName}</Text>
           </View>
         </View>
 

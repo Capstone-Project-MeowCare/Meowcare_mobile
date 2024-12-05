@@ -205,7 +205,7 @@ export default function SetupService({ navigation }) {
         >
           <Ionicons name="time-outline" size={24} color="#902C6C" />
           <Text style={styles.addServiceButtonText}>
-            Quản lý thời gian chăm sóc
+            Quản lý lịch trình chăm sóc dự kiến
           </Text>
         </TouchableOpacity>
         <Text style={styles.sectionTitle}>Dịch vụ thêm</Text>

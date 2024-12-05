@@ -367,6 +367,46 @@ export default function SetupProfile({ navigation }) {
           />
           <Text style={styles.characterCount}>{environment.length} / 500</Text>
         </View>
+        <View style={styles.end}>
+
+        {/* Setup thông tin chuồng cho cat sitter */}
+        <Text style={styles.sectionTitle}>Thông tin chuồng gửi mèo</Text>
+        <View style={styles.row}>
+          <Text style={styles.labelText}>Số lượng chuồng dành cho mèo cưng:</Text>
+            <TextInput
+             style={styles.inputNumber}
+             keyboardType="number-pad"
+              maxLength={2} // Giới hạn nhập số ký tự
+              placeholder="Nhập số lượng"
+              // value={catCapacity} // Bạn có thể sử dụng state để lưu số lượng mèo
+              // onChangeText={(text) => setCatCapacity(text)}
+               />
+            </View>
+            <Text style={styles.CageTitle}>Ảnh chuồng cho mèo cưng:</Text>
+            <View style={styles.imageListContainer}>
+          <FlatList
+            data={profilePictures}
+            renderItem={renderImage}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={false}
+          />
+        </View>
+        <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
+          <Text style={styles.addButtonText}>Thêm ảnh </Text>
+        </TouchableOpacity>
+        <TextInput
+            style={styles.textInput}
+            multiline
+            numberOfLines={4}
+            maxLength={500}
+            // value={cage}
+            // onChangeText={(text) => setCage(text)}
+            placeholder="Vui lòng mô tả không gian và số lượng chuồng nuôi mèo của bạn."
+          />
+           <Text style={styles.characterCount}>{environment.length} / 500</Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -433,6 +473,13 @@ const styles = StyleSheet.create({
     color: "#1F1F1F",
     marginBottom: 4,
     marginTop: 10,
+  },
+  CageTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1F1F1F",
+    marginBottom: 8,
+    marginTop: 8,
   },
 
   imageList: {
@@ -528,4 +575,24 @@ const styles = StyleSheet.create({
     padding: 16,
     // Add more styling and components for previewing profile
   },
+  row: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 10,
+},
+labelText: {
+  fontSize: 14,
+  color: "#555",
+  flex: 1,
+},
+inputNumber: {
+  width: 100,
+  height: 40,
+  borderColor: "#ccc",
+  borderWidth: 1,
+  borderRadius: 8,
+  textAlign: "center",
+  fontSize: 14,
+  color: "#333",
+},
 });

@@ -375,11 +375,11 @@ export default function CareMonitorUser({ navigation, route }) {
             style={styles.backArrow}
           />
         </TouchableOpacity>
-        <Text style={styles.label}>Theo dõi thời gian chăm sóc</Text>
+        <Text style={styles.label}>Theo dõi lịch trình chăm sóc </Text>
       </View>
       <View style={styles.separator} />
 
-      <Text style={styles.timeLabel}>Thời gian chăm sóc</Text>
+      <Text style={styles.timeLabel}>Lịch trình chăm sóc dự kiến</Text>
 
       <View style={styles.dateRow}>
         <TouchableOpacity onPress={handlePreviousDay}>
@@ -535,7 +535,7 @@ export default function CareMonitorUser({ navigation, route }) {
           />
           <View style={styles.userDetails}>
             <View style={styles.userNameAndRating}>
-              <Text style={styles.userName}>
+              <Text style={styles.userName}  numberOfLines={1} ellipsizeMode="tail">
                 {sitterProfile?.fullName || "Nguyễn Lê Đức Tấn"}
               </Text>
               <StarRating
@@ -551,11 +551,11 @@ export default function CareMonitorUser({ navigation, route }) {
                 <Text style={styles.reviews}>Đánh giá</Text>
               </View>
             </View>
-            <Text style={styles.addressText}>
+            <Text style={styles.addressText} numberOfLines={1} ellipsizeMode="tail"> 
               Địa chỉ:
               {sitterProfile?.location || "Linh Xuân, Tp.Thủ Đức, Tp.HCM"}
             </Text>
-            <Text style={styles.serviceText}>
+            <Text style={styles.serviceText}  numberOfLines={1} ellipsizeMode="tail">
               Dịch vụ: {mainServiceName || "Gửi thú cưng"}
             </Text>
           </View>
