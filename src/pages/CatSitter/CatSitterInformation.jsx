@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  FlatList,TouchableOpacity ,
 } from "react-native";
 import WebView from "react-native-webview";
 import { getData } from "../../api/api";
@@ -38,6 +39,16 @@ const skills = [
   "Cắt móng",
   "Chăm sóc tai",
 ];
+const cageImages = [
+  require("../../../assets/VitaminSupplement.png"),
+  require("../../../assets/catpeople.jpg"),
+  require("../../../assets/camera.png"),
+  require("../../../assets/VitaminSupplement.png"),
+  require("../../../assets/VitaminSupplement.png"),
+  require("../../../assets/camera.png"),
+  require("../../../assets/camera.png"),
+  require("../../../assets/camera.png"),
+]; // Thay ảnh này bằng đường dẫn thực tế
 const locationData = [
   {
     text: "Sống trong một căn hộ",
@@ -66,6 +77,27 @@ export default function CatSitterInformation({
   const [coordinates, setCoordinates] = useState(null);
   const webViewRef = useRef(null);
   const [scheduleData, setScheduleData] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  // Số lượng ảnh muốn hiển thị cùng lúc
+  const PAGE_SIZE = 3;
+  // Lấy dữ liệu ảnh theo trang
+  const visibleImages = cageImages.slice(
+    currentIndex,
+    currentIndex + PAGE_SIZE
+  );
+  // Xử lý khi ấn "Next"
+  const handleNext = () => {
+    if (currentIndex + PAGE_SIZE < cageImages.length) {
+      setCurrentIndex(currentIndex + PAGE_SIZE);
+    }
+  };
+
+  // Xử lý khi ấn "Previous"
+  const handlePrev = () => {
+    if (currentIndex - PAGE_SIZE >= 0) {
+      setCurrentIndex(currentIndex - PAGE_SIZE);
+    }
+  };
   const fetchCoordinates = async () => {
     try {
       const response = await axios.get("https://photon.komoot.io/api/", {
@@ -172,7 +204,7 @@ export default function CatSitterInformation({
       </View>
 
       <View style={styles.scheduleContainer}>
-        <Text style={styles.scheduleTitle}>Thời gian chăm sóc:</Text>
+        <Text style={styles.titlesecond}>Lịch trình chăm sóc dự kiến:</Text>
         {console.log("Rendering scheduleData:", scheduleData)}
         {scheduleData.length > 0 ? (
           scheduleData.map((item, index) => (
@@ -192,7 +224,7 @@ export default function CatSitterInformation({
       </View>
 
       <View style={styles.skillContainer}>
-        <Text style={styles.skillText}>Kỹ năng:</Text>
+        <Text style={styles.titlesecond}>Kỹ năng:</Text>
         <View style={styles.skillsGrid}>
           {skill?.map((skillItem, index) => (
             <View key={index} style={styles.skillSquareContainer}>
@@ -202,7 +234,7 @@ export default function CatSitterInformation({
         </View>
       </View>
       <View style={styles.locationInfoContainer}>
-        <Text style={styles.locationInfoText}>Thông tin về nơi ở:</Text>
+        <Text style={styles.titlesecond}>Thông tin về nơi ở:</Text>
         <View style={styles.locationGrid}>
           {locationData.map((item, index) => (
             <View key={index} style={styles.locationItem}>
@@ -213,24 +245,59 @@ export default function CatSitterInformation({
         </View>
       </View>
       <View style={styles.trustSafetyContainer}>
-        <Text style={styles.trustSafetyTitle}>
-          An toàn, tin cậy & môi trường
+        <Text style={styles.titlesecond}>
+          An toàn, tin cậy & môi trường:
         </Text>
-        <Text style={styles.safetyDescription}>{environment}</Text>
-        <Text style={styles.safetyDescription}>
+        <Text style={styles.Description}>{environment}</Text>
+        <Text style={styles.Description}>
           Tôi có gắn camera theo dõi quá trình chăm sóc nếu bạn muốn xem quá
           trình
         </Text>
-        <Text style={styles.safetyDescription}>
+        <Text style={styles.Description}>
           Ứng dụng giám sát: App(name) IOS
         </Text>
-        <Text style={styles.safetyDescription}>
+        <Text style={styles.Description}>
           Sau khi booking tôi sẽ gửi tài khoản mật khẩu để bạn có thể theo dõi
           quá trình chăm sóc.
         </Text>
       </View>
+      {/* Thông tin chuồng gửi mèo */}
+      <View style={styles.trustSafetyContainer}>
+      <Text style={styles.titlesecond}>Thông tin chuồng gửi mèo:</Text>
+
+<View style={styles.imageContainer}>
+  {currentIndex > 0 && (
+    <TouchableOpacity onPress={handlePrev} style={styles.leftArrow}>
+      <Text style={styles.arrowText}>{"<"}</Text>
+    </TouchableOpacity>
+  )}
+
+  <FlatList
+    data={visibleImages}
+    horizontal
+    showsHorizontalScrollIndicator={false}
+    keyExtractor={(item, index) => index.toString()}
+    renderItem={({ item }) => (
+      <Image source={item} style={styles.cageImage} />
+    )}
+    contentContainerStyle={styles.imageList}
+  />
+
+  {currentIndex + PAGE_SIZE < cageImages.length && (
+    <TouchableOpacity onPress={handleNext} style={styles.rightArrow}>
+      <Text style={styles.arrowText}>{">"}</Text>
+    </TouchableOpacity>
+  )}
+</View>
+<View style={styles.descriptionContainer}>
+    <Text style={styles.Description}>
+      Hiện tại tôi có 5 chuồng nuôi mèo, tất cả đều được thiết kế thoáng mát, sạch sẽ, và đầy đủ tiện nghi để đảm bảo sự thoải mái cho mèo cưng của bạn.
+    </Text>
+  </View>
+</View>
+
       <View style={styles.addressContainer}>
-        <Text style={styles.addressTitle}>Vị trí</Text>
+        <Text style={styles.titlesecond}>Vị trí</Text>
         <Text style={styles.addressText}>{location}</Text>
         {osmHTML ? (
           <WebView
@@ -261,8 +328,15 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: width * 0.04,
     color: "#000857",
-    fontWeight: "600",
+    fontWeight: "900",
     marginTop: -height * 0.02,
+  },
+  titlesecond: {
+    textAlign: "left",
+    fontSize: width * 0.04,
+    color: "#000857",
+    fontWeight: "900",
+    marginTop: 10,
   },
   description: {
     textAlign: "left",
@@ -280,13 +354,7 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
   },
-  scheduleTitle: {
-    textAlign: "left",
-    fontSize: width * 0.04,
-    color: "#000857",
-    fontWeight: "600",
-    marginTop: -height * 0.005,
-  },
+  
   scheduleItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -383,15 +451,10 @@ const styles = StyleSheet.create({
   trustSafetyContainer: {
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
+    
   },
-  trustSafetyTitle: {
-    textAlign: "left",
-    fontSize: width * 0.04,
-    color: "#000857",
-    fontWeight: "600",
-    marginBottom: height * 0.01,
-  },
-  safetyDescription: {
+  
+  Description: {
     textAlign: "left",
     fontSize: width * 0.037,
     color: "rgba(0, 8, 87, 0.8)",
@@ -404,13 +467,7 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
   },
-  addressTitle: {
-    textAlign: "left",
-    fontSize: width * 0.04,
-    color: "#000857",
-    fontWeight: "600",
-    marginTop: -height * 0.005,
-  },
+ 
   addressText: {
     textAlign: "left",
     fontSize: width * 0.04,
@@ -425,5 +482,52 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginTop: 10,
     alignSelf: "center",
+  },
+  imageContainer: {
+    position: "relative",
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop:10,
+  },
+  cageImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginHorizontal: 5,
+  },
+  leftArrow: {
+    position: "absolute",
+    left: 5,
+    top: "50%",
+    transform: [{ translateY: -15 }],
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 15,
+    zIndex: 1,
+  },
+  rightArrow: {
+    position: "absolute",
+    right: 5,
+    top: "50%",
+    transform: [{ translateY: -15 }],
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 15,
+    zIndex: 1,
+  },
+  arrowText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  imageList: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 });
