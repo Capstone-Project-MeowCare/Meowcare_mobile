@@ -313,7 +313,7 @@ export default function SetupService({ navigation }) {
             Quản lý lịch trình chăm sóc dự kiến
           </Text>
         </TouchableOpacity>
-        <Text style={styles.sectionTitle}>Dịch vụ thêm</Text>
+        {/* <Text style={styles.sectionTitle}>Dịch vụ thêm</Text>
         {additionalServices.map((service, index) => (
           <View key={service.id || index} style={styles.serviceOption}>
             <View style={styles.headerRow}>
@@ -378,7 +378,7 @@ export default function SetupService({ navigation }) {
         >
           <Ionicons name="add-circle-outline" size={24} color="#902C6C" />
           <Text style={styles.addServiceButtonText}>Tạo mới dịch vụ thêm</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={styles.completeButton}
