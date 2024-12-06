@@ -18,6 +18,7 @@ import moment from "moment";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { firebaseAvatar } from "../../api/firebaseImg";
+import CustomToast from "../../components/CustomToast";
 
 const { width } = Dimensions.get("window");
 
@@ -30,6 +31,7 @@ export default function UpdateProfile({ navigation }) {
     gender: "",
     email: "",
     avatar: "",
+    address: "",
   });
   const [initialProfile, setInitialProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,7 @@ export default function UpdateProfile({ navigation }) {
           gender: response.data.gender || "",
           email: response.data.email || "",
           avatar: response.data.avatar || "",
+          address: response.data.address || "",
         };
         setProfile(fetchedProfile);
         setInitialProfile(fetchedProfile);
@@ -116,12 +119,16 @@ export default function UpdateProfile({ navigation }) {
         dob: profile.birthDate
           ? new Date(profile.birthDate).toISOString()
           : null,
+        address: profile.address,
       };
 
       const response = await putData(`/users/${user.id}`, payload);
 
       if (response?.status === 1002) {
-        Alert.alert("Thành công", "Hồ sơ đã được cập nhật.");
+        CustomToast({
+          text: `Cập nhật hồ sơ thành công`,
+          position: 300,
+        });
         navigation.navigate("Tài Khoản");
       } else {
         console.error("Cập nhật thất bại:", response.message);
@@ -200,7 +207,12 @@ export default function UpdateProfile({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-
+        <Text style={styles.label}>Địa chỉ</Text>
+        <TextInput
+          style={styles.input}
+          value={profile.address}
+          onChangeText={(text) => setProfile({ ...profile, address: text })}
+        />
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.inputemail}
