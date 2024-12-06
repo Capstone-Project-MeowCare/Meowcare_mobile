@@ -535,7 +535,11 @@ export default function CareMonitorUser({ navigation, route }) {
           />
           <View style={styles.userDetails}>
             <View style={styles.userNameAndRating}>
-              <Text style={styles.userName}  numberOfLines={1} ellipsizeMode="tail">
+              <Text
+                style={styles.userName}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {sitterProfile?.fullName || "Nguyễn Lê Đức Tấn"}
               </Text>
               <StarRating
@@ -551,11 +555,19 @@ export default function CareMonitorUser({ navigation, route }) {
                 <Text style={styles.reviews}>Đánh giá</Text>
               </View>
             </View>
-            <Text style={styles.addressText} numberOfLines={1} ellipsizeMode="tail"> 
+            <Text
+              style={styles.addressText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               Địa chỉ:
               {sitterProfile?.location || "Linh Xuân, Tp.Thủ Đức, Tp.HCM"}
             </Text>
-            <Text style={styles.serviceText}  numberOfLines={1} ellipsizeMode="tail">
+            <Text
+              style={styles.serviceText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               Dịch vụ: {mainServiceName || "Gửi thú cưng"}
             </Text>
           </View>
@@ -571,9 +583,9 @@ export default function CareMonitorUser({ navigation, route }) {
             <Text style={styles.messageText}>Nhắn tin với người chăm sóc</Text>
           </TouchableOpacity>
           <View style={styles.iconButtonsContainer}>
-            <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
+            {/* <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
               <Feather name="phone" size={20} color="rgba(0,0,0,0.6)" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity
               style={styles.iconButton}
@@ -851,7 +863,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   messageContainer: {
-    width: width * 0.65,
+    width: width * 0.75,
     height: height * 0.05,
     flexDirection: "row",
     alignItems: "center",
