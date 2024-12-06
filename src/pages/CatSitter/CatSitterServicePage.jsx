@@ -233,7 +233,11 @@ export default function CatSitterServicePage({ navigation }) {
       {activeTab === "Đánh giá" && user.id !== sitterDetails?.user?.id && (
         <TouchableOpacity
           style={styles.bookingButton}
-          // onPress={handleReviewPress}
+          onPress={() =>
+            navigation.navigate("SitterReviewScreen", {
+              sitterId: sitterDetails?.user?.id,
+            })
+          }
         >
           <Text style={styles.bookingText}>Đánh giá ngay</Text>
         </TouchableOpacity>
