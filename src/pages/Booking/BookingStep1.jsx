@@ -33,7 +33,7 @@ export default function BookingStep1({
   const [expanded, setExpanded] = useState(false); // Để toggle danh sách con
   const animationHeight = useRef(new Animated.Value(0)).current;
   const [serviceOptions, setServiceOptions] = useState([
-    { id: "", name: "---Vui lòng chọn dịch vụ---" },
+    { id: "", name: "---Vui lòng chọn loại dịch vụ---" },
   ]);
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export default function BookingStep1({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.mainContent}>
-          <Text style={styles.label}>Chọn dịch vụ chính</Text>
+          <Text style={styles.label}>Loại dịch vụ</Text>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={step1Info.selectedServiceId}
@@ -202,7 +202,7 @@ export default function BookingStep1({
               }}
               style={styles.picker}
             >
-              <Picker.Item label="---Vui lòng chọn dịch vụ---" value="" />
+              <Picker.Item label="---Vui lòng chọn loại dịch vụ---" value="" />
               {basicServices.map((service) => (
                 <Picker.Item
                   key={service.id}
@@ -219,12 +219,13 @@ export default function BookingStep1({
             {expanded && (
               <>
                 <Text style={styles.includedText}>
-                  Đây là các dịch vụ được bao gồm:
+                   Các hoạt động chăm sóc dự kiến:
                 </Text>
                 {childServices.map((child) => (
                   <View key={child.id} style={styles.childServiceRow}>
                     <Text
                       style={styles.childServiceText}
+                      onPress={() => handleServiceSelection(child)}
                     >{`_ ${child.name}`}</Text>
                   </View>
                 ))}
@@ -261,7 +262,7 @@ export default function BookingStep1({
             </Picker>
           </View> */}
 
-          <Text style={styles.label}>Dịch vụ thêm có phí</Text>
+          {/* <Text style={styles.label}>Dịch vụ thêm có phí</Text> */}
 
           {/* <View style={styles.extraServicesContainer}>
             {extraServices.map((service) => (
@@ -290,7 +291,7 @@ export default function BookingStep1({
             ))}
           </View> */}
 
-          <View style={styles.checkboxContainer}>
+          {/* <View style={styles.checkboxContainer}>
             <Checkbox
               value={step1Info.isChecked}
               onValueChange={(value) =>
@@ -301,7 +302,7 @@ export default function BookingStep1({
             <Text style={styles.checkboxLabel}>
               Dịch vụ đưa đón mèo (1-10km)
             </Text>
-          </View>
+          </View> */}
 
           {/* <View
             style={[
@@ -340,7 +341,7 @@ export default function BookingStep1({
             </Picker>
           </View> */}
 
-          <TextInput
+          {/* <TextInput
             value={userAddress || "Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"}
             onChangeText={(text) =>
               setStep1Info({ ...step1Info, selectedLocation: text })
@@ -348,7 +349,7 @@ export default function BookingStep1({
             style={styles.textInput}
             editable={step1Info.isChecked} // Cho phép chỉnh sửa nếu step1Info.isChecked = true
             placeholder="Nhập địa chỉ"
-          />
+          /> */}
 
           {/* <TextInput
             style={[
@@ -363,7 +364,7 @@ export default function BookingStep1({
             }
           /> */}
 
-          <View style={styles.checkboxContainer}>
+          {/* <View style={styles.checkboxContainer}>
             <Checkbox
               value={step1Info.isCustomFoodChecked}
               onValueChange={(value) =>
@@ -372,9 +373,9 @@ export default function BookingStep1({
               style={styles.checkbox}
             />
             <Text style={styles.checkboxLabel}>Thức ăn theo yêu cầu</Text>
-          </View>
+          </View> */}
 
-          <TextInput
+          {/* <TextInput
             style={[
               styles.textInput,
               !step1Info.isCustomFoodChecked && styles.disabledTextInput,
@@ -385,7 +386,7 @@ export default function BookingStep1({
             onChangeText={(text) =>
               setStep1Info({ ...step1Info, customFood: text })
             }
-          />
+          /> */}
         </View>
       </ScrollView>
     </View>
