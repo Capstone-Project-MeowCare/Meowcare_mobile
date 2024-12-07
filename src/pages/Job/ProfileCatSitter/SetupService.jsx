@@ -156,7 +156,7 @@ export default function SetupService({ navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Dịch vụ chính</Text>
+        <Text style={styles.sectionTitle}>Laoị dịch vụ</Text>
         {mainServices.map((service, index) => (
           <View key={service.id || index} style={styles.serviceOption}>
             <View style={styles.headerRow}>
@@ -208,7 +208,7 @@ export default function SetupService({ navigation }) {
             Quản lý lịch trình chăm sóc dự kiến
           </Text>
         </TouchableOpacity>
-        <Text style={styles.sectionTitle}>Dịch vụ thêm</Text>
+        <Text style={styles.sectionTitle}>Dịch vụ</Text>
         {additionalServices.map((service, index) => (
           <View key={service.id || index} style={styles.serviceOption}>
             <View style={styles.headerRow}>
@@ -272,7 +272,7 @@ export default function SetupService({ navigation }) {
           onPress={addNewAdditionalService}
         >
           <Ionicons name="add-circle-outline" size={24} color="#902C6C" />
-          <Text style={styles.addServiceButtonText}>Tạo mới dịch vụ thêm</Text>
+          <Text style={styles.addServiceButtonText}>Tạo mới dịch vụ</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

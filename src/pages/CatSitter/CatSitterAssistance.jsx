@@ -115,8 +115,8 @@ export default function CatSitterAssistance({ id }) {
         <Text>Đang tải...</Text>
       ) : (
         <>
-          {/* Render Dịch vụ chính */}
-          <Text style={styles.text}>Dịch vụ chính</Text>
+          {/* Render loại dịch vụ  */}
+          <Text style={styles.text}>Loại dịch vụ</Text>
           {mainServices.length > 0 ? (
             mainServices.map((service, index) => (
               <ServiceItem
@@ -127,13 +127,13 @@ export default function CatSitterAssistance({ id }) {
               />
             ))
           ) : (
-            <Text style={styles.noDataText}>Không có dịch vụ chính</Text>
+            <Text style={styles.noDataText}>Không có dịch vụ</Text>
           )}
 
           <View style={styles.separator} />
 
           {/* Render Dịch vụ phụ */}
-          <Text style={styles.text1}>Dịch vụ thêm có phí</Text>
+          <Text style={styles.text1}>Dịch vụ</Text>
           {additionalServices.length > 0 ? (
             additionalServices.map((service, index) => (
               <ExtraServiceItem
