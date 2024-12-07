@@ -26,23 +26,52 @@ export default function SetupService({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // useEffect(() => {
+  //   const fetchSitterServices = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       const response = await getData(`/services/sitter/${user.id}`);
+  //       if (response?.status === 1000 && Array.isArray(response.data)) {
+  //         const sitterServices = response.data.map((service) => ({
+  //           ...service,
+  //           enabled: service.status === "ACTIVE", // Nếu status là ACTIVE, Switch được bật
+  //         }));
+
+  //         setMainServices(
+  //           sitterServices.filter((s) => s.serviceType === "MAIN_SERVICE")
+  //         );
+  //         setAdditionalServices(
+  //           sitterServices.filter((s) => s.serviceType === "ADDITION_SERVICE")
+  //         );
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching sitter services:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   if (user?.id) fetchSitterServices();
+  // }, [user]);
   useEffect(() => {
     const fetchSitterServices = async () => {
       setIsLoading(true);
       try {
-        const response = await getData(`/services/sitter/${user.id}`);
+        const params = new URLSearchParams({
+          serviceType: "MAIN_SERVICE", // Lấy MAIN_SERVICE
+          status: "ACTIVE", // Chỉ lấy dịch vụ có status ACTIVE
+        });
+
+        const response = await getData(
+          `/services/sitter/${user.id}/type?${params.toString()}`
+        );
         if (response?.status === 1000 && Array.isArray(response.data)) {
           const sitterServices = response.data.map((service) => ({
             ...service,
             enabled: service.status === "ACTIVE", // Nếu status là ACTIVE, Switch được bật
           }));
 
-          setMainServices(
-            sitterServices.filter((s) => s.serviceType === "MAIN_SERVICE")
-          );
-          setAdditionalServices(
-            sitterServices.filter((s) => s.serviceType === "ADDITION_SERVICE")
-          );
+          setMainServices(sitterServices); // Chỉ cần lọc MAIN_SERVICE
         }
       } catch (error) {
         console.error("Error fetching sitter services:", error);
@@ -304,7 +333,7 @@ export default function SetupService({ navigation }) {
             </View>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.addServiceButton}
           onPress={() => navigation.navigate("CareTimeManagement")}
         >
@@ -312,7 +341,7 @@ export default function SetupService({ navigation }) {
           <Text style={styles.addServiceButtonText}>
             Quản lý lịch trình chăm sóc dự kiến
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         {/* <Text style={styles.sectionTitle}>Dịch vụ thêm</Text>
         {additionalServices.map((service, index) => (
           <View key={service.id || index} style={styles.serviceOption}>
