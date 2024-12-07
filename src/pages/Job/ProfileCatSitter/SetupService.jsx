@@ -409,7 +409,7 @@ export default function SetupService({ navigation }) {
           <Text style={styles.addServiceButtonText}>Tạo mới dịch vụ thêm</Text>
         </TouchableOpacity> */}
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.completeButton}
           onPress={handleComplete}
           disabled={isSubmitting}
@@ -419,7 +419,7 @@ export default function SetupService({ navigation }) {
           ) : (
             <Text style={styles.completeButtonText}>Lưu thay đổi</Text>
           )}
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
     </View>
   );
