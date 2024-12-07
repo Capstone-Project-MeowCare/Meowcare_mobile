@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { useAuth } from "../../../../auth/useAuth";
-import { getData, postData, putData } from "../../../api/api";
+import { deleteData, getData, postData, putData } from "../../../api/api";
 import CustomToast from "../../../components/CustomToast";
 
 const { width, height } = Dimensions.get("window");
@@ -74,8 +74,8 @@ export default function CareTimeManagement({ navigation }) {
         const childServices = response.data.map((service) => ({
           id: service.id,
           name: service.name,
-          startTime: `${service.startTime}:00`,
-          endTime: `${service.endTime}:00`,
+          startTime: service.startTime.slice(0, 5),
+          endTime: service.endTime.slice(0, 5),
         }));
 
         // Loại bỏ các dịch vụ trùng lặp theo `name`
@@ -111,7 +111,7 @@ export default function CareTimeManagement({ navigation }) {
     setAdditionalServices((prevServices) => [
       ...prevServices,
       {
-        id: Date.now(),
+        id: null,
         name: "",
         startTime: "00:00",
         endTime: "00:00",
@@ -173,25 +173,26 @@ export default function CareTimeManagement({ navigation }) {
       for (const service of additionalServices) {
         const payload = {
           name: service.name,
-          startTime: parseInt(service.startTime.split(":")[0], 10),
-          endTime: parseInt(service.endTime.split(":")[0], 10),
+          startTime: service.startTime,
+          endTime: service.endTime,
         };
 
         if (service.id) {
-          // Nếu dịch vụ đã tồn tại, sử dụng putData để cập nhật
-          await putData(`/services/${service.id}`, payload, accessToken);
-          console.log(`Dịch vụ cập nhật với ID: ${service.id}`, payload);
+          // Nếu dịch vụ đã tồn tại, sử dụng PUT để cập nhật
+          console.log("Updating service:", payload);
+          await putData(`/services/${service.id}`, payload);
         } else {
-          // Nếu dịch vụ mới, sử dụng postData để tạo mới
+          // Nếu là dịch vụ mới, sử dụng POST để tạo mới
           const newPayload = {
             ...payload,
             serviceType: "CHILD_SERVICE",
             status: "ACTIVE",
           };
+          console.log("Creating new service:", newPayload);
           await postData("/services", newPayload, accessToken);
-          console.log("Dịch vụ mới được tạo:", newPayload);
         }
       }
+
       CustomToast({
         text: `Cập nhật dịch vụ thành công`,
         position: 300,
@@ -200,6 +201,51 @@ export default function CareTimeManagement({ navigation }) {
     } catch (error) {
       console.error("Lỗi khi lưu dịch vụ:", error);
       Alert.alert("Lỗi", "Không thể lưu dịch vụ. Vui lòng thử lại.");
+    }
+  };
+
+  const confirmDeleteService = (id) => {
+    if (typeof id === "number") {
+      // Dịch vụ vừa tạo (id là số tạm thời), xóa ngay mà không hiển thị Alert
+      deleteAdditionalService(id);
+    } else {
+      // Dịch vụ đã lưu trong cơ sở dữ liệu, hiển thị Alert xác nhận
+      Alert.alert(
+        "Xác nhận xóa",
+        "Bạn có muốn xóa dịch vụ này không?",
+        [
+          {
+            text: "Hủy",
+            style: "cancel",
+          },
+          {
+            text: "Có",
+            onPress: () => handleDeleteService(id),
+          },
+        ],
+        { cancelable: true }
+      );
+    }
+  };
+
+  const handleDeleteService = async (id) => {
+    try {
+      const response = await deleteData(`/services/${id}`);
+      if (response?.status === 1003) {
+        setAdditionalServices((prevServices) =>
+          prevServices.filter((service) => service.id !== id)
+        );
+        CustomToast({
+          text: "Xóa dịch vụ thành công",
+          position: 300,
+        });
+      } else {
+        console.error("Xóa dịch vụ thất bại:", response.message);
+        Alert.alert("Lỗi", "Không thể xóa dịch vụ. Vui lòng thử lại.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa dịch vụ:", error);
+      Alert.alert("Lỗi", "Không thể xóa dịch vụ. Vui lòng thử lại.");
     }
   };
 
@@ -253,7 +299,7 @@ export default function CareTimeManagement({ navigation }) {
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
-                onPress={() => deleteAdditionalService(service.id)}
+                onPress={() => confirmDeleteService(service.id)}
                 style={styles.deleteButton}
               >
                 <Ionicons name="trash-outline" size={20} color="#FF3D00" />
@@ -300,7 +346,7 @@ export default function CareTimeManagement({ navigation }) {
             style={styles.confirmButton}
             onPress={handleAddService}
           >
-            <Text style={styles.confirmButtonText}>Thêm dịch vụ</Text>
+            <Text style={styles.confirmButtonText}>Lưu thay đổi</Text>
           </TouchableOpacity>
         </View>
       )}
