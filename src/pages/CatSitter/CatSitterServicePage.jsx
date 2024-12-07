@@ -14,17 +14,6 @@ import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
-const catSitters = [
-  {
-    id: "1",
-    name: "Nguyễn Phương Đại",
-    description: "Yêu mèo, có kinh nghiệm chăm sóc",
-    address: "Phường 10, Quận 6, Tp.HCM",
-    price: "150.000đ",
-    imageSource: require("../../../assets/avatar.png"),
-  },
-];
-
 function FirstRoute({ experience, skill, environment, location, userId }) {
   return (
     <View style={styles.routeContainer}>
@@ -87,7 +76,7 @@ export default function CatSitterServicePage({ navigation }) {
   const userId = route.params?.userId; // ID mới
   const [loading, setLoading] = useState(true);
   const [profilePictures, setProfilePictures] = useState([]);
-
+  const [activeTab, setActiveTab] = useState("Thông tin");
   useEffect(() => {
     const fetchSitterDetails = async () => {
       try {
@@ -201,6 +190,13 @@ export default function CatSitterServicePage({ navigation }) {
             tabBarIndicatorStyle: { backgroundColor: "#000857" },
             tabBarStyle: { backgroundColor: "#FFFAF5" },
           })}
+          screenListeners={{
+            state: (e) => {
+              const tabIndex = e.data.state.index;
+              const tabName = e.data.state.routeNames[tabIndex];
+              setActiveTab(tabName);
+            },
+          }}
         >
           <Tab.Screen
             name="Thông tin"
@@ -222,7 +218,7 @@ export default function CatSitterServicePage({ navigation }) {
         </Tab.Navigator>
       </View>
 
-      {user.id !== sitterDetails?.user?.id && (
+      {activeTab === "Thông tin" && user.id !== sitterDetails?.user?.id && (
         <TouchableOpacity
           style={styles.bookingButton}
           onPress={() =>
@@ -232,6 +228,18 @@ export default function CatSitterServicePage({ navigation }) {
           }
         >
           <Text style={styles.bookingText}>Đặt Lịch</Text>
+        </TouchableOpacity>
+      )}
+      {activeTab === "Đánh giá" && user.id !== sitterDetails?.user?.id && (
+        <TouchableOpacity
+          style={styles.bookingButton}
+          onPress={() =>
+            navigation.navigate("SitterReviewScreen", {
+              sitterId: sitterDetails?.user?.id,
+            })
+          }
+        >
+          <Text style={styles.bookingText}>Đánh giá ngay</Text>
         </TouchableOpacity>
       )}
     </ScrollView>
@@ -378,7 +386,6 @@ const styles = StyleSheet.create({
     Top: height * 0.02,
     alignSelf: "center",
   },
-
   bookingText: {
     color: "#FFF",
     fontWeight: "bold",

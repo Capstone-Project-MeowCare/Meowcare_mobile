@@ -519,10 +519,21 @@ export default function CareMonitorCatSitter({ navigation, route }) {
                 <Text style={styles.reviews}>Đánh giá</Text>
               </View> */}
             </View>
-            <Text style={styles.addressText} numberOfLines={2} ellipsizeMode="tail">
-              Địa chỉ: {userProfile?.address} 
+            <Text
+              style={styles.addressText}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              Địa chỉ: {userProfile?.address}
             </Text>
-            <Text style={styles.serviceText} numberOfLines={1} ellipsizeMode="tail"> Dịch vụ: {serviceName}</Text>
+            <Text
+              style={styles.serviceText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {" "}
+              Dịch vụ: {serviceName}
+            </Text>
           </View>
         </View>
 
@@ -536,9 +547,9 @@ export default function CareMonitorCatSitter({ navigation, route }) {
             <Text style={styles.messageText}>Nhắn tin với người chăm sóc</Text>
           </TouchableOpacity>
           <View style={styles.iconButtonsContainer}>
-            <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
+            {/* <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
               <Feather name="phone" size={20} color="rgba(0,0,0,0.6)" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity
               style={styles.iconButton}
@@ -857,7 +868,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   messageContainer: {
-    width: width * 0.65,
+    width: width * 0.75,
     height: height * 0.05,
     flexDirection: "row",
     alignItems: "center",

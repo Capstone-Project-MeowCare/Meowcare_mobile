@@ -8,7 +8,8 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  FlatList,TouchableOpacity ,
+  FlatList,
+  TouchableOpacity,
 } from "react-native";
 import WebView from "react-native-webview";
 import { getData } from "../../api/api";
@@ -245,17 +246,13 @@ export default function CatSitterInformation({
         </View>
       </View>
       <View style={styles.trustSafetyContainer}>
-        <Text style={styles.titlesecond}>
-          An toàn, tin cậy & môi trường:
-        </Text>
+        <Text style={styles.titlesecond}>An toàn, tin cậy & môi trường:</Text>
         <Text style={styles.Description}>{environment}</Text>
         <Text style={styles.Description}>
           Tôi có gắn camera theo dõi quá trình chăm sóc nếu bạn muốn xem quá
           trình
         </Text>
-        <Text style={styles.Description}>
-          Ứng dụng giám sát: App(name) IOS
-        </Text>
+        <Text style={styles.Description}>Ứng dụng giám sát: App(name) IOS</Text>
         <Text style={styles.Description}>
           Sau khi booking tôi sẽ gửi tài khoản mật khẩu để bạn có thể theo dõi
           quá trình chăm sóc.
@@ -263,38 +260,40 @@ export default function CatSitterInformation({
       </View>
       {/* Thông tin chuồng gửi mèo */}
       <View style={styles.trustSafetyContainer}>
-      <Text style={styles.titlesecond}>Thông tin chuồng gửi mèo:</Text>
+        <Text style={styles.titlesecond}>Thông tin chuồng gửi mèo:</Text>
 
-<View style={styles.imageContainer}>
-  {currentIndex > 0 && (
-    <TouchableOpacity onPress={handlePrev} style={styles.leftArrow}>
-      <Text style={styles.arrowText}>{"<"}</Text>
-    </TouchableOpacity>
-  )}
+        <View style={styles.imageContainer}>
+          {currentIndex > 0 && (
+            <TouchableOpacity onPress={handlePrev} style={styles.leftArrow}>
+              <Text style={styles.arrowText}>{"<"}</Text>
+            </TouchableOpacity>
+          )}
 
-  <FlatList
-    data={visibleImages}
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    keyExtractor={(item, index) => index.toString()}
-    renderItem={({ item }) => (
-      <Image source={item} style={styles.cageImage} />
-    )}
-    contentContainerStyle={styles.imageList}
-  />
+          <FlatList
+            data={visibleImages}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <Image source={item} style={styles.cageImage} />
+            )}
+            contentContainerStyle={styles.imageList}
+          />
 
-  {currentIndex + PAGE_SIZE < cageImages.length && (
-    <TouchableOpacity onPress={handleNext} style={styles.rightArrow}>
-      <Text style={styles.arrowText}>{">"}</Text>
-    </TouchableOpacity>
-  )}
-</View>
-<View style={styles.descriptionContainer}>
-    <Text style={styles.Description}>
-      Hiện tại tôi có 5 chuồng nuôi mèo, tất cả đều được thiết kế thoáng mát, sạch sẽ, và đầy đủ tiện nghi để đảm bảo sự thoải mái cho mèo cưng của bạn.
-    </Text>
-  </View>
-</View>
+          {currentIndex + PAGE_SIZE < cageImages.length && (
+            <TouchableOpacity onPress={handleNext} style={styles.rightArrow}>
+              <Text style={styles.arrowText}>{">"}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.Description}>
+            Hiện tại tôi có 5 chuồng nuôi mèo, tất cả đều được thiết kế thoáng
+            mát, sạch sẽ, và đầy đủ tiện nghi để đảm bảo sự thoải mái cho mèo
+            cưng của bạn.
+          </Text>
+        </View>
+      </View>
 
       <View style={styles.addressContainer}>
         <Text style={styles.titlesecond}>Vị trí</Text>
@@ -354,7 +353,7 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
   },
-  
+
   scheduleItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -451,9 +450,8 @@ const styles = StyleSheet.create({
   trustSafetyContainer: {
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
-    
   },
-  
+
   Description: {
     textAlign: "left",
     fontSize: width * 0.037,
@@ -467,7 +465,7 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
   },
- 
+
   addressText: {
     textAlign: "left",
     fontSize: width * 0.04,
@@ -487,7 +485,7 @@ const styles = StyleSheet.create({
     position: "relative",
     flexDirection: "row",
     alignItems: "center",
-    marginTop:10,
+    marginTop: 10,
   },
   cageImage: {
     width: 100,

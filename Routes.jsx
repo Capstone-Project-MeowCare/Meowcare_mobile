@@ -80,6 +80,7 @@ import ConfirmPayment from "./src/pages/ServicesSitter/ConfirmPayment";
 import InComeMoney from "./src/pages/Job/Wallet/IncomeMoney";
 import AdditionServicePayment from "./src/pages/ServicePayment/AdditionServicePayment";
 import CareTimeManagement from "./src/pages/Job/ProfileCatSitter/CareTimeManagement";
+import SitterReviewScreen from "./src/pages/Reviews/SitterReviewScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -731,6 +732,11 @@ export function Routes() {
               },
             }),
           }}
+        />
+        <Stack.Screen
+          name="SitterReviewScreen"
+          options={{ headerLeft: null, headerShown: false }}
+          component={SitterReviewScreen}
         />
         <Stack.Screen
           name="Register"

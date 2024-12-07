@@ -18,6 +18,7 @@ import { getData, putData } from "../../../api/api";
 import { firebaseImg } from "../../../api/firebaseImg";
 import CatSitterSkill from "../../../data/CatSitterSkill.json";
 import CustomToast from "../../../components/CustomToast";
+import ImageViewing from "react-native-image-viewing";
 
 export default function SetupProfile({ navigation }) {
   const { user } = useAuth();
@@ -29,10 +30,34 @@ export default function SetupProfile({ navigation }) {
   const [sitterProfileId, setSitterProfileId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isImageViewVisible, setImageViewVisible] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  const renderImage = ({ item }) => (
+  // const renderImage = ({ item }) => (
+  //   <View style={styles.imageContainer}>
+  //     <Image source={{ uri: item.imageUrl }} style={styles.image} />
+  //     <TouchableOpacity
+  //       style={styles.removeButton}
+  //       onPress={() =>
+  //         setProfilePictures((prevPictures) =>
+  //           prevPictures.filter((pic) => pic.id !== item.id)
+  //         )
+  //       }
+  //     >
+  //       <Text style={styles.removeText}>X</Text>
+  //     </TouchableOpacity>
+  //   </View>
+  // );
+  const renderImage = ({ item, index }) => (
     <View style={styles.imageContainer}>
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedImageIndex(index);
+          setImageViewVisible(true);
+        }}
+      >
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.removeButton}
         onPress={() =>
@@ -296,6 +321,12 @@ export default function SetupProfile({ navigation }) {
             showsHorizontalScrollIndicator={false}
             scrollEnabled={false}
           />
+          <ImageViewing
+            images={profilePictures.map((pic) => ({ uri: pic.imageUrl }))}
+            imageIndex={selectedImageIndex}
+            visible={isImageViewVisible}
+            onRequestClose={() => setImageViewVisible(false)}
+          />
         </View>
         <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
           <Text style={styles.addButtonText}>Thêm ảnh </Text>
@@ -368,35 +399,42 @@ export default function SetupProfile({ navigation }) {
           <Text style={styles.characterCount}>{environment.length} / 500</Text>
         </View>
         <View style={styles.end}>
-
-        {/* Setup thông tin chuồng cho cat sitter */}
-        <Text style={styles.sectionTitle}>Thông tin chuồng gửi mèo</Text>
-        <View style={styles.row}>
-          <Text style={styles.labelText}>Số lượng chuồng dành cho mèo cưng:</Text>
+          {/* Setup thông tin chuồng cho cat sitter */}
+          <Text style={styles.sectionTitle}>Thông tin chuồng gửi mèo</Text>
+          <View style={styles.row}>
+            <Text style={styles.labelText}>
+              Số lượng chuồng dành cho mèo cưng:
+            </Text>
             <TextInput
-             style={styles.inputNumber}
-             keyboardType="number-pad"
+              style={styles.inputNumber}
+              keyboardType="number-pad"
               maxLength={2} // Giới hạn nhập số ký tự
               placeholder="Nhập số lượng"
               // value={catCapacity} // Bạn có thể sử dụng state để lưu số lượng mèo
               // onChangeText={(text) => setCatCapacity(text)}
-               />
-            </View>
-            <Text style={styles.CageTitle}>Ảnh chuồng cho mèo cưng:</Text>
-            <View style={styles.imageListContainer}>
-          <FlatList
-            data={profilePictures}
-            renderItem={renderImage}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            scrollEnabled={false}
-          />
-        </View>
-        <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
-          <Text style={styles.addButtonText}>Thêm ảnh </Text>
-        </TouchableOpacity>
-        <TextInput
+            />
+          </View>
+          <Text style={styles.CageTitle}>Ảnh chuồng cho mèo cưng:</Text>
+          <View style={styles.imageListContainer}>
+            <FlatList
+              data={profilePictures}
+              renderItem={renderImage}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              scrollEnabled={false}
+            />
+            <ImageViewing
+              images={profilePictures.map((pic) => ({ uri: pic.imageUrl }))}
+              imageIndex={selectedImageIndex}
+              visible={isImageViewVisible}
+              onRequestClose={() => setImageViewVisible(false)}
+            />
+          </View>
+          <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
+            <Text style={styles.addButtonText}>Thêm ảnh </Text>
+          </TouchableOpacity>
+          <TextInput
             style={styles.textInput}
             multiline
             numberOfLines={4}
@@ -405,7 +443,7 @@ export default function SetupProfile({ navigation }) {
             // onChangeText={(text) => setCage(text)}
             placeholder="Vui lòng mô tả không gian và số lượng chuồng nuôi mèo của bạn."
           />
-           <Text style={styles.characterCount}>{environment.length} / 500</Text>
+          <Text style={styles.characterCount}>{environment.length} / 500</Text>
         </View>
       </ScrollView>
     </View>
@@ -576,23 +614,23 @@ const styles = StyleSheet.create({
     // Add more styling and components for previewing profile
   },
   row: {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: 10,
-},
-labelText: {
-  fontSize: 14,
-  color: "#555",
-  flex: 1,
-},
-inputNumber: {
-  width: 100,
-  height: 40,
-  borderColor: "#ccc",
-  borderWidth: 1,
-  borderRadius: 8,
-  textAlign: "center",
-  fontSize: 14,
-  color: "#333",
-},
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  labelText: {
+    fontSize: 14,
+    color: "#555",
+    flex: 1,
+  },
+  inputNumber: {
+    width: 100,
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    textAlign: "center",
+    fontSize: 14,
+    color: "#333",
+  },
 });
