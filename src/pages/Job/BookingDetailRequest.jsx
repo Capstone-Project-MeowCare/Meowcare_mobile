@@ -105,7 +105,7 @@ export default function BookingDetailRequest({ navigation }) {
   ).length;
 
   // Tính tổng giá trị
-  const dailyPrice = bookingDetails.mainService?.service?.price || 0; // Giá dịch vụ chính mỗi ngày
+  const dailyPrice = bookingDetails.mainService?.service?.price || 0; // Giá loại dịch vụ  mỗi ngày
   const pricePerDay = dailyPrice * daysBooked; // Giá theo số ngày đã đặt
   const pricePerPet = dailyPrice * petCount;
 
@@ -241,7 +241,7 @@ export default function BookingDetailRequest({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.petLabel}>Dịch vụ khách đã chọn:</Text>
 
-          {/* Hiển thị dịch vụ chính */}
+          {/* Hiển thị loại dịch vụ  */}
           <View style={styles.mainServiceContainer}>
             <Text style={styles.serviceName}>
               {`${bookingDetails.mainService?.service?.name || "Không xác định"}`}

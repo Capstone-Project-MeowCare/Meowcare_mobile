@@ -54,9 +54,9 @@ export default function ConfirmPayment({ navigation, route }) {
 
       <View style={styles.contentContainer}>
         <View style={styles.paymentDetails}>
-          {/* Dịch vụ chính */}
+          {/* Loại dịch vụ  */}
           <View style={styles.row}>
-            <Text style={styles.itemText}>• Dịch vụ chính:</Text>
+            <Text style={styles.itemText}>• Loại dịch vụ:</Text>
             <Text style={styles.priceText}>
               {`${uniqueMainServices(
                 bookingDetails?.bookingDetailWithPetAndServices || []
