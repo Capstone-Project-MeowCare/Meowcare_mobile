@@ -91,11 +91,13 @@ const linking = {
   config: {
     screens: {
       ServicePaymentComplete: "payment-complete",
+      ServicePayment: "*",
     },
   },
   // Optional: Handle unknown URLs
   async getInitialURL() {
     const url = await Linking.getInitialURL();
+    console.log("Initial URL:", url);
     return url;
   },
   subscribe(listener) {

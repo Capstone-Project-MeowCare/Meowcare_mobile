@@ -34,6 +34,7 @@ export default function ServicePayment() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [services, setServices] = useState([]); // Lưu thông tin dịch vụ
   const [totalPrice, setTotalPrice] = useState(0); // Lưu tổng giá
+  const [bookingId, setBookingId] = useState(null);
   const [days, setDays] = useState(1);
   const [catsCount, setCatsCount] = useState(0);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
@@ -164,82 +165,76 @@ export default function ServicePayment() {
         return null;
     }
   };
+  useEffect(() => {
+    const handleDeepLink = async ({ url }) => {
+      console.log("Received URL:", url); // Log URL nhận được
+      if (!url) return;
 
-  // const handlePayment = async () => {
-  //   setIsLoading(true);
+      try {
+        const parsedUrl = new URL(url);
+        const path = parsedUrl.pathname.replace("/", ""); // Lấy path
+        const partnerCode = parsedUrl.searchParams.get("partnerCode");
+        const resultCode = parsedUrl.searchParams.get("resultCode");
+        const message = parsedUrl.searchParams.get("message");
 
-  //   const payload = {
-  //     bookingDetails: step3Info.selectedCats.map((cat) => ({
-  //       quantity: 1,
-  //       petProfileId: cat.id,
-  //       serviceId: step1Info.selectedServiceId,
-  //     })),
-  //     ...selectedExtras.map((serviceId) => ({
-  //       quantity: 1,
-  //       petProfileId: null,
-  //       serviceId,
-  //     })),
-  //     sitterId,
-  //     time: new Date().toISOString(),
-  //     startDate: new Date(step2Info.startDate).toISOString(),
-  //     endDate: new Date(step2Info.endDate).toISOString(),
-  //     numberOfPet: step3Info.selectedCats.length,
-  //     name: contactInfo.name,
-  //     phoneNumber: contactInfo.phoneNumber,
-  //     address: step1Info.selectedLocation,
-  //     note: contactInfo.note,
-  //   };
+        // Log để kiểm tra các giá trị
+        console.log("Path:", path);
+        console.log("Partner Code:", partnerCode);
+        console.log("Result Code:", resultCode);
+        console.log("Message:", message);
 
-  //   console.log("Payload for booking order:", payload);
+        if (path === "payment-complete") {
+          if (resultCode === "0") {
+            console.log("Transaction successful.");
+            navigation.navigate("ServicePaymentComplete");
+          } else {
+            console.log("Transaction failed:", message);
+            Alert.alert(
+              "Giao dịch thất bại",
+              message || "Thanh toán không thành công. Vui lòng thử lại.",
+              [
+                {
+                  text: "OK",
+                  onPress: () => navigation.navigate("ServicePayment"),
+                },
+              ]
+            );
+          }
+        } else {
+          console.log("Invalid URL or not from MoMo:", url);
+        }
+      } catch (error) {
+        console.error("Error parsing URL:", error);
+      }
+    };
 
-  //   try {
-  //     const response = await postData("/booking-orders/with-details", payload);
-  //     console.log("Response data:", response.data);
-  //     if (response.status === 1000) {
-  //       navigation.navigate("ServicePaymentComplete", {
-  //         bookingId: response.data.id,
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error submitting booking order:", error);
+    const subscription = Linking.addEventListener("url", handleDeepLink);
 
-  //     if (error.response) {
-  //       // console.error("Response data:", error.response.data);
-  //       // console.error("Status:", error.response.status);
-  //       // console.error("Headers:", error.response.headers);
-  //       // console.error("Payload details: ");
-  //       // console.error("Sitter ID:", sitterId);
-  //       // console.error("Time:", payload.time);
-  //       // console.error("Start Date:", payload.startDate);
-  //       // console.error("End Date:", payload.endDate);
-  //       // console.error("Number of Pets:", payload.numberOfPet);
-  //       // console.error("Name:", payload.name);
-  //       // console.error("Phone Number:", payload.phoneNumber);
-  //       // console.error("Address:", payload.address);
-  //       // console.error("Note:", payload.note);
-  //       // console.error("Booking Details:", payload.bookingDetails);
-  //     } else if (error.request) {
-  //       console.error("Request data:", error.request);
-  //     } else {
-  //       console.error("Error message:", error.message);
-  //     }
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+    return () => {
+      subscription.remove();
+    };
+  }, [navigation]);
+
   // const handlePayment = async () => {
   //   setIsLoading(true);
 
   //   const bookingPayload = {
-  //     bookingDetails: step3Info.selectedCats.map((cat) => ({
-  //       quantity: 1,
-  //       petProfileId: cat.id,
-  //       serviceId: step1Info.selectedServiceId,
-  //     })),
+  //     bookingDetails: step3Info.selectedCats.flatMap((cat) => [
+  //       {
+  //         quantity: 1,
+  //         petProfileId: cat.id,
+  //         serviceId: step1Info.selectedServiceId,
+  //       },
+  //       ...step1Info.childServices.map((child) => ({
+  //         quantity: 1,
+  //         petProfileId: cat.id,
+  //         serviceId: child.id,
+  //       })),
+  //     ]),
   //     sitterId,
   //     time: new Date().toISOString(),
   //     startDate: new Date(step2Info.startDate).toISOString(),
-  //     endDate: new Date(step2Info.endDate).toISOString(),
+  //     endDate: new Date(step2Info.endDate || step2Info.startDate).toISOString(),
   //     numberOfPet: step3Info.selectedCats.length,
   //     name: contactInfo.name,
   //     phoneNumber: contactInfo.phoneNumber,
@@ -260,6 +255,20 @@ export default function ServicePayment() {
 
   //       console.log("Booking created successfully with ID:", bookingId);
 
+  //       // Gửi thông báo đến sitter
+  //       await sendNotification({
+  //         userId: sitterId, // Gửi thông báo đến sitter
+  //         title: "Yêu cầu booking mới",
+  //         message: `Bạn nhận được yêu cầu chăm sóc từ ${contactInfo.name}.`,
+  //         relatedId: bookingId,
+  //         relatedType: "BOOKING",
+  //         type: "REQUEST_BOOKING",
+  //         status: "NEW",
+  //       });
+
+  //       console.log("Thông báo đã gửi đến sitter:", sitterId);
+
+  //       // Thanh toán
   //       const redirectUrl = encodeURIComponent(
   //         "com.meowcare.mobile://payment-complete"
   //       );
@@ -272,9 +281,21 @@ export default function ServicePayment() {
   //         const paymentResponse = await postData(paymentUrl);
   //         console.log("Payment Response:", paymentResponse);
 
-  //         if (paymentResponse.status === 1000 && paymentResponse.data?.payUrl) {
-  //           const payUrl = paymentResponse.data.payUrl;
-  //           Linking.openURL(payUrl);
+  //         if (paymentResponse.status === 1000 && paymentResponse.data) {
+  //           const { payUrl, deeplink, applink } = paymentResponse.data;
+
+  //           if (payUrl) {
+  //             Linking.openURL(payUrl);
+  //           } else if (deeplink) {
+  //             Linking.openURL(deeplink);
+  //           } else if (applink) {
+  //             Linking.openURL(applink);
+  //           } else {
+  //             Alert.alert(
+  //               "Lỗi thanh toán",
+  //               "Không thể mở liên kết thanh toán. Vui lòng thử lại sau."
+  //             );
+  //           }
   //         } else {
   //           Alert.alert(
   //             "Lỗi thanh toán",
@@ -298,100 +319,95 @@ export default function ServicePayment() {
   const handlePayment = async () => {
     setIsLoading(true);
 
-    const bookingPayload = {
-      bookingDetails: step3Info.selectedCats.flatMap((cat) => [
-        {
-          quantity: 1,
-          petProfileId: cat.id,
-          serviceId: step1Info.selectedServiceId,
-        },
-        ...step1Info.childServices.map((child) => ({
-          quantity: 1,
-          petProfileId: cat.id,
-          serviceId: child.id,
-        })),
-      ]),
-      sitterId,
-      time: new Date().toISOString(),
-      startDate: new Date(step2Info.startDate).toISOString(),
-      endDate: new Date(step2Info.endDate || step2Info.startDate).toISOString(),
-      numberOfPet: step3Info.selectedCats.length,
-      name: contactInfo.name,
-      phoneNumber: contactInfo.phoneNumber,
-      address: step1Info.selectedLocation,
-      note: contactInfo.note,
-    };
-
     try {
-      console.log("=== START: Creating Booking ===");
-      const bookingResponse = await postData(
-        "/booking-orders/with-details",
-        bookingPayload
-      );
-      console.log("Booking Response:", bookingResponse);
+      let currentBookingId = bookingId;
 
-      if (bookingResponse.status === 1000 && bookingResponse.data?.id) {
-        const bookingId = bookingResponse.data.id;
+      if (!currentBookingId) {
+        const bookingPayload = {
+          bookingDetails: step3Info.selectedCats.flatMap((cat) => [
+            {
+              quantity: 1,
+              petProfileId: cat.id,
+              serviceId: step1Info.selectedServiceId,
+            },
+            ...step1Info.childServices.map((child) => ({
+              quantity: 1,
+              petProfileId: cat.id,
+              serviceId: child.id,
+            })),
+          ]),
+          sitterId,
+          time: new Date().toISOString(),
+          startDate: new Date(step2Info.startDate).toISOString(),
+          endDate: new Date(
+            step2Info.endDate || step2Info.startDate
+          ).toISOString(),
+          numberOfPet: step3Info.selectedCats.length,
+          name: contactInfo.name,
+          phoneNumber: contactInfo.phoneNumber,
+          address: step1Info.selectedLocation,
+          note: contactInfo.note,
+        };
 
-        console.log("Booking created successfully with ID:", bookingId);
-
-        // Gửi thông báo đến sitter
-        await sendNotification({
-          userId: sitterId, // Gửi thông báo đến sitter
-          title: "Yêu cầu booking mới",
-          message: `Bạn nhận được yêu cầu chăm sóc từ ${contactInfo.name}.`,
-          relatedId: bookingId,
-          relatedType: "BOOKING",
-          type: "REQUEST_BOOKING",
-          status: "NEW",
-        });
-
-        console.log("Thông báo đã gửi đến sitter:", sitterId);
-
-        // Thanh toán
-        const redirectUrl = encodeURIComponent(
-          "com.meowcare.mobile://payment-complete"
+        console.log("=== START: Creating Booking ===");
+        const bookingResponse = await postData(
+          "/booking-orders/with-details",
+          bookingPayload
         );
-        const queryParams = `?id=${bookingId}&requestType=CAPTURE_WALLET&redirectUrl=${redirectUrl}`;
-        const paymentUrl = `/booking-orders/payment-url${queryParams}`;
+        console.log("Booking Response:", bookingResponse);
 
-        console.log("Payment URL:", paymentUrl);
+        if (bookingResponse.status === 1000 && bookingResponse.data?.id) {
+          currentBookingId = bookingResponse.data.id;
+          setBookingId(currentBookingId);
+          console.log(
+            "Booking created successfully with ID:",
+            currentBookingId
+          );
+        } else {
+          throw new Error("Không thể tạo booking. Vui lòng thử lại sau.");
+        }
+      }
 
-        try {
-          const paymentResponse = await postData(paymentUrl);
-          console.log("Payment Response:", paymentResponse);
+      if (!currentBookingId) {
+        throw new Error("Booking ID is null. Unable to proceed with payment.");
+      }
 
-          if (paymentResponse.status === 1000 && paymentResponse.data) {
-            const { payUrl, deeplink, applink } = paymentResponse.data;
+      // Tạo Payment URL
+      console.log("Using Booking ID:", currentBookingId);
+      const redirectUrl = encodeURIComponent(
+        "com.meowcare.mobile://payment-complete"
+      );
+      const queryParams = `?id=${currentBookingId}&requestType=CAPTURE_WALLET&redirectUrl=${redirectUrl}`;
+      const paymentUrl = `/booking-orders/payment-url${queryParams}`;
 
-            if (payUrl) {
-              Linking.openURL(payUrl);
-            } else if (deeplink) {
-              Linking.openURL(deeplink);
-            } else if (applink) {
-              Linking.openURL(applink);
-            } else {
-              Alert.alert(
-                "Lỗi thanh toán",
-                "Không thể mở liên kết thanh toán. Vui lòng thử lại sau."
-              );
-            }
-          } else {
-            Alert.alert(
-              "Lỗi thanh toán",
-              "Không thể tạo liên kết thanh toán. Vui lòng thử lại sau."
-            );
-          }
-        } catch (error) {
-          console.error("Payment Error:", error);
-          Alert.alert("Lỗi thanh toán", "Không thể xử lý thanh toán.");
+      console.log("Payment URL:", paymentUrl);
+
+      const paymentResponse = await postData(paymentUrl);
+      console.log("Payment Response:", paymentResponse);
+
+      if (paymentResponse.status === 1000 && paymentResponse.data) {
+        const { payUrl, deeplink, applink } = paymentResponse.data;
+
+        if (payUrl) {
+          Linking.openURL(payUrl);
+        } else if (deeplink) {
+          Linking.openURL(deeplink);
+        } else if (applink) {
+          Linking.openURL(applink);
+        } else {
+          Alert.alert(
+            "Lỗi thanh toán",
+            "Không thể mở liên kết thanh toán. Vui lòng thử lại sau."
+          );
         }
       } else {
-        Alert.alert("Lỗi", "Không thể tạo booking. Vui lòng thử lại sau.");
+        throw new Error(
+          "Không thể tạo liên kết thanh toán. Vui lòng thử lại sau."
+        );
       }
     } catch (error) {
-      console.error("Booking Error:", error);
-      Alert.alert("Lỗi", "Đặt lịch thất bại.");
+      console.error("Payment Error:", error);
+      Alert.alert("Thất bại", "Thanh toán thất bại. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }
