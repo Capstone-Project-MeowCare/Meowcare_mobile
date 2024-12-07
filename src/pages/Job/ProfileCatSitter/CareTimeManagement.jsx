@@ -25,18 +25,58 @@ export default function CareTimeManagement({ navigation }) {
 
   // Gọi API để lấy dịch vụ của sitter
 
+  // const fetchChildServices = async () => {
+  //   try {
+  //     const response = await getData(`/services/sitter/${user.id}`); // Không cần accessToken
+  //     if (Array.isArray(response.data)) {
+  //       const childServices = response.data
+  //         .filter((service) => service.serviceType === "CHILD_SERVICE")
+  //         .map((service) => ({
+  //           id: service.id,
+  //           name: service.name,
+  //           startTime: `${service.startTime}:00`,
+  //           endTime: `${service.endTime}:00`,
+  //         }));
+
+  //       // Loại bỏ các dịch vụ trùng lặp theo `name`
+  //       const uniqueServices = [];
+  //       const seenNames = new Set();
+
+  //       for (const service of childServices) {
+  //         if (!seenNames.has(service.name)) {
+  //           seenNames.add(service.name);
+  //           uniqueServices.push(service);
+  //         }
+  //       }
+
+  //       console.log("Danh sách dịch vụ không trùng lặp:", uniqueServices);
+
+  //       setAdditionalServices(uniqueServices);
+  //     } else {
+  //       console.error("Invalid response format:", response);
+  //     }
+  //   } catch (error) {
+  //     console.error("Lỗi khi lấy dịch vụ:", error);
+  //     Alert.alert("Lỗi", "Không thể tải danh sách dịch vụ. Vui lòng thử lại.");
+  //   }
+  // };
   const fetchChildServices = async () => {
     try {
-      const response = await getData(`/services/sitter/${user.id}`); // Không cần accessToken
-      if (Array.isArray(response.data)) {
-        const childServices = response.data
-          .filter((service) => service.serviceType === "CHILD_SERVICE")
-          .map((service) => ({
-            id: service.id,
-            name: service.name,
-            startTime: `${service.startTime}:00`,
-            endTime: `${service.endTime}:00`,
-          }));
+      const params = new URLSearchParams({
+        serviceType: "CHILD_SERVICE",
+        status: "ACTIVE",
+      });
+
+      const response = await getData(
+        `/services/sitter/${user.id}/type?${params.toString()}`
+      );
+      if (response?.status === 1000 && Array.isArray(response.data)) {
+        const childServices = response.data.map((service) => ({
+          id: service.id,
+          name: service.name,
+          startTime: `${service.startTime}:00`,
+          endTime: `${service.endTime}:00`,
+        }));
 
         // Loại bỏ các dịch vụ trùng lặp theo `name`
         const uniqueServices = [];
@@ -173,7 +213,9 @@ export default function CareTimeManagement({ navigation }) {
         >
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Quản lý lịch trình chăm sóc dự kiến</Text>
+        <Text style={styles.headerTitle}>
+          Quản lý lịch trình chăm sóc dự kiến
+        </Text>
       </View>
 
       <View style={styles.divider} />
