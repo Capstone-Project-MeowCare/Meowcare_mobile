@@ -35,7 +35,9 @@ export default function BookingStep1({
   const [expanded, setExpanded] = useState(false); // Để toggle danh sách con
   const animationHeight = useRef(new Animated.Value(0)).current;
   const [showStartPicker, setShowStartPicker] = useState(null);
-
+  const additionalServicesRef = useRef(
+    step1Info.selectedAdditionalServices || []
+  );
   const [isDisplayingAdditionalServices, setIsDisplayingAdditionalServices] =
     useState(false);
 
@@ -123,9 +125,10 @@ export default function BookingStep1({
         selectedService: "",
         price: 0,
         childServices: [],
-        additionalServices: [],
+        additionalServices: [], // Đặt về mảng rỗng
         selectedAdditionalServices: [], // Reset danh sách dịch vụ bổ sung đã chọn
       }));
+      setAdditionalServices([]); // Đồng bộ với SwipeStep
       setExpanded(false); // Ẩn danh sách dịch vụ con
       setIsDisplayingAdditionalServices(false); // Ẩn danh sách ADDITION_SERVICE
       Animated.timing(animationHeight, {
@@ -134,33 +137,27 @@ export default function BookingStep1({
         useNativeDriver: false,
       }).start();
     } else if (itemValue === "OTHER_SERVICES") {
-      // Fetch và hiển thị ADDITION_SERVICE
       try {
         const response = await getData(`/services/sitter/${userId}`);
         if (response?.data) {
-          // Lọc ADDITION_SERVICE có trạng thái ACTIVE
           const filteredServices = response.data.filter(
             (service) =>
               service.serviceType === "ADDITION_SERVICE" &&
               service.status === "ACTIVE"
           );
 
-          setAdditionalServices(filteredServices); // Cập nhật danh sách ADDITION_SERVICE
+          setAdditionalServices(filteredServices); // Cập nhật state local
           setStep1Info((prev) => ({
             ...prev,
             selectedServiceId: "OTHER_SERVICES",
             selectedService: "",
             price: 0,
-            childServices: [], // Reset danh sách dịch vụ con
+            childServices: [],
+            additionalServices: filteredServices, // Đồng bộ vào step1Info
             selectedAdditionalServices: [], // Reset danh sách đã chọn
           }));
-          setExpanded(false); // Ẩn danh sách dịch vụ con
-          setIsDisplayingAdditionalServices(true); // Hiển thị danh sách ADDITION_SERVICE
-          Animated.timing(animationHeight, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: false,
-          }).start();
+          setExpanded(false);
+          setIsDisplayingAdditionalServices(true);
         }
       } catch (error) {
         console.error("Error fetching additional services: ", error);
@@ -179,9 +176,10 @@ export default function BookingStep1({
         childServices: childServices.filter(
           (service) => service.status === "ACTIVE"
         ),
-        additionalServices: [],
+        additionalServices: [], // Đặt về mảng rỗng
         selectedAdditionalServices: [], // Reset danh sách dịch vụ bổ sung
       }));
+      setAdditionalServices([]); // Đồng bộ với SwipeStep
       setIsDisplayingAdditionalServices(false); // Ẩn danh sách ADDITION_SERVICE
 
       // Hiển thị danh sách dịch vụ con nếu có
@@ -201,6 +199,39 @@ export default function BookingStep1({
         }).start();
       }
     }
+
+    // Log để kiểm tra giá trị của additionalServices
+    console.log("Updated additionalServices:", additionalServices);
+  };
+  const handleCheckboxChange = (isChecked, serviceId) => {
+    setStep1Info((prev) => {
+      // Lấy danh sách dịch vụ hiện tại
+      const currentAdditionalServices = prev.additionalServices || [];
+      const selectedService = currentAdditionalServices.find(
+        (service) => service.id === serviceId
+      );
+
+      // Cập nhật danh sách ID đã chọn
+      const updatedSelectedIds = isChecked
+        ? [...(prev.selectedAdditionalServices || []), serviceId]
+        : (prev.selectedAdditionalServices || []).filter(
+            (id) => id !== serviceId
+          );
+
+      // Cập nhật danh sách dịch vụ đã chọn
+      const updatedSelectedServices = isChecked
+        ? [...(prev.additionalServices || []), selectedService]
+        : (prev.additionalServices || []).filter(
+            (service) => service.id !== serviceId
+          );
+
+      // Trả về state mới
+      return {
+        ...prev,
+        selectedAdditionalServices: updatedSelectedIds,
+        additionalServices: updatedSelectedServices, // Cập nhật chi tiết dịch vụ
+      };
+    });
   };
 
   const validateForm = () => {
@@ -232,8 +263,17 @@ export default function BookingStep1({
     validateForm();
   }, [step1Info]);
   useEffect(() => {
-    console.log("Updated step1Info: ", step1Info);
-  }, [step1Info]);
+    console.log(
+      "Updated step1Info.additionalServices:",
+      step1Info.additionalServices
+    );
+  }, [step1Info.additionalServices]);
+
+  useEffect(() => {
+    if (isDisplayingAdditionalServices) {
+      setAdditionalServices(additionalServices);
+    }
+  }, [additionalServices, setAdditionalServices]);
 
   return (
     <View style={styles.container}>
@@ -320,31 +360,17 @@ export default function BookingStep1({
                   <View key={service.id} style={styles.serviceContainer}>
                     {/* Hàng checkbox và tên dịch vụ */}
                     <View style={styles.checkboxAndNameRow}>
-                      <Checkbox
-                        value={step1Info.selectedAdditionalServices?.includes(
-                          service.id
-                        )}
-                        onValueChange={(isChecked) => {
-                          if (isChecked) {
-                            setStep1Info((prev) => ({
-                              ...prev,
-                              selectedAdditionalServices: [
-                                ...(prev.selectedAdditionalServices || []),
-                                service.id, // Thêm dịch vụ vào danh sách
-                              ],
-                            }));
-                          } else {
-                            setStep1Info((prev) => ({
-                              ...prev,
-                              selectedAdditionalServices: (
-                                prev.selectedAdditionalServices || []
-                              ).filter((id) => id !== service.id), // Loại bỏ dịch vụ khỏi danh sách
-                            }));
+                      <View style={styles.checkboxAndLabel}>
+                        <Checkbox
+                          value={step1Info.selectedAdditionalServices?.includes(
+                            service.id
+                          )}
+                          onValueChange={(isChecked) =>
+                            handleCheckboxChange(isChecked, service.id)
                           }
-                        }}
-                        style={styles.checkbox}
-                      />
-                      <Text style={styles.checkboxLabel}>{service.name}</Text>
+                        />
+                        <Text style={styles.checkboxLabel}>{service.name}</Text>
+                      </View>
                       <Text style={styles.childServicePrice}>
                         {`${service.price.toLocaleString()}đ/dịch vụ`}
                       </Text>
@@ -402,19 +428,26 @@ export default function BookingStep1({
                         is24Hour={true}
                         onCancel={() => setShowStartPicker(null)}
                         onConfirm={(selectedTime) => {
-                          const newStartTime = new Date(selectedTime);
-                          const formattedStartTime = newStartTime
-                            .toISOString()
-                            .slice(11, 16);
-                          const durationInMinutes = service.duration || 0;
-                          const newEndTime = new Date(newStartTime.getTime());
-                          newEndTime.setMinutes(
-                            newEndTime.getMinutes() + durationInMinutes
-                          );
-                          const formattedEndTime = newEndTime
-                            .toISOString()
-                            .slice(11, 16);
+                          // Chuyển đổi thời gian được chọn sang múi giờ cục bộ
+                          const localStartTime = new Date(selectedTime); // Đảm bảo đây là Date object
+                          const formattedStartTime =
+                            localStartTime.toLocaleTimeString("en-GB", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }); // Không cần `replace` để giữ lại phút
 
+                          const durationInMinutes = service.duration || 0; // Lấy duration của dịch vụ
+                          const newEndTime = new Date(
+                            localStartTime.getTime() + durationInMinutes * 60000
+                          ); // Cộng thêm duration
+
+                          const formattedEndTime =
+                            newEndTime.toLocaleTimeString("en-GB", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }); // Không cần `replace` để giữ lại phút
+
+                          // Cập nhật step1Info với startTime và endTime của dịch vụ
                           setStep1Info((prev) => ({
                             ...prev,
                             selectedServiceTime: {
@@ -426,7 +459,7 @@ export default function BookingStep1({
                             },
                           }));
 
-                          setShowStartPicker(null);
+                          setShowStartPicker(null); // Đóng picker
                         }}
                       />
                     )}
@@ -687,15 +720,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    width: "100%",
+    paddingRight: 10,
+  },
+  checkboxAndLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
   },
   timeRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
     gap: 10,
+    marginTop: height * 0.012,
   },
-
   timePickerGroup: {
     flexDirection: "row",
     alignItems: "center",
@@ -706,12 +745,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 8,
-    minWidth: 80, // Đảm bảo nút có kích thước đồng đều
+    minWidth: 80,
     alignItems: "center",
     justifyContent: "center",
   },
   childServicesContainer: {
-    overflow: "hidden", // Đảm bảo chỉ hiển thị trong vùng cho phép
+    overflow: "hidden",
     backgroundColor: "#FFFAF5",
     marginTop: height * 0.01,
     borderRadius: 5,
@@ -741,7 +780,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   childServicePrice: {
-    fontSize: 15,
+    fontSize: 16,
     color: "#2B764F",
     fontWeight: "bold",
     textAlign: "right",
@@ -756,6 +795,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000857",
     fontWeight: "bold",
+    marginLeft: 8,
+    flexWrap: "wrap",
   },
   textInput: {
     width: "100%",

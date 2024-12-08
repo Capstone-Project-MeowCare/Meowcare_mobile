@@ -20,9 +20,10 @@ export default function BookingStep2({
   setIsValid,
   step2Info,
   setStep2Info,
+  step1Info,
 }) {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
-
+  const isSingleDateMode = step1Info.selectedServiceId === "OTHER_SERVICES";
   const validateForm = () => {
     if (step2Info.startDate) {
       setIsValid(true);
@@ -66,18 +67,21 @@ export default function BookingStep2({
   const onDayPress = (day) => {
     const dayString = day.dateString;
 
-    if (!step2Info.startDate) {
-      // Nếu chưa có ngày bắt đầu, đặt ngày đầu tiên
+    if (isSingleDateMode) {
+      // Nếu chế độ chọn 1 ngày, chỉ đặt startDate và xóa endDate
       setStep2Info({ startDate: dayString, endDate: null });
-    } else if (
-      !step2Info.endDate &&
-      moment(dayString).isAfter(step2Info.startDate)
-    ) {
-      // Nếu đã có startDate và ngày mới lớn hơn startDate, đặt ngày đó làm endDate
-      setStep2Info({ ...step2Info, endDate: dayString });
     } else {
-      // Nếu chọn ngày nhỏ hơn startDate hoặc đã có cả startDate và endDate, đặt lại startDate
-      setStep2Info({ startDate: dayString, endDate: null });
+      // Chế độ chọn khoảng ngày
+      if (!step2Info.startDate) {
+        setStep2Info({ startDate: dayString, endDate: null });
+      } else if (
+        !step2Info.endDate &&
+        moment(dayString).isAfter(step2Info.startDate)
+      ) {
+        setStep2Info({ ...step2Info, endDate: dayString });
+      } else {
+        setStep2Info({ startDate: dayString, endDate: null });
+      }
     }
   };
 
@@ -87,12 +91,13 @@ export default function BookingStep2({
     let markedDates = {
       [step2Info.startDate]: {
         startingDay: true,
+        endingDay: isSingleDateMode, // Nếu chế độ 1 ngày, đánh dấu cả bắt đầu và kết thúc
         color: "#902C6C",
         textColor: "white",
       },
     };
 
-    if (step2Info.endDate) {
+    if (!isSingleDateMode && step2Info.endDate) {
       let currentDate = step2Info.startDate;
       while (currentDate <= step2Info.endDate) {
         markedDates[currentDate] = {

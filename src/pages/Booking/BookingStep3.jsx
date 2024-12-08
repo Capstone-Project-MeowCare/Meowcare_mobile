@@ -22,12 +22,13 @@ export default function BookingStep3({
   setIsValid,
   step3Info,
   setStep3Info,
+  step1Info,
 }) {
   const { user } = useAuth();
   const [catData, setCatData] = useState([]);
   const [loading, setLoading] = useState(true); // State to track loading
   const navigation = useNavigation();
-
+  const isSingleCatMode = step1Info.selectedServiceId === "OTHER_SERVICES";
   const fetchCatData = async () => {
     try {
       const response = await getData(`/pet-profiles/user/${user.id}`);
@@ -47,21 +48,59 @@ export default function BookingStep3({
       fetchCatData();
     }, [])
   );
+  // const handleSelectCat = (cat) => {
+  //   if (
+  //     step3Info.selectedCats.some((selectedCat) => selectedCat.id === cat.id)
+  //   ) {
+  //     setStep3Info({
+  //       ...step3Info,
+  //       selectedCats: step3Info.selectedCats.filter(
+  //         (selectedCat) => selectedCat.id !== cat.id
+  //       ),
+  //     });
+  //   } else {
+  //     setStep3Info({
+  //       ...step3Info,
+  //       selectedCats: [...step3Info.selectedCats, cat],
+  //     });
+  //   }
+  // };
+
+  // const isCatSelected = (catId) => {
+  //   return step3Info.selectedCats.some(
+  //     (selectedCat) => selectedCat.id === catId
+  //   );
+  // };
   const handleSelectCat = (cat) => {
-    if (
-      step3Info.selectedCats.some((selectedCat) => selectedCat.id === cat.id)
-    ) {
-      setStep3Info({
-        ...step3Info,
-        selectedCats: step3Info.selectedCats.filter(
-          (selectedCat) => selectedCat.id !== cat.id
-        ),
-      });
+    if (isSingleCatMode) {
+      // Chế độ chỉ chọn 1 mèo
+      if (
+        step3Info.selectedCats.length > 0 &&
+        step3Info.selectedCats[0].id === cat.id
+      ) {
+        // Nếu mèo đã được chọn, bỏ chọn
+        setStep3Info({ ...step3Info, selectedCats: [] });
+      } else {
+        // Nếu chưa chọn, đặt mèo mới
+        setStep3Info({ ...step3Info, selectedCats: [cat] });
+      }
     } else {
-      setStep3Info({
-        ...step3Info,
-        selectedCats: [...step3Info.selectedCats, cat],
-      });
+      // Chế độ chọn nhiều mèo
+      if (
+        step3Info.selectedCats.some((selectedCat) => selectedCat.id === cat.id)
+      ) {
+        setStep3Info({
+          ...step3Info,
+          selectedCats: step3Info.selectedCats.filter(
+            (selectedCat) => selectedCat.id !== cat.id
+          ),
+        });
+      } else {
+        setStep3Info({
+          ...step3Info,
+          selectedCats: [...step3Info.selectedCats, cat],
+        });
+      }
     }
   };
 

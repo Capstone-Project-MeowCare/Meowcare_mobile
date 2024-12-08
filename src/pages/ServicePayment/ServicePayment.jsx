@@ -22,7 +22,9 @@ export default function ServicePayment() {
   const navigation = useNavigation();
   const route = useRoute();
   const {
-    step1Info = {},
+    step1Info = {
+      additionalServices: [],
+    },
     selectedExtras = [],
     step2Info = {},
     step3Info = {},
@@ -88,7 +90,17 @@ export default function ServicePayment() {
       const days = numberOfDays > 0 ? numberOfDays : 1;
 
       // Dịch vụ chính
-      if (step1Info.selectedServiceId) {
+      // if (step1Info.selectedServiceId) {
+      //   selectedServices.push({
+      //     name: step1Info.selectedService || "Không xác định",
+      //     price: (step1Info.price || 0) * days * numberOfCats,
+      //     type: "MAIN_SERVICE",
+      //   });
+      // }
+      if (
+        step1Info.selectedServiceId &&
+        step1Info.selectedServiceId !== "OTHER_SERVICES"
+      ) {
         selectedServices.push({
           name: step1Info.selectedService || "Không xác định",
           price: (step1Info.price || 0) * days * numberOfCats,
@@ -110,14 +122,27 @@ export default function ServicePayment() {
         });
       }
 
-      // Dịch vụ thêm (Extra Services)
-      selectedExtras.forEach((extra) => {
-        selectedServices.push({
-          name: extra.name || "Dịch vụ thêm không xác định",
-          price: (extra.price || 0) * days * numberOfCats, // Giá phải có giá trị
-          type: extra.type || "ADDITIONAL_SERVICE",
+      if (Array.isArray(step1Info.selectedAdditionalServices)) {
+        step1Info.selectedAdditionalServices.forEach((serviceId) => {
+          const additionalService = step1Info.additionalServices?.find(
+            (service) => service.id === serviceId
+          );
+
+          if (additionalService) {
+            selectedServices.push({
+              name: additionalService.name || "Dịch vụ bổ sung không xác định",
+              price: additionalService.price || 0, // Giá của dịch vụ bổ sung
+              type: "ADDITIONAL_SERVICE",
+              startTime:
+                step1Info.selectedServiceTime?.[serviceId]?.startTime || "",
+              endTime:
+                step1Info.selectedServiceTime?.[serviceId]?.endTime || "",
+            });
+          } else {
+            console.warn(`Dịch vụ bổ sung với ID ${serviceId} không tìm thấy.`);
+          }
         });
-      });
+      }
 
       // Thêm log để kiểm tra dịch vụ
       console.log("Selected Services:", selectedServices);
@@ -327,18 +352,74 @@ export default function ServicePayment() {
 
       if (!currentBookingId) {
         const bookingPayload = {
-          bookingDetails: step3Info.selectedCats.flatMap((cat) => [
-            {
-              quantity: 1,
-              petProfileId: cat.id,
-              serviceId: step1Info.selectedServiceId,
-            },
-            ...step1Info.childServices.map((child) => ({
-              quantity: 1,
-              petProfileId: cat.id,
-              serviceId: child.id,
-            })),
-          ]),
+          bookingDetailWithPetAndServices: step3Info.selectedCats.flatMap(
+            (cat) => {
+              const mainService =
+                step1Info.selectedServiceId &&
+                step1Info.selectedServiceId !== "OTHER_SERVICES"
+                  ? [
+                      {
+                        quantity: 1,
+                        petProfileId: cat.id,
+                        service: {
+                          id: step1Info.selectedServiceId,
+                          name: step1Info.selectedService,
+                          startTime:
+                            step1Info.selectedServiceTime?.[
+                              step1Info.selectedServiceId
+                            ]?.startTime || "00:00",
+                          endTime:
+                            step1Info.selectedServiceTime?.[
+                              step1Info.selectedServiceId
+                            ]?.endTime || "00:00",
+                        },
+                      },
+                    ]
+                  : [];
+
+              const childServices = step1Info.childServices?.map((child) => ({
+                quantity: 1,
+                petProfileId: cat.id,
+                service: {
+                  id: child.id,
+                  name: child.name,
+                  startTime:
+                    step1Info.selectedServiceTime?.[child.id]?.startTime ||
+                    "00:00",
+                  endTime:
+                    step1Info.selectedServiceTime?.[child.id]?.endTime ||
+                    "00:00",
+                },
+              }));
+
+              const additionalServices =
+                step1Info.selectedAdditionalServices?.map((serviceId) => {
+                  const additionalService = step1Info.additionalServices.find(
+                    (service) => service.id === serviceId
+                  );
+                  return {
+                    quantity: 1,
+                    petProfileId: cat.id,
+                    service: {
+                      id: additionalService.id,
+                      name: additionalService.name,
+                      startTime:
+                        step1Info.selectedServiceTime?.[additionalService.id]
+                          ?.startTime || "00:00",
+                      endTime:
+                        step1Info.selectedServiceTime?.[additionalService.id]
+                          ?.endTime || "00:00",
+                    },
+                  };
+                });
+
+              return [
+                ...mainService,
+                ...(childServices || []),
+                ...(additionalServices || []),
+              ];
+            }
+          ),
           sitterId,
           time: new Date().toISOString(),
           startDate: new Date(step2Info.startDate).toISOString(),
@@ -458,7 +539,11 @@ export default function ServicePayment() {
               <View style={styles.textWrapper}>
                 <Text style={styles.dot}>•</Text>
                 <Text style={styles.dotText}>
-                  {service.name || "Dịch vụ không xác định"}:
+                  {`${service.name || "Dịch vụ không xác định"} ${
+                    service.startTime && service.endTime
+                      ? `(${service.startTime} - ${service.endTime})`
+                      : ""
+                  }`}
                 </Text>
               </View>
               <Text style={styles.price}>
