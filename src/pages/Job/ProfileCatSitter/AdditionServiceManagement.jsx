@@ -136,27 +136,18 @@ export default function AdditionServiceManagement({ navigation }) {
     }
   };
 
-  const confirmDeleteService = (id) => {
-    Alert.alert(
-      "Xác nhận xóa",
-      "Bạn có muốn xóa dịch vụ này không?",
-      [
-        {
-          text: "Hủy",
-          style: "cancel",
-        },
-        {
-          text: "Có",
-          onPress: () => handleDeleteService(id),
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
   const handleDeleteService = async (id) => {
+    if (id === null) {
+      // Nếu là dịch vụ mới, xóa ngay lập tức khỏi danh sách local
+      setAdditionalServices((prevServices) =>
+        prevServices.filter((service) => service.id !== id)
+      );
+      return;
+    }
+
     try {
-      const response = await deleteData(`/services/${id}`, accessToken);
+      // Nếu là dịch vụ từ server, thực hiện gọi API để xóa
+      const response = await deleteData(`/services/${id}`);
       if (response?.status === 1003) {
         setAdditionalServices((prevServices) =>
           prevServices.filter((service) => service.id !== id)
@@ -172,6 +163,30 @@ export default function AdditionServiceManagement({ navigation }) {
     } catch (error) {
       console.error("Lỗi khi xóa dịch vụ:", error);
       Alert.alert("Lỗi", "Không thể xóa dịch vụ. Vui lòng thử lại.");
+    }
+  };
+
+  // Hàm confirmDeleteService hiển thị Alert cho dịch vụ đã tồn tại
+  const confirmDeleteService = (id) => {
+    if (id === null) {
+      // Nếu là dịch vụ mới, gọi trực tiếp handleDeleteService
+      handleDeleteService(id);
+    } else {
+      Alert.alert(
+        "Xác nhận xóa",
+        "Bạn có muốn xóa dịch vụ này không?",
+        [
+          {
+            text: "Hủy",
+            style: "cancel",
+          },
+          {
+            text: "Có",
+            onPress: () => handleDeleteService(id),
+          },
+        ],
+        { cancelable: true }
+      );
     }
   };
 
@@ -379,6 +394,8 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginTop: height * 0.02,
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   addServiceButton: {
     flexDirection: "row",
