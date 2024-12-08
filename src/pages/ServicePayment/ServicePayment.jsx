@@ -167,52 +167,55 @@ export default function ServicePayment() {
   };
   useEffect(() => {
     const handleDeepLink = async ({ url }) => {
-      console.log("Received URL:", url); // Log URL nhận được
+      console.log("Received URL:", url);
       if (!url) return;
 
+      console.log("Received URL:", url);
+
+      // Parse URL để lấy path và query params
       try {
         const parsedUrl = new URL(url);
-        const path = parsedUrl.pathname.replace("/", ""); // Lấy path
+        const path = parsedUrl.pathname.replace("/", "");
         const partnerCode = parsedUrl.searchParams.get("partnerCode");
         const resultCode = parsedUrl.searchParams.get("resultCode");
         const message = parsedUrl.searchParams.get("message");
 
-        // Log để kiểm tra các giá trị
         console.log("Path:", path);
-        console.log("Partner Code:", partnerCode);
         console.log("Result Code:", resultCode);
-        console.log("Message:", message);
+        console.log("Partner Code:", partnerCode);
 
-        if (path === "payment-complete") {
+        if (path === "payment-complete" && partnerCode === "MOMOLRJZ20181206") {
           if (resultCode === "0") {
-            console.log("Transaction successful.");
+            // Giao dịch thành công
             navigation.navigate("ServicePaymentComplete");
           } else {
-            console.log("Transaction failed:", message);
+            // Giao dịch thất bại
+            console.log("Giao dịch thất bại:", message);
             Alert.alert(
               "Giao dịch thất bại",
-              message || "Thanh toán không thành công. Vui lòng thử lại.",
-              [
-                {
-                  text: "OK",
-                  onPress: () => navigation.navigate("ServicePayment"),
-                },
-              ]
+              message || "Thanh toán không thành công. Vui lòng thử lại."
             );
+            navigation.navigate("ServicePayment");
           }
         } else {
-          console.log("Invalid URL or not from MoMo:", url);
+          console.log("URL không hợp lệ hoặc không phải từ đối tác MoMo:", url);
+          Alert.alert(
+            "Lỗi",
+            "URL không hợp lệ hoặc không phải từ MoMo. Vui lòng thử lại."
+          );
         }
       } catch (error) {
         console.error("Error parsing URL:", error);
+        Alert.alert(
+          "Lỗi",
+          "Có lỗi xảy ra khi xử lý URL thanh toán. Vui lòng thử lại."
+        );
       }
     };
 
     const subscription = Linking.addEventListener("url", handleDeepLink);
 
-    return () => {
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, [navigation]);
 
   // const handlePayment = async () => {

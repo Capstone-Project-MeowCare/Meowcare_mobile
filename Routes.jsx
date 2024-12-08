@@ -81,6 +81,7 @@ import InComeMoney from "./src/pages/Job/Wallet/IncomeMoney";
 import AdditionServicePayment from "./src/pages/ServicePayment/AdditionServicePayment";
 import CareTimeManagement from "./src/pages/Job/ProfileCatSitter/CareTimeManagement";
 import SitterReviewScreen from "./src/pages/Reviews/SitterReviewScreen";
+import AdditionServiceManagement from "./src/pages/Job/ProfileCatSitter/AdditionServiceManagement";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -91,7 +92,7 @@ const linking = {
   config: {
     screens: {
       ServicePaymentComplete: "payment-complete",
-      ServicePayment: "*",
+      // ServicePayment: "*",
     },
   },
   // Optional: Handle unknown URLs
@@ -298,6 +299,11 @@ export function Routes() {
           name="CareTimeManagement"
           options={{ headerLeft: null, headerShown: false }}
           component={CareTimeManagement}
+        />
+        <Stack.Screen
+          name="AdditionServiceManagement"
+          options={{ headerLeft: null, headerShown: false }}
+          component={AdditionServiceManagement}
         />
         <Stack.Screen
           name="HistoryWallet"
