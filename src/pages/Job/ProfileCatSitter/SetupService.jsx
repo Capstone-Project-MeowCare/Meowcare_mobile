@@ -342,12 +342,12 @@ export default function SetupService({ navigation }) {
             <View style={styles.headerRow}>
               <Text style={styles.optionLabel}>Các loại dịch vụ khác</Text>
 
-              <Switch
+              {/* <Switch
                 value={false} // Giá trị mặc định
                 onValueChange={(value) => {
                   console.log(`Switch toggled: ${value}`);
                 }}
-              />
+              /> */}
             </View>
           </View>
         </TouchableOpacity>

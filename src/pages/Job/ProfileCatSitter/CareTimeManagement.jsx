@@ -166,21 +166,35 @@ export default function CareTimeManagement({ navigation }) {
       (service) => service.name && service.startTime && service.endTime
     );
   };
+  const convertTo24HourFormat = (time) => {
+    // Chuyển đổi từ "8:10 PM" thành "20:10"
+    const [hourMin, period] = time.split(" ");
+    let [hours, minutes] = hourMin.split(":").map(Number);
 
+    if (period === "PM" && hours !== 12) {
+      hours += 12; // Chuyển đổi giờ PM
+    } else if (period === "AM" && hours === 12) {
+      hours = 0; // Chuyển đổi giờ AM thành 0 giờ
+    }
+
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
+  };
   // Hàm thêm dịch vụ
   const handleAddService = async () => {
     try {
       for (const service of additionalServices) {
         const payload = {
           name: service.name,
-          startTime: service.startTime,
-          endTime: service.endTime,
+          startTime: convertTo24HourFormat(service.startTime),
+          endTime: convertTo24HourFormat(service.endTime),
         };
 
         if (service.id) {
           // Nếu dịch vụ đã tồn tại, sử dụng PUT để cập nhật
           console.log("Updating service:", payload);
-          await putData(`/services/${service.id}`, payload);
+          await putData(`/services/${service.id}`, payload, accessToken);
         } else {
           // Nếu là dịch vụ mới, sử dụng POST để tạo mới
           const newPayload = {
