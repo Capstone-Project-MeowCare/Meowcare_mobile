@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { getData } from "../../api/api";
 import { ScrollView } from "react-native-gesture-handler";
 import { useAuth } from "../../../auth/useAuth";
+import DateTimePicker from "react-native-modal-datetime-picker";
 
 const { width, height } = Dimensions.get("window");
 
@@ -28,13 +29,15 @@ export default function BookingStep1({
   const { user } = useAuth();
   const [basicServices, setBasicServices] = useState([]);
   const [extraServices, setExtraServices] = useState([]);
+  const [additionalServices, setAdditionalServices] = useState([]);
   const [childServices, setChildServices] = useState([]);
   const [userAddress, setUserAddress] = useState("");
   const [expanded, setExpanded] = useState(false); // Để toggle danh sách con
   const animationHeight = useRef(new Animated.Value(0)).current;
-  const [serviceOptions, setServiceOptions] = useState([
-    { id: "", name: "---Vui lòng chọn loại dịch vụ---" },
-  ]);
+  const [showStartPicker, setShowStartPicker] = useState(null);
+
+  const [isDisplayingAdditionalServices, setIsDisplayingAdditionalServices] =
+    useState(false);
 
   useEffect(() => {
     const fetchUserAddress = async () => {
@@ -109,9 +112,101 @@ export default function BookingStep1({
 
     fetchServices();
   }, [userId]);
+  const handleSelectService = async (itemValue) => {
+    console.log("Selected Service ID: ", itemValue);
+
+    if (itemValue === "") {
+      // Reset toàn bộ thông tin khi chọn tùy chọn mặc định
+      setStep1Info((prev) => ({
+        ...prev,
+        selectedServiceId: "",
+        selectedService: "",
+        price: 0,
+        childServices: [],
+        additionalServices: [],
+        selectedAdditionalServices: [], // Reset danh sách dịch vụ bổ sung đã chọn
+      }));
+      setExpanded(false); // Ẩn danh sách dịch vụ con
+      setIsDisplayingAdditionalServices(false); // Ẩn danh sách ADDITION_SERVICE
+      Animated.timing(animationHeight, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    } else if (itemValue === "OTHER_SERVICES") {
+      // Fetch và hiển thị ADDITION_SERVICE
+      try {
+        const response = await getData(`/services/sitter/${userId}`);
+        if (response?.data) {
+          // Lọc ADDITION_SERVICE có trạng thái ACTIVE
+          const filteredServices = response.data.filter(
+            (service) =>
+              service.serviceType === "ADDITION_SERVICE" &&
+              service.status === "ACTIVE"
+          );
+
+          setAdditionalServices(filteredServices); // Cập nhật danh sách ADDITION_SERVICE
+          setStep1Info((prev) => ({
+            ...prev,
+            selectedServiceId: "OTHER_SERVICES",
+            selectedService: "",
+            price: 0,
+            childServices: [], // Reset danh sách dịch vụ con
+            selectedAdditionalServices: [], // Reset danh sách đã chọn
+          }));
+          setExpanded(false); // Ẩn danh sách dịch vụ con
+          setIsDisplayingAdditionalServices(true); // Hiển thị danh sách ADDITION_SERVICE
+          Animated.timing(animationHeight, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: false,
+          }).start();
+        }
+      } catch (error) {
+        console.error("Error fetching additional services: ", error);
+        Alert.alert("Lỗi", "Không thể tải danh sách dịch vụ bổ sung.");
+      }
+    } else {
+      // Xử lý khi chọn MAIN_SERVICE
+      const selectedService = basicServices.find(
+        (service) => service.id === itemValue
+      );
+      setStep1Info((prev) => ({
+        ...prev,
+        selectedServiceId: itemValue,
+        selectedService: selectedService?.name || "",
+        price: selectedService?.price || 0,
+        childServices: childServices.filter(
+          (service) => service.status === "ACTIVE"
+        ),
+        additionalServices: [],
+        selectedAdditionalServices: [], // Reset danh sách dịch vụ bổ sung
+      }));
+      setIsDisplayingAdditionalServices(false); // Ẩn danh sách ADDITION_SERVICE
+
+      // Hiển thị danh sách dịch vụ con nếu có
+      if (childServices.length > 0) {
+        setExpanded(true);
+        Animated.timing(animationHeight, {
+          toValue: childServices.length * 50,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      } else {
+        setExpanded(false);
+        Animated.timing(animationHeight, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      }
+    }
+  };
 
   const validateForm = () => {
     let isValidForm = true;
+
+    // Kiểm tra các điều kiện chung
     if (
       step1Info.selectedServiceId === "" ||
       (step1Info.isChecked &&
@@ -120,6 +215,16 @@ export default function BookingStep1({
     ) {
       isValidForm = false;
     }
+
+    // Kiểm tra khi chọn "Đặt dịch vụ khác"
+    if (
+      step1Info.selectedServiceId === "OTHER_SERVICES" &&
+      (!step1Info.selectedAdditionalServices ||
+        step1Info.selectedAdditionalServices.length === 0)
+    ) {
+      isValidForm = false;
+    }
+
     setIsValid(isValidForm);
   };
 
@@ -127,8 +232,9 @@ export default function BookingStep1({
     validateForm();
   }, [step1Info]);
   useEffect(() => {
-    console.log("Updated step1Info in SwipeStep: ", step1Info);
+    console.log("Updated step1Info: ", step1Info);
   }, [step1Info]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -161,45 +267,7 @@ export default function BookingStep1({
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={step1Info.selectedServiceId}
-              onValueChange={(itemValue) => {
-                console.log("Selected Service ID: ", itemValue);
-
-                const selectedService = basicServices.find(
-                  (service) => service.id === itemValue
-                );
-
-                // Cập nhật step1Info, bao gồm childServices
-                setStep1Info((prev) => ({
-                  ...prev,
-                  selectedService: selectedService?.name || "",
-                  price: selectedService?.price || 0,
-                  selectedServiceId: itemValue,
-                  childServices: childServices, // Truyền toàn bộ danh sách dịch vụ con
-                }));
-
-                // Log để kiểm tra
-                console.log("Updated step1Info: ", {
-                  ...step1Info,
-                  childServices,
-                });
-
-                // Hiển thị dịch vụ con nếu có
-                if (childServices.length > 0) {
-                  setExpanded(true);
-                  Animated.timing(animationHeight, {
-                    toValue: childServices.length * 50,
-                    duration: 300,
-                    useNativeDriver: false,
-                  }).start();
-                } else {
-                  setExpanded(false);
-                  Animated.timing(animationHeight, {
-                    toValue: 0,
-                    duration: 300,
-                    useNativeDriver: false,
-                  }).start();
-                }
-              }}
+              onValueChange={handleSelectService}
               style={styles.picker}
             >
               <Picker.Item label="---Vui lòng chọn loại dịch vụ---" value="" />
@@ -210,28 +278,162 @@ export default function BookingStep1({
                   value={service.id}
                 />
               ))}
+              <Picker.Item label="Đặt dịch vụ khác" value="OTHER_SERVICES" />
             </Picker>
           </View>
 
           <Animated.View
-            style={[styles.childServicesContainer, { height: animationHeight }]}
+            style={[
+              styles.childServicesContainer,
+              {
+                height:
+                  expanded && !isDisplayingAdditionalServices
+                    ? animationHeight
+                    : 0,
+              },
+            ]}
           >
-            {expanded && (
+            {expanded && !isDisplayingAdditionalServices && (
               <>
                 <Text style={styles.includedText}>
-                   Các hoạt động chăm sóc dự kiến:
+                  Các hoạt động chăm sóc dự kiến:
                 </Text>
                 {childServices.map((child) => (
                   <View key={child.id} style={styles.childServiceRow}>
                     <Text
                       style={styles.childServiceText}
                       onPress={() => handleServiceSelection(child)}
-                    >{`_ ${child.name}`}</Text>
+                    >
+                      {`_ ${child.name}`}
+                    </Text>
                   </View>
                 ))}
               </>
             )}
           </Animated.View>
+
+          {step1Info.selectedServiceId === "OTHER_SERVICES" &&
+            isDisplayingAdditionalServices &&
+            additionalServices.length > 0 && (
+              <View style={styles.additionalServicesContainer}>
+                {additionalServices.map((service, index) => (
+                  <View key={service.id} style={styles.serviceContainer}>
+                    {/* Hàng checkbox và tên dịch vụ */}
+                    <View style={styles.checkboxAndNameRow}>
+                      <Checkbox
+                        value={step1Info.selectedAdditionalServices?.includes(
+                          service.id
+                        )}
+                        onValueChange={(isChecked) => {
+                          if (isChecked) {
+                            setStep1Info((prev) => ({
+                              ...prev,
+                              selectedAdditionalServices: [
+                                ...(prev.selectedAdditionalServices || []),
+                                service.id, // Thêm dịch vụ vào danh sách
+                              ],
+                            }));
+                          } else {
+                            setStep1Info((prev) => ({
+                              ...prev,
+                              selectedAdditionalServices: (
+                                prev.selectedAdditionalServices || []
+                              ).filter((id) => id !== service.id), // Loại bỏ dịch vụ khỏi danh sách
+                            }));
+                          }
+                        }}
+                        style={styles.checkbox}
+                      />
+                      <Text style={styles.checkboxLabel}>{service.name}</Text>
+                      <Text style={styles.childServicePrice}>
+                        {`${service.price.toLocaleString()}đ/dịch vụ`}
+                      </Text>
+                    </View>
+
+                    {/* Hàng timeRow: chọn thời gian */}
+                    <View style={styles.timeRow}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (
+                            step1Info.selectedAdditionalServices?.includes(
+                              service.id
+                            )
+                          ) {
+                            setShowStartPicker(index);
+                          }
+                        }}
+                        style={[
+                          styles.timeButton,
+                          step1Info.selectedAdditionalServices?.includes(
+                            service.id
+                          )
+                            ? {}
+                            : { backgroundColor: "#f0f0f0", opacity: 0.7 },
+                        ]}
+                        disabled={
+                          !step1Info.selectedAdditionalServices?.includes(
+                            service.id
+                          )
+                        }
+                      >
+                        <Text>
+                          {step1Info.selectedServiceTime?.[service.id]
+                            ?.startTime || "00:00"}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        disabled={true}
+                        style={[
+                          styles.timeButton,
+                          { backgroundColor: "#f0f0f0", opacity: 0.7 },
+                        ]}
+                      >
+                        <Text>
+                          {step1Info.selectedServiceTime?.[service.id]
+                            ?.endTime || "00:00"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {showStartPicker === index && (
+                      <DateTimePicker
+                        isVisible={true}
+                        mode="time"
+                        is24Hour={true}
+                        onCancel={() => setShowStartPicker(null)}
+                        onConfirm={(selectedTime) => {
+                          const newStartTime = new Date(selectedTime);
+                          const formattedStartTime = newStartTime
+                            .toISOString()
+                            .slice(11, 16);
+                          const durationInMinutes = service.duration || 0;
+                          const newEndTime = new Date(newStartTime.getTime());
+                          newEndTime.setMinutes(
+                            newEndTime.getMinutes() + durationInMinutes
+                          );
+                          const formattedEndTime = newEndTime
+                            .toISOString()
+                            .slice(11, 16);
+
+                          setStep1Info((prev) => ({
+                            ...prev,
+                            selectedServiceTime: {
+                              ...(prev.selectedServiceTime || {}),
+                              [service.id]: {
+                                startTime: formattedStartTime,
+                                endTime: formattedEndTime,
+                              },
+                            },
+                          }));
+
+                          setShowStartPicker(null);
+                        }}
+                      />
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
 
           {/* <Text style={styles.label}>Chọn thức ăn cho mèo</Text>
           <View style={styles.pickerContainer}>
@@ -456,7 +658,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: height * 0.1, // Khoảng cách dưới cùng
+    paddingBottom: height * 0.1,
   },
   pickerContainer: {
     width: "100%",
@@ -477,6 +679,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: height * 0.02,
+  },
+  serviceContainer: {
+    marginBottom: 16,
+  },
+  checkboxAndNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 10,
+  },
+
+  timePickerGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  timeButton: {
+    borderWidth: 1,
+    borderColor: "#000",
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    minWidth: 80, // Đảm bảo nút có kích thước đồng đều
+    alignItems: "center",
+    justifyContent: "center",
   },
   childServicesContainer: {
     overflow: "hidden", // Đảm bảo chỉ hiển thị trong vùng cho phép
@@ -537,7 +769,6 @@ const styles = StyleSheet.create({
   disabledTextInput: {
     backgroundColor: "rgba(0, 0, 0, 0.2)",
   },
-
   nextButton: {
     width: width,
     height: height * 0.067,
