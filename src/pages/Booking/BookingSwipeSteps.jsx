@@ -35,6 +35,7 @@ export default function SwipeStep({ navigation }) {
     isCustomFoodChecked: false,
     customFood: "",
     childServices: [],
+    selectedAdditionalServices: [],
   });
   const [selectedExtras, setSelectedExtras] = useState([]);
   // State lưu thông tin từ Step 2
@@ -179,6 +180,7 @@ export default function SwipeStep({ navigation }) {
                   step3Info,
                   contactInfo,
                   sitterId,
+                  additionalServices: step1Info.additionalServices,
                 });
               }
             }}
