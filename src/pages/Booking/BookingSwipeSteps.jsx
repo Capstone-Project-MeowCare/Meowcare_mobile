@@ -19,6 +19,7 @@ const { width, height } = Dimensions.get("window");
 export default function SwipeStep({ navigation }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isValid, setIsValid] = useState(false);
+  const [additionalServices, setAdditionalServices] = useState([]);
   const route = useRoute();
   const sitterId = route.params?.sitterId;
   useEffect(() => {
@@ -94,6 +95,8 @@ export default function SwipeStep({ navigation }) {
             setIsValid={setIsValid}
             selectedExtras={selectedExtras}
             setSelectedExtras={setSelectedExtras}
+            additionalServices={additionalServices} // Truyền vào đây nếu cần
+            setAdditionalServices={setAdditionalServices} // Thêm dòng này
             userId={sitterId}
           />
         );
@@ -104,6 +107,7 @@ export default function SwipeStep({ navigation }) {
             setStep2Info={setStep2Info}
             setIsValid={setIsValid}
             onGoBack={() => setCurrentStep(1)}
+            step1Info={step1Info}
           />
         );
       case 3:
@@ -113,6 +117,7 @@ export default function SwipeStep({ navigation }) {
             setStep3Info={setStep3Info}
             setIsValid={setIsValid}
             onGoBack={() => setCurrentStep(2)}
+            step1Info={step1Info}
           />
         );
       case 4:
@@ -171,8 +176,20 @@ export default function SwipeStep({ navigation }) {
             style={[styles.nextButton, !step5Checked && styles.disabledButton]}
             onPress={() => {
               if (step5Checked) {
+                console.log(
+                  "Final step1Info:",
+                  JSON.stringify(step1Info, null, 2)
+                );
                 navigation.navigate("ServicePayment", {
-                  step1Info,
+                  step1Info: {
+                    ...step1Info,
+                    additionalServices: step1Info.additionalServices.map(
+                      (service) => ({
+                        ...service,
+                        ...(step1Info.selectedServiceTime?.[service.id] || {}), // Gộp startTime và endTime
+                      })
+                    ),
+                  },
                   selectedExtras: selectedExtras.filter(
                     (extra) => extra.isSelected
                   ),
@@ -180,7 +197,6 @@ export default function SwipeStep({ navigation }) {
                   step3Info,
                   contactInfo,
                   sitterId,
-                  additionalServices: step1Info.additionalServices,
                 });
               }
             }}
