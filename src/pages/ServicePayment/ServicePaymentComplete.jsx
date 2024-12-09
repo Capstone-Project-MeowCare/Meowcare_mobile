@@ -52,7 +52,7 @@ export default function ServicePaymentComplete() {
         <Text style={styles.backButtonText}>Quay lại trang chính</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={() =>
           navigation.navigate("ServicePaymentOrderDetail", {
             bookingId,
@@ -64,7 +64,7 @@ export default function ServicePaymentComplete() {
         }
       >
         <Text style={styles.viewBookingText}>Xem thông tin đã đặt</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }

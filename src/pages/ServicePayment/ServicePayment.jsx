@@ -43,6 +43,14 @@ export default function ServicePayment() {
     "Chọn phương thức thanh toán"
   );
   const [selectedIcon, setSelectedIcon] = useState(null);
+  useEffect(() => {
+    console.log("Received step1Info in ServicePayment:", step1Info);
+    if (step1Info?.childServices) {
+      console.log("Child Services in step1Info:", step1Info.childServices);
+    } else {
+      console.log("No Child Services received in step1Info.");
+    }
+  }, []);
 
   // useEffect(() => {
   //   const fetchServices = () => {
@@ -224,10 +232,10 @@ export default function ServicePayment() {
           }
         } else {
           console.log("URL không hợp lệ hoặc không phải từ đối tác MoMo:", url);
-          Alert.alert(
-            "Lỗi",
-            "URL không hợp lệ hoặc không phải từ MoMo. Vui lòng thử lại."
-          );
+          // Alert.alert(
+          //   "Lỗi",
+          //   "URL không hợp lệ hoặc không phải từ MoMo. Vui lòng thử lại."
+          // );
         }
       } catch (error) {
         console.error("Error parsing URL:", error);
@@ -352,74 +360,64 @@ export default function ServicePayment() {
 
       if (!currentBookingId) {
         const bookingPayload = {
-          bookingDetailWithPetAndServices: step3Info.selectedCats.flatMap(
-            (cat) => {
-              const mainService =
-                step1Info.selectedServiceId &&
-                step1Info.selectedServiceId !== "OTHER_SERVICES"
-                  ? [
-                      {
-                        quantity: 1,
-                        petProfileId: cat.id,
-                        service: {
-                          id: step1Info.selectedServiceId,
-                          name: step1Info.selectedService,
-                          startTime:
-                            step1Info.selectedServiceTime?.[
-                              step1Info.selectedServiceId
-                            ]?.startTime || "00:00",
-                          endTime:
-                            step1Info.selectedServiceTime?.[
-                              step1Info.selectedServiceId
-                            ]?.endTime || "00:00",
-                        },
-                      },
-                    ]
-                  : [];
+          bookingDetails: step3Info.selectedCats.flatMap((cat) => {
+            // Dịch vụ chính (MAIN_SERVICE)
+            const mainService =
+              step1Info.selectedServiceId &&
+              step1Info.selectedServiceId !== "OTHER_SERVICES"
+                ? [
+                    {
+                      quantity: 1,
+                      petProfileId: cat.id,
+                      serviceId: step1Info.selectedServiceId,
+                    },
+                  ]
+                : [];
 
-              const childServices = step1Info.childServices?.map((child) => ({
+            // Dịch vụ con (CHILD_SERVICE)
+            const childServices =
+              step1Info.childServices?.map((child) => ({
                 quantity: 1,
                 petProfileId: cat.id,
-                service: {
-                  id: child.id,
-                  name: child.name,
-                  startTime:
-                    step1Info.selectedServiceTime?.[child.id]?.startTime ||
-                    "00:00",
-                  endTime:
-                    step1Info.selectedServiceTime?.[child.id]?.endTime ||
-                    "00:00",
-                },
-              }));
+                serviceId: child.id,
+              })) || [];
 
-              const additionalServices =
-                step1Info.selectedAdditionalServices?.map((serviceId) => {
-                  const additionalService = step1Info.additionalServices.find(
-                    (service) => service.id === serviceId
-                  );
-                  return {
-                    quantity: 1,
-                    petProfileId: cat.id,
-                    service: {
-                      id: additionalService.id,
-                      name: additionalService.name,
-                      startTime:
-                        step1Info.selectedServiceTime?.[additionalService.id]
-                          ?.startTime || "00:00",
-                      endTime:
-                        step1Info.selectedServiceTime?.[additionalService.id]
-                          ?.endTime || "00:00",
-                    },
-                  };
-                });
+            console.log("Child Services for cat:", cat.id, childServices);
 
-              return [
-                ...mainService,
-                ...(childServices || []),
-                ...(additionalServices || []),
-              ];
-            }
-          ),
+            // Dịch vụ bổ sung (ADDITIONAL_SERVICE)
+            const additionalServices =
+              step1Info.selectedAdditionalServices?.map((serviceId) => {
+                const additionalService = step1Info.additionalServices.find(
+                  (service) => service.id === serviceId
+                );
+                return {
+                  quantity: 1,
+                  petProfileId: cat.id,
+                  serviceId: serviceId,
+                  startTime: new Date(
+                    `${step2Info.startDate}T${
+                      step1Info.selectedServiceTime?.[serviceId]?.startTime ||
+                      "00:00"
+                    }:00Z`
+                  ).toISOString(),
+                  endTime: new Date(
+                    `${step2Info.startDate}T${
+                      step1Info.selectedServiceTime?.[serviceId]?.endTime ||
+                      "00:00"
+                    }:00Z`
+                  ).toISOString(),
+                };
+              }) || [];
+
+            console.log(
+              "Additional Services for cat:",
+              cat.id,
+              additionalServices
+            );
+
+            // Kết hợp tất cả các dịch vụ
+            return [...mainService, ...childServices, ...additionalServices];
+          }),
           sitterId,
           time: new Date().toISOString(),
           startDate: new Date(step2Info.startDate).toISOString(),
@@ -431,7 +429,14 @@ export default function ServicePayment() {
           phoneNumber: contactInfo.phoneNumber,
           address: step1Info.selectedLocation,
           note: contactInfo.note,
+          paymentMethod: "MOMO",
         };
+
+        // Log toàn bộ payload để kiểm tra
+        console.log(
+          "Booking Payload for Payment:",
+          JSON.stringify(bookingPayload, null, 2)
+        );
 
         console.log("=== START: Creating Booking ===");
         const bookingResponse = await postData(
