@@ -125,6 +125,7 @@ export default function Service() {
             id: booking.id,
             userId: booking.user?.id,
             sitterId: booking.sitter?.id,
+            userPhoneNumber: booking.user?.phoneNumber,
             userEmail: booking.user?.email,
             sitterEmail: booking.sitter?.email,
             userName: booking.user?.fullName || "Unknown User",
@@ -381,6 +382,7 @@ export default function Service() {
                         userId: item.userId,
                         sitterId: item.sitterId,
                         serviceName: item.serviceName,
+                        userPhoneNumber: item.userPhoneNumber,
                       })
                     }
                   />

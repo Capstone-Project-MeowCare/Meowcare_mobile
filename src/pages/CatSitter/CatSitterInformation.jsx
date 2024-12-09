@@ -279,7 +279,6 @@ export default function CatSitterInformation({
             )}
             contentContainerStyle={styles.imageList}
           />
-
           {currentIndex + PAGE_SIZE < cageImages.length && (
             <TouchableOpacity onPress={handleNext} style={styles.rightArrow}>
               <Text style={styles.arrowText}>{">"}</Text>
