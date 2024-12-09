@@ -117,92 +117,72 @@ export default function BookingStep1({
   const handleSelectService = async (itemValue) => {
     console.log("Selected Service ID: ", itemValue);
 
+    // Log giá trị `childServices` hiện tại
+    console.log("Current Child Services (Before Update): ", childServices);
+
     if (itemValue === "") {
-      // Reset toàn bộ thông tin khi chọn tùy chọn mặc định
       setStep1Info((prev) => ({
         ...prev,
         selectedServiceId: "",
         selectedService: "",
         price: 0,
         childServices: [],
-        additionalServices: [], // Đặt về mảng rỗng
-        selectedAdditionalServices: [], // Reset danh sách dịch vụ bổ sung đã chọn
+        additionalServices: [],
+        selectedAdditionalServices: [],
       }));
-      setAdditionalServices([]); // Đồng bộ với SwipeStep
-      setExpanded(false); // Ẩn danh sách dịch vụ con
-      setIsDisplayingAdditionalServices(false); // Ẩn danh sách ADDITION_SERVICE
+      setExpanded(false);
       Animated.timing(animationHeight, {
         toValue: 0,
         duration: 300,
         useNativeDriver: false,
       }).start();
-    } else if (itemValue === "OTHER_SERVICES") {
-      try {
-        const response = await getData(`/services/sitter/${userId}`);
-        if (response?.data) {
-          const filteredServices = response.data.filter(
-            (service) =>
-              service.serviceType === "ADDITION_SERVICE" &&
-              service.status === "ACTIVE"
-          );
-
-          setAdditionalServices(filteredServices); // Cập nhật state local
-          setStep1Info((prev) => ({
-            ...prev,
-            selectedServiceId: "OTHER_SERVICES",
-            selectedService: "",
-            price: 0,
-            childServices: [],
-            additionalServices: filteredServices, // Đồng bộ vào step1Info
-            selectedAdditionalServices: [], // Reset danh sách đã chọn
-          }));
-          setExpanded(false);
-          setIsDisplayingAdditionalServices(true);
-        }
-      } catch (error) {
-        console.error("Error fetching additional services: ", error);
-        Alert.alert("Lỗi", "Không thể tải danh sách dịch vụ bổ sung.");
-      }
-    } else {
-      // Xử lý khi chọn MAIN_SERVICE
-      const selectedService = basicServices.find(
-        (service) => service.id === itemValue
-      );
-      setStep1Info((prev) => ({
-        ...prev,
-        selectedServiceId: itemValue,
-        selectedService: selectedService?.name || "",
-        price: selectedService?.price || 0,
-        childServices: childServices.filter(
-          (service) => service.status === "ACTIVE"
-        ),
-        additionalServices: [], // Đặt về mảng rỗng
-        selectedAdditionalServices: [], // Reset danh sách dịch vụ bổ sung
-      }));
-      setAdditionalServices([]); // Đồng bộ với SwipeStep
-      setIsDisplayingAdditionalServices(false); // Ẩn danh sách ADDITION_SERVICE
-
-      // Hiển thị danh sách dịch vụ con nếu có
-      if (childServices.length > 0) {
-        setExpanded(true);
-        Animated.timing(animationHeight, {
-          toValue: childServices.length * 50,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      } else {
-        setExpanded(false);
-        Animated.timing(animationHeight, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }
+      return;
     }
 
-    // Log để kiểm tra giá trị của additionalServices
-    console.log("Updated additionalServices:", additionalServices);
+    const selectedService = basicServices.find(
+      (service) => service.id === itemValue
+    );
+
+    // Log dịch vụ được chọn
+    console.log("Selected Main Service: ", selectedService);
+
+    setStep1Info((prev) => ({
+      ...prev,
+      selectedServiceId: itemValue,
+      selectedService: selectedService?.name || "",
+      price: selectedService?.price || 0,
+      childServices, // Sử dụng trực tiếp `childServices` đã được lọc trong `useEffect`
+      additionalServices: [],
+      selectedAdditionalServices: [],
+    }));
+
+    // Log `childServices` sau khi cập nhật vào `step1Info`
+    console.log("Child Services Added to step1Info: ", childServices);
+
+    if (childServices.length > 0) {
+      setExpanded(true);
+      Animated.timing(animationHeight, {
+        toValue: childServices.length * 50,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    } else {
+      setExpanded(false);
+      Animated.timing(animationHeight, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    }
+
+    // Log `step1Info` sau khi cập nhật hoàn chỉnh
+    console.log("Updated step1Info: ", {
+      selectedServiceId: itemValue,
+      selectedService: selectedService?.name || "",
+      childServices,
+    });
   };
+
   const handleCheckboxChange = (isChecked, serviceId) => {
     setStep1Info((prev) => {
       // Lấy danh sách dịch vụ hiện tại
