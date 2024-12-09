@@ -30,12 +30,20 @@ export default function SetupProfile({ navigation }) {
   const [sitterProfileId, setSitterProfileId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [cagePictures, setCagePictures] = useState([]);
   const [isImageViewVisible, setImageViewVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // const renderImage = ({ item }) => (
+  // const renderImage = ({ item, index }) => (
   //   <View style={styles.imageContainer}>
-  //     <Image source={{ uri: item.imageUrl }} style={styles.image} />
+  //     <TouchableOpacity
+  //       onPress={() => {
+  //         setSelectedImageIndex(index);
+  //         setImageViewVisible(true);
+  //       }}
+  //     >
+  //       <Image source={{ uri: item.imageUrl }} style={styles.image} />
+  //     </TouchableOpacity>
   //     <TouchableOpacity
   //       style={styles.removeButton}
   //       onPress={() =>
@@ -48,7 +56,8 @@ export default function SetupProfile({ navigation }) {
   //     </TouchableOpacity>
   //   </View>
   // );
-  const renderImage = ({ item, index }) => (
+  // Render ảnh cá nhân
+  const renderProfileImage = ({ item, index }) => (
     <View style={styles.imageContainer}>
       <TouchableOpacity
         onPress={() => {
@@ -71,7 +80,31 @@ export default function SetupProfile({ navigation }) {
     </View>
   );
 
-  const handleImagePick = async () => {
+  // Render ảnh chuồng
+  const renderCageImage = ({ item, index }) => (
+    <View style={styles.imageContainer}>
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedImageIndex(index);
+          setImageViewVisible(true);
+        }}
+      >
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.removeButton}
+        onPress={() =>
+          setCagePictures((prevPictures) =>
+            prevPictures.filter((pic) => pic.id !== item.id)
+          )
+        }
+      >
+        <Text style={styles.removeText}>X</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const handleImagePick = async (isCagePicture = false) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -82,16 +115,18 @@ export default function SetupProfile({ navigation }) {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newImage = result.assets[0];
         if (newImage.uri) {
-          const newProfilePicture = {
+          const newPicture = {
             id: new Date().getTime().toString(),
             imageName: newImage.uri.split("/").pop(),
-            imageUrl: newImage.uri, // Lưu URI tạm thời, không upload ngay
+            imageUrl: newImage.uri,
+            isCargoProfilePicture: isCagePicture, // Đánh dấu loại ảnh
           };
-          console.log("Image selected:", newProfilePicture);
-          setProfilePictures((prevPictures) => [
-            ...prevPictures,
-            newProfilePicture,
-          ]);
+
+          if (isCagePicture) {
+            setCagePictures((prev) => [...prev, newPicture]);
+          } else {
+            setProfilePictures((prev) => [...prev, newPicture]);
+          }
         } else {
           console.error("Invalid image URI.");
         }
@@ -113,7 +148,15 @@ export default function SetupProfile({ navigation }) {
         if (response?.data) {
           const profileData = response.data;
 
-          // Cập nhật trạng thái với dữ liệu từ API
+          // Lọc các ảnh cá nhân và ảnh chuồng từ profilePictures
+          const allPictures = profileData.profilePictures || [];
+          const personalPictures = allPictures.filter(
+            (pic) => !pic.isCargoProfilePicture
+          );
+          const cargoPictures = allPictures.filter(
+            (pic) => pic.isCargoProfilePicture
+          );
+
           setSitterProfileId(profileData.id || null);
           setBio(profileData.bio || "");
           setExperience(profileData.experience || "");
@@ -121,14 +164,15 @@ export default function SetupProfile({ navigation }) {
           setSelectedSkills(
             profileData.skill ? profileData.skill.split(",") : []
           );
-          setProfilePictures(profileData.profilePictures || []);
+          setProfilePictures(personalPictures); // Gán ảnh cá nhân
+          setCagePictures(cargoPictures); // Gán ảnh chuồng
         } else {
           console.error("Sitter profile data not found.");
         }
       } catch (error) {
         console.error("Error fetching sitter profile:", error);
       } finally {
-        setIsLoading(false); // Đảm bảo trạng thái tải được cập nhật
+        setIsLoading(false);
       }
     };
 
@@ -177,28 +221,26 @@ export default function SetupProfile({ navigation }) {
         return;
       }
 
-      console.log("==== Bắt đầu lưu hồ sơ người chăm sóc ====");
-      console.log("Danh sách ảnh hiện tại:", profilePictures);
-
       setIsSaving(true);
 
-      // Upload ảnh lên Firebase
       const uploadedPictures = await Promise.all(
-        profilePictures.map(async (pic) => {
+        [...profilePictures, ...cagePictures].map(async (pic) => {
           if (!pic.imageUrl.startsWith("https://")) {
-            // Chỉ upload ảnh chưa được upload
-            console.log(`Uploading image: ${pic.imageName}`);
             const imageUrl = await firebaseImg(pic.imageUrl);
-            return {
-              imageName: pic.imageName,
-              imageUrl,
-            };
+            return { ...pic, imageUrl };
           }
-          return pic; // Ảnh đã upload thì giữ nguyên
+          return pic;
         })
       );
 
-      console.log("Uploaded Pictures:", uploadedPictures);
+      const sanitizedPictures = uploadedPictures.map(
+        ({ id, imageUrl, imageName, isCargoProfilePicture, description }) => ({
+          imageUrl,
+          imageName,
+          isCargoProfilePicture: isCargoProfilePicture || false,
+          description: description || "",
+        })
+      );
 
       // Dữ liệu payload
       const profileData = {
@@ -209,7 +251,7 @@ export default function SetupProfile({ navigation }) {
         environment,
         maximumQuantity: 0,
         status: 0,
-        profilePictures: uploadedPictures,
+        profilePictures: sanitizedPictures, // Danh sách ảnh đã được chuẩn hóa
       };
 
       console.log("Payload gửi đến API:", JSON.stringify(profileData, null, 2));
@@ -221,12 +263,6 @@ export default function SetupProfile({ navigation }) {
       );
 
       console.log("Phản hồi từ API sau khi lưu:", response);
-      if (response?.data?.profilePictures) {
-        console.log(
-          "Danh sách ảnh được lưu thành công trên server:",
-          response.data.profilePictures
-        );
-      }
 
       CustomToast({
         text: "Chỉnh sửa hồ sơ thành công",
@@ -235,23 +271,10 @@ export default function SetupProfile({ navigation }) {
 
       navigation.navigate("CatSitterProfile");
     } catch (error) {
-      console.error("==== Lỗi khi lưu hồ sơ ====", error);
-
-      if (error.response) {
-        console.error(
-          "Error Response Data:",
-          JSON.stringify(error.response.data, null, 2)
-        );
-        console.error("Error Response Status:", error.response.status);
-        console.error("Error Response Headers:", error.response.headers);
-      } else {
-        console.error("Error Message:", error.message);
-      }
-
+      console.error("Error saving profile:", error);
       Alert.alert("Lỗi", "Không thể lưu thông tin. Vui lòng thử lại sau.");
     } finally {
       setIsSaving(false);
-      console.log("==== Kết thúc lưu hồ sơ ====");
     }
   };
 
@@ -315,11 +338,9 @@ export default function SetupProfile({ navigation }) {
         <View style={styles.imageListContainer}>
           <FlatList
             data={profilePictures}
-            renderItem={renderImage}
+            renderItem={renderProfileImage}
             keyExtractor={(item) => item.id}
             horizontal
-            showsHorizontalScrollIndicator={false}
-            scrollEnabled={false}
           />
           <ImageViewing
             images={profilePictures.map((pic) => ({ uri: pic.imageUrl }))}
@@ -328,7 +349,10 @@ export default function SetupProfile({ navigation }) {
             onRequestClose={() => setImageViewVisible(false)}
           />
         </View>
-        <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => handleImagePick(false)}
+        >
           <Text style={styles.addButtonText}>Thêm ảnh </Text>
         </TouchableOpacity>
         <Text style={styles.sectionTitle}>Tiểu sử của bản thân:</Text>
@@ -417,13 +441,12 @@ export default function SetupProfile({ navigation }) {
           <Text style={styles.CageTitle}>Ảnh chuồng cho mèo cưng:</Text>
           <View style={styles.imageListContainer}>
             <FlatList
-              data={profilePictures}
-              renderItem={renderImage}
+              data={cagePictures}
+              renderItem={renderCageImage}
               keyExtractor={(item) => item.id}
               horizontal
-              showsHorizontalScrollIndicator={false}
-              scrollEnabled={false}
             />
+
             <ImageViewing
               images={profilePictures.map((pic) => ({ uri: pic.imageUrl }))}
               imageIndex={selectedImageIndex}
@@ -431,8 +454,11 @@ export default function SetupProfile({ navigation }) {
               onRequestClose={() => setImageViewVisible(false)}
             />
           </View>
-          <TouchableOpacity style={styles.addButton} onPress={handleImagePick}>
-            <Text style={styles.addButtonText}>Thêm ảnh </Text>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => handleImagePick(true)}
+          >
+            <Text style={styles.addButtonText}>Thêm ảnh chuồng</Text>
           </TouchableOpacity>
           <TextInput
             style={styles.textInput}

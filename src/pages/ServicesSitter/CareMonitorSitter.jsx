@@ -8,6 +8,7 @@ import {
   Dimensions,
   Image,
   Alert,
+  Linking,
 } from "react-native";
 import { AntDesign, Entypo, Feather } from "@expo/vector-icons";
 import StarRating from "react-native-star-rating-widget";
@@ -24,8 +25,15 @@ import { useFocusEffect } from "@react-navigation/native";
 const { width, height } = Dimensions.get("window");
 
 export default function CareMonitorCatSitter({ navigation, route }) {
-  const { userEmail, sitterEmail, bookingId, userId, sitterId, serviceName } =
-    route.params;
+  const {
+    userEmail,
+    sitterEmail,
+    bookingId,
+    userId,
+    sitterId,
+    serviceName,
+    userPhoneNumber,
+  } = route.params;
   const [expandedStates, setExpandedStates] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [currentDate, setCurrentDate] = useState(null);
@@ -42,6 +50,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
       userId,
       sitterId,
       serviceName,
+      userPhoneNumber,
     });
   }, []);
 
@@ -289,29 +298,22 @@ export default function CareMonitorCatSitter({ navigation, route }) {
   };
 
   const handleVideoCallPress = async () => {
-    const hasPermissions = await requestPermissions();
-    if (!hasPermissions) return;
+    if (!userPhoneNumber) {
+      Alert.alert("Lỗi", "Không tìm thấy số điện thoại của người dùng.");
+      return;
+    }
 
-    const roomRef = doc(db, "rooms", bookingId);
-    const roomSnapshot = await getDoc(roomRef);
+    const url = `https://zalo.me/${userPhoneNumber}`;
 
-    if (roomSnapshot.exists()) {
-      // Nếu room đã tồn tại, tham gia cuộc gọi
-      console.log("Room exists. Joining call...");
-      navigation.navigate("JoinScreen", {
-        roomId: bookingId,
-        userEmail,
-        sitterEmail,
-      });
-    } else {
-      // Nếu room chưa tồn tại, tạo phòng mới
-      console.log("Room does not exist. Creating a new room...");
-      navigation.navigate("CallScreen", {
-        roomId: bookingId,
-        bookingId,
-        userEmail,
-        sitterEmail,
-      });
+    try {
+      // Mở trực tiếp URL Zalo với số điện thoại
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("Error opening Zalo URL:", error);
+      Alert.alert(
+        "Lỗi",
+        "Không thể mở Zalo để gọi video. Vui lòng thử lại sau."
+      );
     }
   };
 

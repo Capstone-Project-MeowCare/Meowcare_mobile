@@ -103,6 +103,24 @@ export default function BookingStep1({
                   name: service.name,
                 }))
             );
+
+            // Lọc và gán các ADDITION_SERVICE đang hoạt động
+            setAdditionalServices(
+              services
+                .filter(
+                  (service) =>
+                    service.serviceType === "ADDITION_SERVICE" &&
+                    service.status === "ACTIVE"
+                )
+                .map((service) => ({
+                  id: service.id,
+                  name: service.name,
+                  price: service.price,
+                  duration: service.duration,
+                  startTime: service.startTime,
+                  endTime: service.endTime,
+                }))
+            );
           }
         } else {
           console.warn("No userId provided for fetching sitter services.");
@@ -114,23 +132,25 @@ export default function BookingStep1({
 
     fetchServices();
   }, [userId]);
+
   const handleSelectService = async (itemValue) => {
     console.log("Selected Service ID: ", itemValue);
 
-    // Log giá trị `childServices` hiện tại
-    console.log("Current Child Services (Before Update): ", childServices);
-
-    if (itemValue === "") {
+    // Nếu chọn loại dịch vụ khác
+    if (itemValue === "OTHER_SERVICES") {
       setStep1Info((prev) => ({
         ...prev,
-        selectedServiceId: "",
-        selectedService: "",
+        selectedServiceId: "OTHER_SERVICES",
+        selectedService: "Đặt dịch vụ khác",
         price: 0,
-        childServices: [],
-        additionalServices: [],
+        childServices: [], // Đặt childServices trống
+        additionalServices, // Hiển thị các dịch vụ bổ sung
         selectedAdditionalServices: [],
       }));
-      setExpanded(false);
+
+      // Hiển thị additionalServices thay vì childServices
+      setIsDisplayingAdditionalServices(true);
+      setExpanded(false); // Ẩn childServices
       Animated.timing(animationHeight, {
         toValue: 0,
         duration: 300,
@@ -139,25 +159,22 @@ export default function BookingStep1({
       return;
     }
 
+    // Nếu chọn một dịch vụ chính (MAIN_SERVICE)
     const selectedService = basicServices.find(
       (service) => service.id === itemValue
     );
-
-    // Log dịch vụ được chọn
-    console.log("Selected Main Service: ", selectedService);
 
     setStep1Info((prev) => ({
       ...prev,
       selectedServiceId: itemValue,
       selectedService: selectedService?.name || "",
       price: selectedService?.price || 0,
-      childServices, // Sử dụng trực tiếp `childServices` đã được lọc trong `useEffect`
-      additionalServices: [],
+      childServices, // Hiển thị childServices nếu có
+      additionalServices: [], // Đặt additionalServices trống
       selectedAdditionalServices: [],
     }));
 
-    // Log `childServices` sau khi cập nhật vào `step1Info`
-    console.log("Child Services Added to step1Info: ", childServices);
+    setIsDisplayingAdditionalServices(false); // Ẩn additionalServices
 
     if (childServices.length > 0) {
       setExpanded(true);
@@ -174,13 +191,6 @@ export default function BookingStep1({
         useNativeDriver: false,
       }).start();
     }
-
-    // Log `step1Info` sau khi cập nhật hoàn chỉnh
-    console.log("Updated step1Info: ", {
-      selectedServiceId: itemValue,
-      selectedService: selectedService?.name || "",
-      childServices,
-    });
   };
 
   const handleCheckboxChange = (isChecked, serviceId) => {
