@@ -367,19 +367,32 @@ export default function AdditionServiceManagement({ navigation }) {
                             selectedSlots.includes(slot.id) && {
                               borderColor: "#902C6C",
                             },
+                            slot.isAssigned && { backgroundColor: "#902C6C" },
                           ]}
                           onPress={() => toggleSlotSelection(slot.id)}
                         >
-                          <Text>{`${new Date(slot.startTime).toLocaleTimeString(
-                            "vi-VN",
-                            { hour: "2-digit", minute: "2-digit" }
-                          )} - ${new Date(slot.endTime).toLocaleTimeString(
-                            "vi-VN",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}`}</Text>
+                          <Text
+                            style={[
+                              slot.isAssigned && {
+                                color: "#FFFFFF",
+                                fontWeight: "bold",
+                              },
+                            ]}
+                          >
+                            {`${new Date(slot.startTime).toLocaleTimeString(
+                              "vi-VN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )} - ${new Date(slot.endTime).toLocaleTimeString(
+                              "vi-VN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}`}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
