@@ -34,7 +34,7 @@ export default function BookingStep1({
   const [userAddress, setUserAddress] = useState("");
   const [expanded, setExpanded] = useState(false); // Để toggle danh sách con
   const animationHeight = useRef(new Animated.Value(0)).current;
-  const [showStartPicker, setShowStartPicker] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const additionalServicesRef = useRef(
     step1Info.selectedAdditionalServices || []
   );
@@ -116,9 +116,7 @@ export default function BookingStep1({
                   id: service.id,
                   name: service.name,
                   price: service.price,
-                  duration: service.duration,
-                  startTime: service.startTime,
-                  endTime: service.endTime,
+                  slots: [], // Khởi tạo danh sách slot trống
                 }))
             );
           }
@@ -132,11 +130,51 @@ export default function BookingStep1({
 
     fetchServices();
   }, [userId]);
+  const fetchSlotsForService = async (serviceId) => {
+    try {
+      const response = await getData(
+        `/booking-slots/by-service-id?serviceId=${serviceId}`
+      );
+      if (response?.status === 1000 && Array.isArray(response.data)) {
+        const slots = response.data.map((slot) => ({
+          id: slot.id,
+          startTime: new Date(slot.startTime),
+          endTime: new Date(slot.endTime),
+          isSelected: false, // Trạng thái mặc định chưa chọn
+        }));
+
+        // Cập nhật slots vào dịch vụ tương ứng
+        setAdditionalServices((prevServices) =>
+          prevServices.map((service) =>
+            service.id === serviceId ? { ...service, slots } : service
+          )
+        );
+      } else {
+        console.warn("Failed to fetch slots:", response);
+      }
+    } catch (error) {
+      console.error("Error fetching slots:", error);
+    }
+  };
+
+  const toggleSlotSelection = (serviceId, slotId) => {
+    setAdditionalServices((prevServices) =>
+      prevServices.map((service) => {
+        if (!service || service.id !== serviceId || !service.slots)
+          return service;
+
+        const updatedSlots = service.slots.map((slot) =>
+          slot.id === slotId ? { ...slot, isSelected: !slot.isSelected } : slot
+        );
+
+        return { ...service, slots: updatedSlots };
+      })
+    );
+  };
 
   const handleSelectService = async (itemValue) => {
     console.log("Selected Service ID: ", itemValue);
 
-    // Nếu chọn loại dịch vụ khác
     if (itemValue === "OTHER_SERVICES") {
       setStep1Info((prev) => ({
         ...prev,
@@ -148,18 +186,19 @@ export default function BookingStep1({
         selectedAdditionalServices: [],
       }));
 
-      // Hiển thị additionalServices thay vì childServices
       setIsDisplayingAdditionalServices(true);
-      setExpanded(false); // Ẩn childServices
+      setExpanded(false);
+
+      // Đặt chiều cao của `CHILD_SERVICE` về 0
       Animated.timing(animationHeight, {
         toValue: 0,
         duration: 300,
         useNativeDriver: false,
       }).start();
+
       return;
     }
 
-    // Nếu chọn một dịch vụ chính (MAIN_SERVICE)
     const selectedService = basicServices.find(
       (service) => service.id === itemValue
     );
@@ -174,7 +213,7 @@ export default function BookingStep1({
       selectedAdditionalServices: [],
     }));
 
-    setIsDisplayingAdditionalServices(false); // Ẩn additionalServices
+    setIsDisplayingAdditionalServices(false);
 
     if (childServices.length > 0) {
       setExpanded(true);
@@ -193,35 +232,45 @@ export default function BookingStep1({
     }
   };
 
-  const handleCheckboxChange = (isChecked, serviceId) => {
+  const handleCheckboxChange = async (isChecked, serviceId) => {
+    if (isLoading) return; // Ngăn chặn thao tác nếu đang xử lý
+    setIsLoading(true);
+
     setStep1Info((prev) => {
-      // Lấy danh sách dịch vụ hiện tại
       const currentAdditionalServices = prev.additionalServices || [];
       const selectedService = currentAdditionalServices.find(
-        (service) => service.id === serviceId
+        (service) => service?.id === serviceId
       );
 
-      // Cập nhật danh sách ID đã chọn
       const updatedSelectedIds = isChecked
         ? [...(prev.selectedAdditionalServices || []), serviceId]
         : (prev.selectedAdditionalServices || []).filter(
             (id) => id !== serviceId
           );
 
-      // Cập nhật danh sách dịch vụ đã chọn
       const updatedSelectedServices = isChecked
         ? [...(prev.additionalServices || []), selectedService]
         : (prev.additionalServices || []).filter(
-            (service) => service.id !== serviceId
+            (service) => service?.id !== serviceId
           );
 
-      // Trả về state mới
       return {
         ...prev,
         selectedAdditionalServices: updatedSelectedIds,
-        additionalServices: updatedSelectedServices, // Cập nhật chi tiết dịch vụ
+        additionalServices: updatedSelectedServices,
       };
     });
+
+    // Chỉ gọi API khi checkbox được tích
+    if (isChecked) {
+      try {
+        await fetchSlotsForService(serviceId);
+      } catch (error) {
+        console.error("Error fetching slots:", error);
+      }
+    }
+
+    setIsLoading(false);
   };
 
   const validateForm = () => {
@@ -319,7 +368,9 @@ export default function BookingStep1({
                 height:
                   expanded && !isDisplayingAdditionalServices
                     ? animationHeight
-                    : 0,
+                    : isDisplayingAdditionalServices
+                      ? "auto"
+                      : 0,
               },
             ]}
           >
@@ -346,7 +397,7 @@ export default function BookingStep1({
             isDisplayingAdditionalServices &&
             additionalServices.length > 0 && (
               <View style={styles.additionalServicesContainer}>
-                {additionalServices.map((service, index) => (
+                {additionalServices.map((service) => (
                   <View key={service.id} style={styles.serviceContainer}>
                     {/* Hàng checkbox và tên dịch vụ */}
                     <View style={styles.checkboxAndNameRow}>
@@ -366,92 +417,49 @@ export default function BookingStep1({
                       </Text>
                     </View>
 
-                    {/* Hàng timeRow: chọn thời gian */}
-                    <View style={styles.timeRow}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          if (
-                            step1Info.selectedAdditionalServices?.includes(
-                              service.id
-                            )
-                          ) {
-                            setShowStartPicker(index);
-                          }
-                        }}
-                        style={[
-                          styles.timeButton,
-                          step1Info.selectedAdditionalServices?.includes(
-                            service.id
-                          )
-                            ? {}
-                            : { backgroundColor: "#f0f0f0", opacity: 0.7 },
-                        ]}
-                        disabled={
-                          !step1Info.selectedAdditionalServices?.includes(
-                            service.id
-                          )
-                        }
-                      >
-                        <Text>
-                          {step1Info.selectedServiceTime?.[service.id]
-                            ?.startTime || "00:00"}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        disabled={true}
-                        style={[
-                          styles.timeButton,
-                          { backgroundColor: "#f0f0f0", opacity: 0.7 },
-                        ]}
-                      >
-                        <Text>
-                          {step1Info.selectedServiceTime?.[service.id]
-                            ?.endTime || "00:00"}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {showStartPicker === index && (
-                      <DateTimePicker
-                        isVisible={true}
-                        mode="time"
-                        is24Hour={true}
-                        onCancel={() => setShowStartPicker(null)}
-                        onConfirm={(selectedTime) => {
-                          // Chuyển đổi thời gian được chọn sang múi giờ cục bộ
-                          const localStartTime = new Date(selectedTime); // Đảm bảo đây là Date object
-                          const formattedStartTime =
-                            localStartTime.toLocaleTimeString("en-GB", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }); // Không cần `replace` để giữ lại phút
-
-                          const durationInMinutes = service.duration || 0; // Lấy duration của dịch vụ
-                          const newEndTime = new Date(
-                            localStartTime.getTime() + durationInMinutes * 60000
-                          ); // Cộng thêm duration
-
-                          const formattedEndTime =
-                            newEndTime.toLocaleTimeString("en-GB", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }); // Không cần `replace` để giữ lại phút
-
-                          // Cập nhật step1Info với startTime và endTime của dịch vụ
-                          setStep1Info((prev) => ({
-                            ...prev,
-                            selectedServiceTime: {
-                              ...(prev.selectedServiceTime || {}),
-                              [service.id]: {
-                                startTime: formattedStartTime,
-                                endTime: formattedEndTime,
-                              },
-                            },
-                          }));
-
-                          setShowStartPicker(null); // Đóng picker
-                        }}
-                      />
+                    {/* Accordion để chọn slot giờ */}
+                    {step1Info.selectedAdditionalServices?.includes(
+                      service.id
+                    ) && (
+                      <View style={styles.slotContainer}>
+                        {service?.slots?.length > 0 ? (
+                          service.slots.map((slot) => (
+                            <TouchableOpacity
+                              key={slot.id}
+                              onPress={() =>
+                                toggleSlotSelection(service.id, slot.id)
+                              }
+                              style={[
+                                styles.slotItem,
+                                slot.isSelected && {
+                                  backgroundColor: "#902C6C",
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={{
+                                  color: slot.isSelected ? "#FFFFFF" : "#000",
+                                }}
+                              >
+                                {`${slot.startTime.toLocaleTimeString("vi-VN", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })} - ${slot.endTime.toLocaleTimeString(
+                                  "vi-VN",
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}`}
+                              </Text>
+                            </TouchableOpacity>
+                          ))
+                        ) : (
+                          <Text style={styles.noSlotsText}>
+                            Không có slot giờ khả dụng
+                          </Text>
+                        )}
+                      </View>
                     )}
                   </View>
                 ))}
