@@ -171,6 +171,31 @@ export default function BookingStep1({
       })
     );
   };
+  useEffect(() => {
+    if (additionalServices.length > 0) {
+      const updatedSelectedSlot = {};
+      additionalServices.forEach((service) => {
+        if (
+          step1Info.selectedAdditionalServices?.includes(service.id) &&
+          service.slots.length > 0
+        ) {
+          updatedSelectedSlot[service.id] = service.slots[0]; // Chọn slot đầu tiên
+        }
+      });
+
+      setStep1Info((prev) => ({
+        ...prev,
+        selectedSlot: {
+          ...(prev.selectedSlot || {}),
+          ...updatedSelectedSlot,
+        },
+      }));
+    }
+  }, [additionalServices, step1Info.selectedAdditionalServices]);
+
+  useEffect(() => {
+    console.log("Selected Slot Data:", step1Info.selectedSlot);
+  }, [step1Info.selectedSlot]);
 
   const handleSelectService = async (itemValue) => {
     console.log("Selected Service ID: ", itemValue);
@@ -417,50 +442,55 @@ export default function BookingStep1({
                       </Text>
                     </View>
 
-                    {/* Accordion để chọn slot giờ */}
+                    {/* Hiển thị và chọn slot */}
                     {step1Info.selectedAdditionalServices?.includes(
                       service.id
-                    ) && (
-                      <View style={styles.slotContainer}>
-                        {service?.slots?.length > 0 ? (
-                          service.slots.map((slot) => (
-                            <TouchableOpacity
-                              key={slot.id}
-                              onPress={() =>
-                                toggleSlotSelection(service.id, slot.id)
-                              }
-                              style={[
-                                styles.slotItem,
-                                slot.isSelected && {
-                                  backgroundColor: "#902C6C",
+                    ) &&
+                      service?.slots?.length > 0 && (
+                        <View style={styles.slotPickerContainer}>
+                          <Text style={styles.slotLabel}>Chọn giờ:</Text>
+                          <Picker
+                            selectedValue={
+                              step1Info.selectedSlot?.[service.id]?.id || ""
+                            } // Giá trị slot được chọn
+                            onValueChange={(slotId) => {
+                              const selectedSlot = service.slots.find(
+                                (slot) => slot.id === slotId
+                              );
+
+                              // Cập nhật slot được chọn vào step1Info
+                              setStep1Info((prev) => ({
+                                ...prev,
+                                selectedSlot: {
+                                  ...(prev.selectedSlot || {}),
+                                  [service.id]: selectedSlot,
                                 },
-                              ]}
-                            >
-                              <Text
-                                style={{
-                                  color: slot.isSelected ? "#FFFFFF" : "#000",
-                                }}
-                              >
-                                {`${slot.startTime.toLocaleTimeString("vi-VN", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })} - ${slot.endTime.toLocaleTimeString(
+                              }));
+                            }}
+                            style={styles.slotPicker}
+                          >
+                            {service.slots.map((slot) => (
+                              <Picker.Item
+                                key={slot.id}
+                                label={`${slot.startTime.toLocaleTimeString(
+                                  "vi-VN",
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )} - ${slot.endTime.toLocaleTimeString(
                                   "vi-VN",
                                   {
                                     hour: "2-digit",
                                     minute: "2-digit",
                                   }
                                 )}`}
-                              </Text>
-                            </TouchableOpacity>
-                          ))
-                        ) : (
-                          <Text style={styles.noSlotsText}>
-                            Không có slot giờ khả dụng
-                          </Text>
-                        )}
-                      </View>
-                    )}
+                                value={slot.id}
+                              />
+                            ))}
+                          </Picker>
+                        </View>
+                      )}
                   </View>
                 ))}
               </View>
@@ -677,6 +707,29 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "flex-start",
     marginTop: height * 0.05,
+  },
+  slotPickerContainer: {
+    marginTop: 10,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.6)",
+    borderRadius: 5,
+    padding: 10,
+  },
+  slotLabel: {
+    fontSize: 14,
+    marginBottom: 5,
+    color: "#333",
+  },
+  selectedSlotText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  noSlotsText: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
   },
   label: {
     fontSize: 18,
