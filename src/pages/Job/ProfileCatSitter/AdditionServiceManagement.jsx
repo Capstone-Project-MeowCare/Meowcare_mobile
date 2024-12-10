@@ -43,6 +43,7 @@ export default function AdditionServiceManagement({ navigation }) {
           price: service.price || 0,
           showSlots: false, // Mặc định ẩn slot giờ
           slotTimes: [], // Mặc định không có slot giờ
+          selectedSlots: [],
         }));
 
         console.log("Danh sách dịch vụ:", childServices);
@@ -95,7 +96,15 @@ export default function AdditionServiceManagement({ navigation }) {
         setAdditionalServices((prevServices) =>
           prevServices.map((service) =>
             service.id === serviceId
-              ? { ...service, slotTimes: updatedSlots, showSlots: true }
+              ? {
+                  ...service,
+                  slotTimes: updatedSlots,
+                  showSlots: true,
+                  selectedSlots:
+                    updatedSlots
+                      .filter((slot) => slot.isAssigned)
+                      .map((slot) => slot.id) || [],
+                }
               : service
           )
         );
@@ -107,12 +116,18 @@ export default function AdditionServiceManagement({ navigation }) {
       Alert.alert("Lỗi", "Không thể tải danh sách slot giờ.");
     }
   };
-  const toggleSlotSelection = (slotId) => {
-    setSelectedSlots(
-      (prevSelected) =>
-        prevSelected.includes(slotId)
-          ? prevSelected.filter((id) => id !== slotId) // Bỏ chọn
-          : [...prevSelected, slotId] // Chọn thêm
+  const toggleSlotSelection = (serviceId, slotId) => {
+    setAdditionalServices((prevServices) =>
+      prevServices.map((service) =>
+        service.id === serviceId
+          ? {
+              ...service,
+              selectedSlots: (service.selectedSlots || []).includes(slotId)
+                ? service.selectedSlots.filter((id) => id !== slotId) // Bỏ chọn
+                : [...service.selectedSlots, slotId], // Chọn thêm
+            }
+          : service
+      )
     );
   };
 
@@ -181,11 +196,11 @@ export default function AdditionServiceManagement({ navigation }) {
           .filter((slot) => slot.isAssigned)
           .map((slot) => slot.id);
 
-        const slotsToAdd = selectedSlots.filter(
+        const slotsToAdd = service.selectedSlots.filter(
           (slotId) => !assignedSlotIds.includes(slotId)
         );
         const slotsToRemove = assignedSlotIds.filter(
-          (slotId) => !selectedSlots.includes(slotId)
+          (slotId) => !service.selectedSlots.includes(slotId)
         );
 
         for (const slotId of slotsToAdd) {
@@ -364,20 +379,20 @@ export default function AdditionServiceManagement({ navigation }) {
                           key={slot.id}
                           style={[
                             styles.timeButton,
-                            selectedSlots.includes(slot.id) && {
-                              borderColor: "#902C6C",
+                            service.selectedSlots.includes(slot.id) && {
+                              backgroundColor: "#902C6C",
                             },
-                            slot.isAssigned && { backgroundColor: "#902C6C" },
                           ]}
-                          onPress={() => toggleSlotSelection(slot.id)}
+                          onPress={() =>
+                            toggleSlotSelection(service.id, slot.id)
+                          }
                         >
                           <Text
-                            style={[
-                              slot.isAssigned && {
-                                color: "#FFFFFF",
-                                fontWeight: "bold",
-                              },
-                            ]}
+                            style={
+                              service.selectedSlots.includes(slot.id)
+                                ? { color: "#FFFFFF", fontWeight: "bold" }
+                                : { color: "#000000" }
+                            }
                           >
                             {`${new Date(slot.startTime).toLocaleTimeString(
                               "vi-VN",
