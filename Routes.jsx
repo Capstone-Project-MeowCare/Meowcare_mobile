@@ -82,6 +82,7 @@ import AdditionServicePayment from "./src/pages/ServicePayment/AdditionServicePa
 import CareTimeManagement from "./src/pages/Job/ProfileCatSitter/CareTimeManagement";
 import SitterReviewScreen from "./src/pages/Reviews/SitterReviewScreen";
 import AdditionServiceManagement from "./src/pages/Job/ProfileCatSitter/AdditionServiceManagement";
+import BookingSlotManagement from "./src/pages/Job/ProfileCatSitter/BookingSlotManagement";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -745,6 +746,11 @@ export function Routes() {
           name="SitterReviewScreen"
           options={{ headerLeft: null, headerShown: false }}
           component={SitterReviewScreen}
+        />
+        <Stack.Screen
+          name="BookingSlotManagement"
+          options={{ headerLeft: null, headerShown: false }}
+          component={BookingSlotManagement}
         />
         <Stack.Screen
           name="Register"
