@@ -98,13 +98,6 @@ export default function ServicePayment() {
       const days = numberOfDays > 0 ? numberOfDays : 1;
 
       // Dịch vụ chính
-      // if (step1Info.selectedServiceId) {
-      //   selectedServices.push({
-      //     name: step1Info.selectedService || "Không xác định",
-      //     price: (step1Info.price || 0) * days * numberOfCats,
-      //     type: "MAIN_SERVICE",
-      //   });
-      // }
       if (
         step1Info.selectedServiceId &&
         step1Info.selectedServiceId !== "OTHER_SERVICES"
@@ -130,6 +123,7 @@ export default function ServicePayment() {
         });
       }
 
+      // Dịch vụ bổ sung (ADDITIONAL_SERVICE)
       if (Array.isArray(step1Info.selectedAdditionalServices)) {
         step1Info.selectedAdditionalServices.forEach((serviceId) => {
           const additionalService = step1Info.additionalServices?.find(
@@ -137,14 +131,26 @@ export default function ServicePayment() {
           );
 
           if (additionalService) {
+            const slot = step1Info.selectedSlot?.[serviceId]; // Lấy slot đã chọn
+            const startTime = slot?.startTime
+              ? new Date(slot.startTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
+            const endTime = slot?.endTime
+              ? new Date(slot.endTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
+
             selectedServices.push({
               name: additionalService.name || "Dịch vụ bổ sung không xác định",
               price: additionalService.price || 0, // Giá của dịch vụ bổ sung
               type: "ADDITIONAL_SERVICE",
-              startTime:
-                step1Info.selectedServiceTime?.[serviceId]?.startTime || "",
-              endTime:
-                step1Info.selectedServiceTime?.[serviceId]?.endTime || "",
+              startTime, // Chỉ giờ bắt đầu
+              endTime, // Chỉ giờ kết thúc
             });
           } else {
             console.warn(`Dịch vụ bổ sung với ID ${serviceId} không tìm thấy.`);
@@ -198,6 +204,31 @@ export default function ServicePayment() {
         return null;
     }
   };
+  useEffect(() => {
+    if (step1Info.selectedSlot) {
+      const deserializedSelectedSlot = Object.fromEntries(
+        Object.entries(step1Info.selectedSlot).map(([serviceId, slot]) => [
+          serviceId,
+          {
+            ...slot,
+            startTime: slot.startTime ? new Date(slot.startTime) : null,
+            endTime: slot.endTime ? new Date(slot.endTime) : null,
+          },
+        ])
+      );
+
+      console.log("Deserialized Selected Slot:", deserializedSelectedSlot);
+
+      // Sử dụng một bản sao để lưu trữ
+      const updatedStep1Info = {
+        ...step1Info,
+        selectedSlot: deserializedSelectedSlot,
+      };
+
+      // Nếu cần, lưu trữ bản sao này vào state
+    }
+  }, [step1Info.selectedSlot]);
+
   useEffect(() => {
     const handleDeepLink = async ({ url }) => {
       console.log("Received URL:", url);
@@ -360,6 +391,20 @@ export default function ServicePayment() {
 
       if (!currentBookingId) {
         const bookingPayload = {
+          time: new Date().toISOString(),
+          startDate: new Date(step2Info.startDate).toISOString(),
+          endDate: new Date(
+            step2Info.endDate || step2Info.startDate
+          ).toISOString(),
+          numberOfPet: step3Info.selectedCats.length,
+          name: contactInfo.name,
+          phoneNumber: contactInfo.phoneNumber,
+          address: step1Info.selectedLocation,
+          note: contactInfo.note,
+          sitterId,
+          isHouseSitting: step1Info.selectedServiceId === "HOUSE_SITTING", // Example logic
+          orderType: "OVERNIGHT", // Example order type
+          paymentMethod: "MOMO",
           bookingDetails: step3Info.selectedCats.flatMap((cat) => {
             // Dịch vụ chính (MAIN_SERVICE)
             const mainService =
@@ -382,54 +427,25 @@ export default function ServicePayment() {
                 serviceId: child.id,
               })) || [];
 
-            console.log("Child Services for cat:", cat.id, childServices);
-
             // Dịch vụ bổ sung (ADDITIONAL_SERVICE)
             const additionalServices =
               step1Info.selectedAdditionalServices?.map((serviceId) => {
                 const additionalService = step1Info.additionalServices.find(
                   (service) => service.id === serviceId
                 );
+                const slot = step1Info.selectedSlot?.[serviceId]; // Lấy thông tin slot
                 return {
                   quantity: 1,
                   petProfileId: cat.id,
                   serviceId: serviceId,
-                  startTime: new Date(
-                    `${step2Info.startDate}T${
-                      step1Info.selectedServiceTime?.[serviceId]?.startTime ||
-                      "00:00"
-                    }:00Z`
-                  ).toISOString(),
-                  endTime: new Date(
-                    `${step2Info.startDate}T${
-                      step1Info.selectedServiceTime?.[serviceId]?.endTime ||
-                      "00:00"
-                    }:00Z`
-                  ).toISOString(),
+                  startTime: slot?.startTime || null,
+                  endTime: slot?.endTime || null,
+                  bookingSlotId: slot?.id || null, // Thêm bookingSlotId
                 };
               }) || [];
 
-            console.log(
-              "Additional Services for cat:",
-              cat.id,
-              additionalServices
-            );
-
-            // Kết hợp tất cả các dịch vụ
             return [...mainService, ...childServices, ...additionalServices];
           }),
-          sitterId,
-          time: new Date().toISOString(),
-          startDate: new Date(step2Info.startDate).toISOString(),
-          endDate: new Date(
-            step2Info.endDate || step2Info.startDate
-          ).toISOString(),
-          numberOfPet: step3Info.selectedCats.length,
-          name: contactInfo.name,
-          phoneNumber: contactInfo.phoneNumber,
-          address: step1Info.selectedLocation,
-          note: contactInfo.note,
-          paymentMethod: "MOMO",
         };
 
         // Log toàn bộ payload để kiểm tra
@@ -544,9 +560,9 @@ export default function ServicePayment() {
               <View style={styles.textWrapper}>
                 <Text style={styles.dot}>•</Text>
                 <Text style={styles.dotText}>
-                  {`${service.name || "Dịch vụ không xác định"} ${
+                  {`${service.name || "Dịch vụ không xác định"}${
                     service.startTime && service.endTime
-                      ? `(${service.startTime} - ${service.endTime})`
+                      ? ` (${service.startTime} - ${service.endTime})`
                       : ""
                   }`}
                 </Text>

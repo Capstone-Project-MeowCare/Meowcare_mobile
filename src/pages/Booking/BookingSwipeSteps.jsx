@@ -174,22 +174,54 @@ export default function SwipeStep({ navigation }) {
         {currentStep === 5 && (
           <TouchableOpacity
             style={[styles.nextButton, !step5Checked && styles.disabledButton]}
+            // onPress={() => {
+            //   if (step5Checked) {
+            //     console.log(
+            //       "Final step1Info:",
+            //       JSON.stringify(step1Info, null, 2)
+            //     );
+            //     navigation.navigate("ServicePayment", {
+            //       step1Info: {
+            //         ...step1Info,
+            //         additionalServices: step1Info.additionalServices.map(
+            //           (service) => ({
+            //             ...service,
+            //             ...(step1Info.selectedServiceTime?.[service.id] || {}), // Gộp startTime và endTime
+            //           })
+            //         ),
+            //       },
+            //       selectedExtras: selectedExtras.filter(
+            //         (extra) => extra.isSelected
+            //       ),
+            //       step2Info,
+            //       step3Info,
+            //       contactInfo,
+            //       sitterId,
+            //     });
+            //   }
+            // }}
             onPress={() => {
               if (step5Checked) {
-                console.log(
-                  "Final step1Info:",
-                  JSON.stringify(step1Info, null, 2)
-                );
+                const serializedStep1Info = {
+                  ...step1Info,
+                  selectedSlot: Object.fromEntries(
+                    Object.entries(step1Info.selectedSlot || {}).map(
+                      ([serviceId, slot]) => [
+                        serviceId,
+                        {
+                          ...slot,
+                          startTime: slot.startTime?.toISOString(),
+                          endTime: slot.endTime?.toISOString(),
+                        },
+                      ]
+                    )
+                  ),
+                };
+
+                console.log("Serialized step1Info:", serializedStep1Info);
+
                 navigation.navigate("ServicePayment", {
-                  step1Info: {
-                    ...step1Info,
-                    additionalServices: step1Info.additionalServices.map(
-                      (service) => ({
-                        ...service,
-                        ...(step1Info.selectedServiceTime?.[service.id] || {}), // Gộp startTime và endTime
-                      })
-                    ),
-                  },
+                  step1Info: serializedStep1Info,
                   selectedExtras: selectedExtras.filter(
                     (extra) => extra.isSelected
                   ),
