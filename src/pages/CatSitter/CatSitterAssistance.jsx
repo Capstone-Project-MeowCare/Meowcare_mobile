@@ -104,7 +104,7 @@ export default function CatSitterAssistance({ id }) {
     if (id) {
       fetchServices();
     } else {
-      console.warn("No sitter ID provided.");
+      // console.warn("No sitter ID provided.");
       setLoading(false);
     }
   }, [id]);
