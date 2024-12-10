@@ -351,7 +351,23 @@ export default function SetupService({ navigation }) {
             </View>
           </View>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("BookingSlotManagement")}
+          style={styles.serviceWrapper}
+        >
+          <View style={styles.serviceOption}>
+            <View style={styles.headerRow}>
+              <Text style={styles.optionLabel}>Quản lý slot </Text>
 
+              {/* <Switch
+                value={false} // Giá trị mặc định
+                onValueChange={(value) => {
+                  console.log(`Switch toggled: ${value}`);
+                }}
+              /> */}
+            </View>
+          </View>
+        </TouchableOpacity>
         {/* <TouchableOpacity
           style={styles.addServiceButton}
           onPress={() => navigation.navigate("CareTimeManagement")}
