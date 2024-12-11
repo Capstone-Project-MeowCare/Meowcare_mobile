@@ -224,19 +224,19 @@ export default function SetupSchedule({ navigation }) {
             onValueChange={setIsBoardingSelected}
           />
         </View>
-        <View style={styles.serviceOption}>
+        {/* <View style={styles.serviceOption}>
           <Text style={styles.optionLabel}>Trông tại nhà (House Sitting)</Text>
           <Switch
             value={isHomeVisitSelected}
             onValueChange={setIsHomeVisitSelected}
           />
-        </View>
+        </View> */}
 
         {isBoardingSelected && (
           <>
             <Text style={styles.sectionTitle}>Gủi thú cưng (Boarding)</Text>
-            <Text style={styles.subTitle}>Chọn ngày trong tuần bạn rảnh </Text>
-            {renderDaySelection("boarding", boardingSelectedDays)}
+            {/* <Text style={styles.subTitle}>Chọn ngày trong tuần bạn rảnh </Text>
+            {renderDaySelection("boarding", boardingSelectedDays)} */}
 
             <Text style={styles.subTitle}>Chọn ngày không thể chăm sóc</Text>
             <Calendar

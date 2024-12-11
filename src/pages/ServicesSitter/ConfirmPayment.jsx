@@ -245,7 +245,7 @@ export default function ConfirmPayment({ navigation, route }) {
         style={styles.confirmButton}
         onPress={() => {
           alert("Thanh toán thành công! Dịch vụ đã hoàn tất.");
-          navigation.navigate("Giao dịch");
+          navigation.navigate("Công Việc");
         }}
       >
         <Text style={styles.confirmButtonText}>Xác nhận thanh toán</Text>
