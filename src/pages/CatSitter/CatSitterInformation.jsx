@@ -234,7 +234,7 @@ export default function CatSitterInformation({
           ))}
         </View>
       </View>
-      <View style={styles.locationInfoContainer}>
+      {/* <View style={styles.locationInfoContainer}>
         <Text style={styles.titlesecond}>Thông tin về nơi ở:</Text>
         <View style={styles.locationGrid}>
           {locationData.map((item, index) => (
@@ -244,7 +244,7 @@ export default function CatSitterInformation({
             </View>
           ))}
         </View>
-      </View>
+      </View> */}
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>An toàn, tin cậy & môi trường:</Text>
         <Text style={styles.Description}>{environment}</Text>

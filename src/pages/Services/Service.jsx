@@ -263,7 +263,7 @@ export default function Service() {
               source={require("../../../assets/IconRequest.png")}
               style={styles.icon}
             />
-            <Text style={styles.iconText}>Nhận yêu cầu</Text>
+            <Text style={styles.iconText}>Đơn đặt lịch</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconContainer}
