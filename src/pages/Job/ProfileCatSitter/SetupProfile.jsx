@@ -13,10 +13,11 @@ import {
   Linking,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../../../auth/useAuth";
-import { getData, putData } from "../../../api/api";
-import { firebaseImg } from "../../../api/firebaseImg";
+import { deleteData, getData, postData, putData } from "../../../api/api";
+import { firebaseCertificate, firebaseImg } from "../../../api/firebaseImg";
 import CatSitterSkill from "../../../data/CatSitterSkill.json";
 import CustomToast from "../../../components/CustomToast";
 import ImageViewing from "react-native-image-viewing";
@@ -38,6 +39,7 @@ export default function SetupProfile({ navigation }) {
   const [maximumQuantity, setMaximumQuantity] = useState("");
   const [cageDescription, setCageDescription] = useState("");
   const [certificates, setCertificates] = useState([]);
+  const [removedCertificates, setRemovedCertificates] = useState([]);
 
   // const renderImage = ({ item, index }) => (
   //   <View style={styles.imageContainer}>
@@ -133,21 +135,21 @@ export default function SetupProfile({ navigation }) {
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
-          style={styles.pdfContainer}
+          style={styles.pdfContainer} // Áp dụng giao diện PDF
           onPress={() => {
             if (item.certificateUrl) {
               Linking.openURL(item.certificateUrl)
                 .then(() => console.log("PDF opened in browser"))
                 .catch((err) => console.error("Failed to open PDF:", err));
-            } else {
-              console.error("PDF URL is invalid or missing");
             }
           }}
         >
           <Text style={styles.pdfText}>PDF</Text>
         </TouchableOpacity>
       )}
-      <Text style={styles.certificateName}>{item.certificateName}</Text>
+      {/* <Text style={styles.certificateName}>
+        {item.certificateName || "Unnamed Certificate"}
+      </Text> */}
       <TouchableOpacity
         style={styles.removeButton} // Nút xóa
         onPress={() => handleRemoveCertificate(index)} // Gọi hàm xóa
@@ -159,8 +161,12 @@ export default function SetupProfile({ navigation }) {
 
   // Hàm xóa chứng chỉ khỏi danh sách
   const handleRemoveCertificate = (index) => {
-    setCertificates((prevCertificates) =>
-      prevCertificates.filter((_, i) => i !== index)
+    const removedCert = certificates[index]; // Lấy chứng chỉ bị xóa
+    if (removedCert.id) {
+      setRemovedCertificates((prev) => [...prev, removedCert.id]); // Lưu id chứng chỉ vào danh sách tạm
+    }
+    setCertificates(
+      (prevCertificates) => prevCertificates.filter((_, i) => i !== index) // Xóa khỏi danh sách hiển thị
     );
   };
 
@@ -197,6 +203,44 @@ export default function SetupProfile({ navigation }) {
       console.error("Error picking image:", error);
     }
   };
+  // const handleCertificatePick = async () => {
+  //   try {
+  //     const result = await DocumentPicker.getDocumentAsync({
+  //       type: ["image/*", "application/pdf"], // Hỗ trợ ảnh và PDF
+  //       copyToCacheDirectory: true,
+  //     });
+
+  //     console.log("Document Picker Result:", result);
+
+  //     // Kiểm tra nếu user hủy chọn file
+  //     if (result.canceled) {
+  //       console.log("No document selected");
+  //       return;
+  //     }
+
+  //     // Lấy thông tin file từ `assets` (trường hợp file được chọn)
+  //     if (result.assets && result.assets.length > 0) {
+  //       const file = result.assets[0]; // Lấy file đầu tiên từ danh sách
+  //       const { uri, name } = file;
+
+  //       // Thêm chứng chỉ vào danh sách
+  //       const newCertificate = {
+  //         id: new Date().getTime().toString(),
+  //         fileName: name,
+  //         fileUri: uri,
+  //         mimeType: file.mimeType,
+  //         size: file.size,
+  //       };
+
+  //       setCertificates((prev) => [...prev, newCertificate]);
+  //       console.log("Certificate added:", newCertificate);
+  //     } else {
+  //       console.error("Invalid document selection");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error picking certificate:", error);
+  //   }
+  // };
   const handleCertificatePick = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -204,17 +248,28 @@ export default function SetupProfile({ navigation }) {
         copyToCacheDirectory: true,
       });
 
-      if (result.type === "success") {
-        const { uri, name } = result;
-        const newCertificate = {
-          id: new Date().getTime().toString(),
-          fileName: name,
-          fileUri: uri,
-        };
-
-        setCertificates((prev) => [...prev, newCertificate]);
-      } else {
+      if (result.canceled) {
         console.log("No document selected");
+        return;
+      }
+
+      if (result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        if (file.uri && file.name) {
+          const newCertificate = {
+            fileName: file.name,
+            fileUri: file.uri,
+            mimeType: file.mimeType,
+            size: file.size,
+            certificateType:
+              file.mimeType === "application/pdf" ? "PDF" : "IMAGE", // Xác định loại
+          };
+
+          setCertificates((prev) => [...prev, newCertificate]);
+          console.log("Certificate added:", newCertificate);
+        } else {
+          console.error("Invalid file structure:", file);
+        }
       }
     } catch (error) {
       console.error("Error picking certificate:", error);
@@ -279,13 +334,12 @@ export default function SetupProfile({ navigation }) {
         const response = await getData(`/certificates/user/${user.id}`);
         console.log("API Response:", response);
 
-        // Kiểm tra dữ liệu chính xác
         if (response?.data && Array.isArray(response.data)) {
           const certificatesData = response.data.map((cert) => ({
             id: cert.id,
             certificateName: cert.certificateName,
             certificateUrl: cert.certificateUrl,
-            certificateType: cert.certificateType,
+            certificateType: cert.certificateType || "PDF", // Mặc định nếu không có certificateType
           }));
           setCertificates(certificatesData);
         } else {
@@ -340,10 +394,16 @@ export default function SetupProfile({ navigation }) {
 
       setIsSaving(true);
 
+      console.log("Bắt đầu lưu thông tin hồ sơ...");
+
+      // 1. Upload hình ảnh cá nhân và chuồng
+      console.log("Ảnh trước khi upload:", profilePictures, cagePictures);
+
       const uploadedPictures = await Promise.all(
         [...profilePictures, ...cagePictures].map(async (pic) => {
           if (!pic.imageUrl.startsWith("https://")) {
             const imageUrl = await firebaseImg(pic.imageUrl);
+            console.log("Uploaded image URL:", imageUrl);
             return { ...pic, imageUrl };
           }
           return pic;
@@ -351,7 +411,7 @@ export default function SetupProfile({ navigation }) {
       );
 
       const sanitizedPictures = uploadedPictures.map(
-        ({ id, imageUrl, imageName, isCargoProfilePicture, description }) => ({
+        ({ imageUrl, imageName, isCargoProfilePicture, description }) => ({
           imageUrl,
           imageName,
           isCargoProfilePicture: isCargoProfilePicture || false,
@@ -359,23 +419,92 @@ export default function SetupProfile({ navigation }) {
         })
       );
 
-      // Dữ liệu payload
+      console.log("Ảnh sau khi upload:", sanitizedPictures);
+
+      // 2. Xử lý chứng chỉ
+      console.log("Chứng chỉ trước khi xử lý:", certificates);
+
+      // Loại bỏ logic xóa chứng chỉ (`deleteData`)
+      await Promise.all(
+        removedCertificates.map(async (certificateId) => {
+          await deleteData(`/certificates/${certificateId}`); // API xóa chứng chỉ
+          console.log("Đã xóa chứng chỉ:", certificateId);
+        })
+      );
+      // Thêm mới chứng chỉ
+      const newCertificates = certificates.filter((cert) => !cert.id);
+      console.log("Chứng chỉ mới cần thêm:", newCertificates);
+
+      await Promise.all(
+        newCertificates.map(async (cert) => {
+          const certificateUrl = await firebaseCertificate(
+            cert.fileUri,
+            cert.fileName
+          );
+          const payload = {
+            userId: user.id,
+            certificateName: "",
+            institutionName: "",
+            issueDate: "",
+            expiryDate: "",
+            certificateUrl,
+            description: "",
+            certificateType:
+              cert.mimeType === "application/pdf" ? "PDF" : "IMAGE",
+          };
+          console.log("Payload gửi khi thêm chứng chỉ:", payload);
+          await postData("/certificates", payload, "POST");
+        })
+      );
+
+      // Cập nhật chứng chỉ đã chỉnh sửa
+      const updatedCertificates = certificates.filter((cert) => cert.id);
+      console.log("Chứng chỉ cần cập nhật:", updatedCertificates);
+
+      await Promise.all(
+        updatedCertificates.map(async (cert) => {
+          const certificateUrl = cert.fileUri?.startsWith("file:")
+            ? await firebaseCertificate(cert.fileUri, cert.fileName)
+            : cert.certificateUrl;
+
+          if (!certificateUrl) {
+            console.error("Certificate URL is missing for:", cert);
+            return;
+          }
+
+          const payload = {
+            userId: user.id,
+            certificateName: cert.fileName || "",
+            institutionName: "",
+            issueDate: "",
+            expiryDate: "",
+            certificateUrl,
+            description: "",
+            certificateType:
+              cert.mimeType === "application/pdf" ? "PDF" : "IMAGE",
+          };
+          console.log("Payload gửi khi cập nhật chứng chỉ:", payload);
+          await putData(`/certificates/${cert.id}`, payload, "PUT");
+        })
+      );
+
+      // 3. Cập nhật thông tin hồ sơ
       const profileData = {
         sitterId: user?.id,
         bio,
         experience,
         skill: selectedSkills.join(","),
         environment,
-        maximumQuantity: parseInt(maximumQuantity, 10) || 0, // Chuyển về số nguyên
+        maximumQuantity: parseInt(maximumQuantity, 10) || 0,
         status: 0,
         profilePictures: sanitizedPictures.map((pic) =>
           pic.isCargoProfilePicture
-            ? { ...pic, description: cageDescription } // Gán description cho ảnh chuồng
+            ? { ...pic, description: cageDescription }
             : pic
         ),
       };
 
-      console.log("Payload gửi đến API:", JSON.stringify(profileData, null, 2));
+      console.log("Payload gửi đến API cập nhật hồ sơ:", profileData);
 
       const response = await putData(
         `/sitter-profiles/${sitterProfileId}`,
@@ -550,9 +679,9 @@ export default function SetupProfile({ navigation }) {
           <View style={styles.imageListContainer}>
             {/* Hiển thị danh sách chứng chỉ nếu có */}
             <FlatList
-              data={certificates} // State để lưu chứng chỉ
-              renderItem={renderCertificate} // Hàm render chứng chỉ
-              keyExtractor={(item) => item.id}
+              data={certificates}
+              renderItem={renderCertificate}
+              keyExtractor={(item, index) => item.id || `certificate-${index}`}
               horizontal
             />
           </View>
