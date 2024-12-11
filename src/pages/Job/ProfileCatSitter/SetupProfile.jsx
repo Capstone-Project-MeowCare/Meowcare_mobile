@@ -33,7 +33,9 @@ export default function SetupProfile({ navigation }) {
   const [cagePictures, setCagePictures] = useState([]);
   const [isImageViewVisible, setImageViewVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-
+  const [activeImageList, setActiveImageList] = useState([]);
+  const [maximumQuantity, setMaximumQuantity] = useState("");
+  const [cageDescription, setCageDescription] = useState("");
   // const renderImage = ({ item, index }) => (
   //   <View style={styles.imageContainer}>
   //     <TouchableOpacity
@@ -57,22 +59,24 @@ export default function SetupProfile({ navigation }) {
   //   </View>
   // );
   // Render ảnh cá nhân
+  // Render ảnh cá nhân
+  const handleImagePress = (index, isCagePicture) => {
+    setSelectedImageIndex(index);
+    setActiveImageList(isCagePicture ? cagePictures : profilePictures); // Gán danh sách đúng
+    setTimeout(() => setImageViewVisible(true), 0); // Đảm bảo trạng thái được cập nhật trước khi hiển thị
+  };
+
   const renderProfileImage = ({ item, index }) => (
     <View style={styles.imageContainer}>
       <TouchableOpacity
-        onPress={() => {
-          setSelectedImageIndex(index);
-          setImageViewVisible(true);
-        }}
+        onPress={() => handleImagePress(index, false)} // false: ảnh cá nhân
       >
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.removeButton}
         onPress={() =>
-          setProfilePictures((prevPictures) =>
-            prevPictures.filter((pic) => pic.id !== item.id)
-          )
+          setProfilePictures((prev) => prev.filter((pic) => pic.id !== item.id))
         }
       >
         <Text style={styles.removeText}>X</Text>
@@ -80,23 +84,17 @@ export default function SetupProfile({ navigation }) {
     </View>
   );
 
-  // Render ảnh chuồng
   const renderCageImage = ({ item, index }) => (
     <View style={styles.imageContainer}>
       <TouchableOpacity
-        onPress={() => {
-          setSelectedImageIndex(index);
-          setImageViewVisible(true);
-        }}
+        onPress={() => handleImagePress(index, true)} // true: ảnh chuồng
       >
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.removeButton}
         onPress={() =>
-          setCagePictures((prevPictures) =>
-            prevPictures.filter((pic) => pic.id !== item.id)
-          )
+          setCagePictures((prev) => prev.filter((pic) => pic.id !== item.id))
         }
       >
         <Text style={styles.removeText}>X</Text>
@@ -148,14 +146,12 @@ export default function SetupProfile({ navigation }) {
         if (response?.data) {
           const profileData = response.data;
 
-          // Lọc các ảnh cá nhân và ảnh chuồng từ profilePictures
-          const allPictures = profileData.profilePictures || [];
-          const personalPictures = allPictures.filter(
-            (pic) => !pic.isCargoProfilePicture
-          );
-          const cargoPictures = allPictures.filter(
+          // Lọc ảnh chuồng và lấy description nếu có
+          const cargoPictures = profileData.profilePictures.filter(
             (pic) => pic.isCargoProfilePicture
           );
+          const cargoDescription =
+            cargoPictures.length > 0 ? cargoPictures[0].description || "" : "";
 
           setSitterProfileId(profileData.id || null);
           setBio(profileData.bio || "");
@@ -164,8 +160,14 @@ export default function SetupProfile({ navigation }) {
           setSelectedSkills(
             profileData.skill ? profileData.skill.split(",") : []
           );
-          setProfilePictures(personalPictures); // Gán ảnh cá nhân
-          setCagePictures(cargoPictures); // Gán ảnh chuồng
+          setProfilePictures(
+            profileData.profilePictures.filter(
+              (pic) => !pic.isCargoProfilePicture
+            )
+          ); // Ảnh cá nhân
+          setCagePictures(cargoPictures); // Ảnh chuồng
+          setMaximumQuantity(profileData.maximumQuantity || "");
+          setCageDescription(cargoDescription);
         } else {
           console.error("Sitter profile data not found.");
         }
@@ -249,9 +251,13 @@ export default function SetupProfile({ navigation }) {
         experience,
         skill: selectedSkills.join(","),
         environment,
-        maximumQuantity: 0,
+        maximumQuantity: parseInt(maximumQuantity, 10) || 0, // Chuyển về số nguyên
         status: 0,
-        profilePictures: sanitizedPictures, // Danh sách ảnh đã được chuẩn hóa
+        profilePictures: sanitizedPictures.map((pic) =>
+          pic.isCargoProfilePicture
+            ? { ...pic, description: cageDescription } // Gán description cho ảnh chuồng
+            : pic
+        ),
       };
 
       console.log("Payload gửi đến API:", JSON.stringify(profileData, null, 2));
@@ -327,14 +333,19 @@ export default function SetupProfile({ navigation }) {
       </View>
       <View style={styles.divider} />
 
+      {/* Hiển thị ảnh khi nhấn */}
+      <ImageViewing
+        images={activeImageList.map((pic) => ({ uri: pic.imageUrl }))}
+        imageIndex={selectedImageIndex}
+        visible={isImageViewVisible}
+        onRequestClose={() => setImageViewVisible(false)}
+      />
+
       <ScrollView
         style={styles.editProfileContainer}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.sectionTitle}>Ảnh của bạn</Text>
-        {/* <Text style={styles.sectionSubtitle}>
-          Kéo rồi thả ảnh và gợi ý theo thứ tự mà bạn muốn xuất hiện.
-        </Text> */}
         <View style={styles.imageListContainer}>
           <FlatList
             data={profilePictures}
@@ -342,19 +353,14 @@ export default function SetupProfile({ navigation }) {
             keyExtractor={(item) => item.id}
             horizontal
           />
-          <ImageViewing
-            images={profilePictures.map((pic) => ({ uri: pic.imageUrl }))}
-            imageIndex={selectedImageIndex}
-            visible={isImageViewVisible}
-            onRequestClose={() => setImageViewVisible(false)}
-          />
         </View>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => handleImagePick(false)}
         >
-          <Text style={styles.addButtonText}>Thêm ảnh </Text>
+          <Text style={styles.addButtonText}>Thêm ảnh</Text>
         </TouchableOpacity>
+
         <Text style={styles.sectionTitle}>Tiểu sử của bản thân:</Text>
         <TextInput
           style={styles.textInput}
@@ -366,6 +372,7 @@ export default function SetupProfile({ navigation }) {
           placeholder="Bạn hãy mô tả tiểu sử của bản thân nhé..."
         />
         <Text style={styles.characterCount}>{bio.length} / 500</Text>
+
         <Text style={styles.sectionTitle}>Kinh nghiệm chăm sóc mèo:</Text>
         <TextInput
           style={styles.textInput}
@@ -377,6 +384,7 @@ export default function SetupProfile({ navigation }) {
           placeholder="Bạn hãy mô tả kinh nghiệm chăm sóc mèo của bản thân nhé..."
         />
         <Text style={styles.characterCount}>{experience.length} / 500</Text>
+
         <View style={styles.skillContainer}>
           <Text style={styles.skillText}>Kỹ năng:</Text>
           <View style={styles.skillsGrid}>
@@ -422,20 +430,22 @@ export default function SetupProfile({ navigation }) {
           />
           <Text style={styles.characterCount}>{environment.length} / 500</Text>
         </View>
+
         <View style={styles.end}>
-          {/* Setup thông tin chuồng cho cat sitter */}
           <Text style={styles.sectionTitle}>Thông tin chuồng gửi mèo</Text>
           <View style={styles.row}>
             <Text style={styles.labelText}>
-              Số lượng chuồng dành cho mèo cưng:
+              Số lượng mèo tối đa bạn có thể chăm:
             </Text>
             <TextInput
               style={styles.inputNumber}
               keyboardType="number-pad"
-              maxLength={2} // Giới hạn nhập số ký tự
+              maxLength={2}
               placeholder="Nhập số lượng"
-              // value={catCapacity} // Bạn có thể sử dụng state để lưu số lượng mèo
-              // onChangeText={(text) => setCatCapacity(text)}
+              value={maximumQuantity.toString()} // Hiển thị giá trị
+              onChangeText={(text) =>
+                setMaximumQuantity(text.replace(/[^0-9]/g, ""))
+              } // Chỉ cho phép nhập số
             />
           </View>
           <Text style={styles.CageTitle}>Ảnh chuồng cho mèo cưng:</Text>
@@ -445,13 +455,6 @@ export default function SetupProfile({ navigation }) {
               renderItem={renderCageImage}
               keyExtractor={(item) => item.id}
               horizontal
-            />
-
-            <ImageViewing
-              images={profilePictures.map((pic) => ({ uri: pic.imageUrl }))}
-              imageIndex={selectedImageIndex}
-              visible={isImageViewVisible}
-              onRequestClose={() => setImageViewVisible(false)}
             />
           </View>
           <TouchableOpacity
@@ -465,9 +468,9 @@ export default function SetupProfile({ navigation }) {
             multiline
             numberOfLines={4}
             maxLength={500}
-            // value={cage}
-            // onChangeText={(text) => setCage(text)}
             placeholder="Vui lòng mô tả không gian và số lượng chuồng nuôi mèo của bạn."
+            value={cageDescription} // Hiển thị giá trị
+            onChangeText={(text) => setCageDescription(text)}
           />
           <Text style={styles.characterCount}>{environment.length} / 500</Text>
         </View>
