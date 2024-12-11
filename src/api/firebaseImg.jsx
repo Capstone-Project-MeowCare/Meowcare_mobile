@@ -88,3 +88,27 @@ export const firebaseAvatar = async (imageUri) => {
     return null;
   }
 };
+export const firebaseCertificate = async (fileUri, isPDF = false) => {
+  try {
+    if (!fileUri) {
+      console.error("File URI is missing");
+      return null;
+    }
+
+    // Tạo tên file dựa trên thời gian hiện tại và số ngẫu nhiên
+    const fileExtension = isPDF ? "pdf" : "jpg";
+    const fileName = `certificate_${Date.now()}_${Math.floor(Math.random() * 10000)}.${fileExtension}`;
+    const fileRef = ref(storage, `certificates/${fileName}`);
+
+    const response = await fetch(fileUri);
+    const blob = await response.blob();
+
+    // Upload file
+    await uploadBytes(fileRef, blob);
+    const fileUrl = await getDownloadURL(fileRef);
+    return fileUrl;
+  } catch (error) {
+    console.error("Error uploading certificate:", error);
+    return null;
+  }
+};

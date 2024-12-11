@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
@@ -36,6 +37,8 @@ export default function SetupProfile({ navigation }) {
   const [activeImageList, setActiveImageList] = useState([]);
   const [maximumQuantity, setMaximumQuantity] = useState("");
   const [cageDescription, setCageDescription] = useState("");
+  const [certificates, setCertificates] = useState([]);
+
   // const renderImage = ({ item, index }) => (
   //   <View style={styles.imageContainer}>
   //     <TouchableOpacity
@@ -101,6 +104,65 @@ export default function SetupProfile({ navigation }) {
       </TouchableOpacity>
     </View>
   );
+  // const renderCertificate = ({ item }) => (
+  //   <View style={styles.imageContainer}>
+  //     {item.certificateType === "IMAGE" ? (
+  //       <TouchableOpacity
+  //         onPress={() => Linking.openURL(item.certificateUrl)} // Mở ảnh lớn
+  //       >
+  //         <Image source={{ uri: item.certificateUrl }} style={styles.image} />
+  //       </TouchableOpacity>
+  //     ) : (
+  //       <TouchableOpacity
+  //         style={styles.pdfContainer}
+  //         onPress={() => Linking.openURL(item.certificateUrl)} // Mở PDF
+  //       >
+  //         <Text style={styles.pdfText}>PDF</Text>
+  //       </TouchableOpacity>
+  //     )}
+  //     <Text style={styles.certificateName}>{item.certificateName}</Text>
+  //   </View>
+  // );
+  const renderCertificate = ({ item, index }) => (
+    <View style={styles.imageContainer}>
+      {item.certificateType === "IMAGE" ? (
+        <TouchableOpacity
+          onPress={() => Linking.openURL(item.certificateUrl)} // Mở ảnh lớn
+        >
+          <Image source={{ uri: item.certificateUrl }} style={styles.image} />
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.pdfContainer}
+          onPress={() => {
+            if (item.certificateUrl) {
+              Linking.openURL(item.certificateUrl)
+                .then(() => console.log("PDF opened in browser"))
+                .catch((err) => console.error("Failed to open PDF:", err));
+            } else {
+              console.error("PDF URL is invalid or missing");
+            }
+          }}
+        >
+          <Text style={styles.pdfText}>PDF</Text>
+        </TouchableOpacity>
+      )}
+      <Text style={styles.certificateName}>{item.certificateName}</Text>
+      <TouchableOpacity
+        style={styles.removeButton} // Nút xóa
+        onPress={() => handleRemoveCertificate(index)} // Gọi hàm xóa
+      >
+        <Text style={styles.removeText}>X</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Hàm xóa chứng chỉ khỏi danh sách
+  const handleRemoveCertificate = (index) => {
+    setCertificates((prevCertificates) =>
+      prevCertificates.filter((_, i) => i !== index)
+    );
+  };
 
   const handleImagePick = async (isCagePicture = false) => {
     try {
@@ -133,6 +195,29 @@ export default function SetupProfile({ navigation }) {
       }
     } catch (error) {
       console.error("Error picking image:", error);
+    }
+  };
+  const handleCertificatePick = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/*", "application/pdf"], // Hỗ trợ ảnh và PDF
+        copyToCacheDirectory: true,
+      });
+
+      if (result.type === "success") {
+        const { uri, name } = result;
+        const newCertificate = {
+          id: new Date().getTime().toString(),
+          fileName: name,
+          fileUri: uri,
+        };
+
+        setCertificates((prev) => [...prev, newCertificate]);
+      } else {
+        console.log("No document selected");
+      }
+    } catch (error) {
+      console.error("Error picking certificate:", error);
     }
   };
 
@@ -182,6 +267,36 @@ export default function SetupProfile({ navigation }) {
       setIsLoading(true);
       fetchSitterProfile();
     }
+  }, [user?.id]);
+  useEffect(() => {
+    const fetchUserCertificates = async () => {
+      try {
+        if (!user?.id) {
+          console.error("User ID is missing.");
+          return;
+        }
+
+        const response = await getData(`/certificates/user/${user.id}`);
+        console.log("API Response:", response);
+
+        // Kiểm tra dữ liệu chính xác
+        if (response?.data && Array.isArray(response.data)) {
+          const certificatesData = response.data.map((cert) => ({
+            id: cert.id,
+            certificateName: cert.certificateName,
+            certificateUrl: cert.certificateUrl,
+            certificateType: cert.certificateType,
+          }));
+          setCertificates(certificatesData);
+        } else {
+          console.error("Invalid response structure or no certificates found.");
+        }
+      } catch (error) {
+        console.error("Error fetching certificates:", error);
+      }
+    };
+
+    fetchUserCertificates();
   }, [user?.id]);
 
   // const fetchSitterProfileDetails = async () => {
@@ -430,6 +545,24 @@ export default function SetupProfile({ navigation }) {
           />
           <Text style={styles.characterCount}>{environment.length} / 500</Text>
         </View>
+        <View style={styles.end}>
+          <Text style={styles.sectionTitle}>Chứng chỉ của bạn</Text>
+          <View style={styles.imageListContainer}>
+            {/* Hiển thị danh sách chứng chỉ nếu có */}
+            <FlatList
+              data={certificates} // State để lưu chứng chỉ
+              renderItem={renderCertificate} // Hàm render chứng chỉ
+              keyExtractor={(item) => item.id}
+              horizontal
+            />
+          </View>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={handleCertificatePick} // Hàm để đăng chứng chỉ
+          >
+            <Text style={styles.addButtonText}>Đăng chứng chỉ</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.end}>
           <Text style={styles.sectionTitle}>Thông tin chuồng gửi mèo</Text>
@@ -548,7 +681,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 8,
   },
-
+  pdfContainer: {
+    width: 80, // Cùng kích thước với ảnh
+    height: 80, // Cùng kích thước với ảnh
+    borderRadius: 8,
+    backgroundColor: "#FF5C5C", // Màu nền đỏ
+    justifyContent: "center", // Căn giữa dọc
+    alignItems: "center", // Căn giữa ngang
+  },
+  pdfText: {
+    color: "#FFFFFF", // Màu chữ trắng
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   imageList: {
     marginBottom: 16,
   },
