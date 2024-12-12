@@ -82,7 +82,12 @@ function FirstRoute() {
 
   const disableParentPress = () => setParentPressEnabled(false);
   const enableParentPress = () => setParentPressEnabled(true);
-
+  const navigateToSitterServicePage = (navigation, sitterProfileId, userId) => {
+    navigation.navigate("SitterServicePage", {
+      sitterId: sitterProfileId, // ID của sitter profile
+      userId, // ID của user
+    });
+  };
   return (
     <ScrollView
       style={styles.fullScreenContainer}
@@ -95,10 +100,7 @@ function FirstRoute() {
             style={styles.catSitterItemContainer}
             onPress={() =>
               parentPressEnabled &&
-              navigation.navigate("SitterServicePage", {
-                sitterId: item.id, // `sitterId` cũ
-                userId: item.sitterId, // `userId` mới
-              })
+              navigateToSitterServicePage(navigation, item.id, item.sitterId)
             }
           >
             <CatSitterCard

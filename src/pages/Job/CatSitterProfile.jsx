@@ -113,6 +113,12 @@ export default function CatSitterProfile({ navigation }) {
       { cancelable: true }
     );
   };
+  const navigateToSitterServicePage = (navigation, sitterProfileId, userId) => {
+    navigation.navigate("SitterServicePage", {
+      sitterId: sitterProfileId, // ID của sitter profile
+      userId, // ID của user
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -196,10 +202,11 @@ export default function CatSitterProfile({ navigation }) {
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() =>
-            navigation.navigate("SitterServicePage", {
-              sitterId: sitterInfo.sitterProfileId, // `id` của `sitterProfile`
-              userId: sitterInfo.sitterId, // `id` của `user`
-            })
+            navigateToSitterServicePage(
+              navigation,
+              sitterInfo.sitterProfileId,
+              sitterInfo.sitterId
+            )
           }
         >
           <FontAwesome5 name="cat" size={24} color="#000857" />

@@ -130,7 +130,7 @@ export default function CatSitterInformation({
         const childServices = response.data
           .filter((service) => service.serviceType === "CHILD_SERVICE")
           .map((service) => ({
-            time: `${service.startTime}:00 - ${service.endTime}:00`,
+            time: `${service.startTime} - ${service.endTime}`,
             activity: service.name,
           }));
 
@@ -204,7 +204,7 @@ export default function CatSitterInformation({
         <Text style={styles.description}>{experience}</Text>
       </View>
 
-      <View style={styles.scheduleContainer}>
+      {/* <View style={styles.scheduleContainer}>
         <Text style={styles.titlesecond}>Lịch trình chăm sóc dự kiến:</Text>
         {console.log("Rendering scheduleData:", scheduleData)}
         {scheduleData.length > 0 ? (
@@ -222,7 +222,7 @@ export default function CatSitterInformation({
             Không có dữ liệu lịch trình.
           </Text>
         )}
-      </View>
+      </View> */}
 
       <View style={styles.skillContainer}>
         <Text style={styles.titlesecond}>Kỹ năng:</Text>
@@ -234,7 +234,8 @@ export default function CatSitterInformation({
           ))}
         </View>
       </View>
-      <View style={styles.locationInfoContainer}>
+
+      {/* <View style={styles.locationInfoContainer}>
         <Text style={styles.titlesecond}>Thông tin về nơi ở:</Text>
         <View style={styles.locationGrid}>
           {locationData.map((item, index) => (
@@ -244,8 +245,8 @@ export default function CatSitterInformation({
             </View>
           ))}
         </View>
-      </View>
-      <View style={styles.trustSafetyContainer}>
+      </View> */}
+      {/* <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>An toàn, tin cậy & môi trường:</Text>
         <Text style={styles.Description}>{environment}</Text>
         <Text style={styles.Description}>
@@ -257,7 +258,7 @@ export default function CatSitterInformation({
           Sau khi booking tôi sẽ gửi tài khoản mật khẩu để bạn có thể theo dõi
           quá trình chăm sóc.
         </Text>
-      </View>
+      </View> */}
       {/* Thông tin chuồng gửi mèo */}
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>Thông tin chuồng gửi mèo:</Text>
@@ -268,7 +269,6 @@ export default function CatSitterInformation({
               <Text style={styles.arrowText}>{"<"}</Text>
             </TouchableOpacity>
           )}
-
           <FlatList
             data={visibleImages}
             horizontal
@@ -348,37 +348,6 @@ const styles = StyleSheet.create({
     color: "#3060A7",
     fontWeight: "600",
   },
-  scheduleContainer: {
-    marginTop: height * 0.02,
-    marginLeft: -width * 0.08,
-  },
-
-  scheduleItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: height * 0.03,
-  },
-  dotAndTime: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: width * 0.02,
-  },
-  dot: {
-    width: width * 0.008,
-    height: width * 0.008,
-    backgroundColor: "#000857",
-    borderRadius: (width * 0.008) / 2,
-    marginRight: height * 0.006,
-  },
-  scheduleTime: {
-    fontSize: width * 0.035,
-    color: "#000857",
-    fontWeight: "500",
-  },
-  scheduleActivity: {
-    fontSize: width * 0.035,
-    color: "rgba(0, 8, 87, 0.8)",
-  },
   skillContainer: {
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
@@ -394,20 +363,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    width: "100%",
     marginTop: height * 0.02,
   },
   skillSquareContainer: {
-    width: width * 0.42 - width * 0.04,
+    width: "48%",
     height: height * 0.04,
     borderRadius: width * 0.02,
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: width * 0.02,
     marginBottom: height * 0.02,
   },
+
   skillTextInside: {
     fontSize: width * 0.03,
     color: "#000857",
@@ -450,7 +418,6 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
   },
-
   Description: {
     textAlign: "left",
     fontSize: width * 0.037,
@@ -464,7 +431,6 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
     marginLeft: -width * 0.08,
   },
-
   addressText: {
     textAlign: "left",
     fontSize: width * 0.04,

@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Text, View, StyleSheet, Image, Dimensions } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Image,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CatSitterCalendarSetting from "./CatSitterCalendarSetting";
 import { Picker } from "@react-native-picker/picker";
@@ -36,8 +43,10 @@ const ExtraServiceItem = ({ image, mainText, price }) => (
 export default function CatSitterAssistance({ id }) {
   const [mainServices, setMainServices] = useState([]);
   const [additionalServices, setAdditionalServices] = useState([]);
+  const [childServices, setChildServices] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [expandedServices, setExpandedServices] = useState([]);
+  const [selectedServiceId, setSelectedServiceId] = useState(null);
   const availableDays = {
     "2024-10-01": { selected: true, selectedColor: "#BAE8C9" },
     "2024-10-02": { selected: true, selectedColor: "#BAE8C9" },
@@ -53,17 +62,20 @@ export default function CatSitterAssistance({ id }) {
     "2024-10-14": { selected: true, selectedColor: "#D9D9D9" },
   };
 
+  const formatTime = (time) => {
+    if (time.includes(":")) {
+      return time.split(":").slice(0, 2).join(":");
+    }
+    return time;
+  };
+
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        console.log("Fetching services for sitter id:", id);
         const response = await getData(`/services/sitter/${id}`);
-
-        // Kiểm tra status trả về từ API
         if (response?.status === 1000 && Array.isArray(response.data)) {
           const services = response.data;
 
-          // Lọc và xử lý các dịch vụ
           const mains = services
             .filter(
               (service) =>
@@ -71,8 +83,9 @@ export default function CatSitterAssistance({ id }) {
                 service.status === "ACTIVE"
             )
             .map((service) => ({
+              id: service.id,
               name: service.name,
-              price: service.price,
+              price: service.price.toLocaleString("vi-VN"),
             }));
 
           const additionals = services
@@ -82,17 +95,27 @@ export default function CatSitterAssistance({ id }) {
                 service.status === "ACTIVE"
             )
             .map((service) => ({
+              id: service.id,
               name: service.name,
-              price: service.price,
+              price: service.price.toLocaleString("vi-VN"),
             }));
 
-          console.log("Filtered main services:", mains);
-          console.log("Filtered additional services:", additionals);
+          const children = services
+            .filter(
+              (service) =>
+                service.serviceType === "CHILD_SERVICE" &&
+                service.status === "ACTIVE"
+            )
+            .map((child) => ({
+              id: child.id,
+              name: child.name,
+              startTime: formatTime(child.startTime),
+              endTime: formatTime(child.endTime),
+            }));
 
           setMainServices(mains);
           setAdditionalServices(additionals);
-        } else {
-          console.warn("Invalid API response format or status:", response);
+          setChildServices(children);
         }
       } catch (error) {
         console.error("Error fetching sitter services:", error);
@@ -103,9 +126,6 @@ export default function CatSitterAssistance({ id }) {
 
     if (id) {
       fetchServices();
-    } else {
-      // console.warn("No sitter ID provided.");
-      setLoading(false);
     }
   }, [id]);
 
@@ -115,16 +135,57 @@ export default function CatSitterAssistance({ id }) {
         <Text>Đang tải...</Text>
       ) : (
         <>
-          {/* Render loại dịch vụ  */}
+          {/* Render loại dịch vụ */}
           <Text style={styles.text}>Loại dịch vụ</Text>
           {mainServices.length > 0 ? (
-            mainServices.map((service, index) => (
-              <ServiceItem
-                key={index} // Vì dữ liệu chỉ chứa name và price, dùng index làm key
-                image={require("../../../assets/Vector.png")}
-                mainText={service.name}
-                price={`${service.price}đ`}
-              />
+            mainServices.map((service) => (
+              <View key={service.id} style={styles.serviceItem}>
+                {/* Hiển thị dịch vụ chính */}
+                <TouchableOpacity
+                  onPress={() =>
+                    setSelectedServiceId(
+                      selectedServiceId === service.id ? null : service.id
+                    )
+                  }
+                  activeOpacity={0.7}
+                >
+                  {/* Truyền đúng giá trị price */}
+                  <ServiceItem
+                    image={require("../../../assets/Vector.png")}
+                    mainText={service.name}
+                    price={`${service.price}đ`} // Giá trị chính xác được truyền từ mainServices
+                  />
+                </TouchableOpacity>
+
+                {/* Hiển thị dịch vụ con (lịch trình) nếu được chọn */}
+                {selectedServiceId === service.id && (
+                  <View style={styles.childServicesContainer}>
+                    <Text style={styles.titlesecond}>
+                      Lịch trình chăm sóc dự kiến:
+                    </Text>
+                    {childServices.length > 0 ? (
+                      childServices.map((child) => (
+                        <View key={child.id} style={styles.scheduleItem}>
+                          <View style={styles.dotAndTime}>
+                            <View style={styles.dot} />
+                            {/* Hiển thị startTime - endTime: name */}
+                            <Text style={styles.scheduleTime}>
+                              {child.startTime} - {child.endTime}:{" "}
+                              <Text style={styles.scheduleActivity}>
+                                {child.name}
+                              </Text>
+                            </Text>
+                          </View>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.noChildServices}>
+                        Không có lịch trình.
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </View>
             ))
           ) : (
             <Text style={styles.noDataText}>Không có dịch vụ</Text>
@@ -133,7 +194,7 @@ export default function CatSitterAssistance({ id }) {
           <View style={styles.separator} />
 
           {/* Render Dịch vụ phụ */}
-          <Text style={styles.text1}>Dịch vụ</Text>
+          <Text style={styles.text1}>Dịch vụ phụ</Text>
           {additionalServices.length > 0 ? (
             additionalServices.map((service, index) => (
               <ExtraServiceItem
@@ -173,28 +234,28 @@ export default function CatSitterAssistance({ id }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFAF5",
-    alignItems: "flex-start", // Căn giữa theo chiều ngang
-    justifyContent: "flex-start", // Căn giữa theo chiều dọc
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
     marginRight: -20,
   },
   text: {
-    textAlign: "center", // Đặt text chính giữa
+    textAlign: "center",
     fontSize: width * 0.04,
     color: "#000857",
     fontWeight: "600",
   },
   mainText: {
-    width: 200,
-    fontSize: 16,
+    fontSize: width * 0.04,
     fontWeight: "600",
+    color: "#000",
+    flexWrap: "wrap",
   },
   text1: {
-    textAlign: "center", // Đặt text chính giữa
+    textAlign: "center",
     fontSize: width * 0.04,
     color: "#000857",
     fontWeight: "600",
@@ -202,30 +263,29 @@ const styles = StyleSheet.create({
   },
   serviceContainer: {
     flexDirection: "row",
-    justifyContent: "flex-start", // Đưa toàn bộ container về bên trái
+    justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
-    marginTop: height * 0.02,
+    paddingVertical: height * 0.01,
+    paddingHorizontal: width * 0.03,
+    marginBottom: height * 0.01,
   },
-
   extraServiceContainer: {
     flexDirection: "row",
-    justifyContent: "flex-start", // Đưa toàn bộ container về bên trái
+    justifyContent: "flex-start",
     alignItems: "center",
     width: "100%",
     marginTop: height * 0.02,
   },
   iconAndTextContainer: {
     flexDirection: "row",
-    alignItems: "center", // Đảm bảo icon và text cùng hàng
-    justifyContent: "flex-start", // Đưa icon và text về bên trái
-    marginRight: 20, // Khoảng cách giữa các thành phần
+    alignItems: "center", // Căn giữa icon và text
   },
   serviceImage: {
-    width: width * 0.1,
-    height: height * 0.05,
+    width: width * 0.1, // Kích thước hình ảnh
+    height: width * 0.1,
+    marginRight: width * 0.03, // Khoảng cách giữa hình và text
     resizeMode: "contain",
-    MarginLeft: 20,
   },
   extraServiceImage: {
     width: width * 0.1,
@@ -233,7 +293,6 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     marginRight: width * 0.03,
   },
-
   priceContainer: {
     flex: 1,
     alignItems: "flex-end",
@@ -247,6 +306,49 @@ const styles = StyleSheet.create({
     fontSize: width * 0.035,
     color: "rgba(0, 8, 87, 0.6)",
     fontWeight: "600",
+  },
+  titlesecond: {
+    textAlign: "left",
+    fontSize: width * 0.04,
+    color: "#000857",
+    fontWeight: "900",
+    marginTop: 10,
+  },
+  childServicesContainer: {
+    marginTop: height * 0.02,
+    paddingHorizontal: width * 0.03,
+  },
+  scheduleItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: height * 0.01, // Khoảng cách giữa các mục
+  },
+  dotAndTime: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dot: {
+    width: width * 0.008,
+    height: width * 0.008,
+    backgroundColor: "#000857",
+    borderRadius: (width * 0.008) / 2,
+    marginRight: height * 0.006,
+  },
+  scheduleTime: {
+    fontSize: width * 0.035,
+    color: "#000857",
+    fontWeight: "500",
+  },
+  scheduleActivity: {
+    fontSize: width * 0.035,
+    color: "rgba(0, 8, 87, 0.8)",
+    fontWeight: "500",
+  },
+  noScheduleText: {
+    fontSize: width * 0.035,
+    color: "rgba(0, 8, 87, 0.6)",
+    fontStyle: "italic",
+    marginTop: height * 0.01,
   },
   separator: {
     width: "90%", // Đảm bảo phần separator không tràn màn hình
