@@ -203,7 +203,6 @@ export default function CatSitterInformation({
         <Text style={styles.title}>Kinh nghiệm chăm sóc mèo:</Text>
         <Text style={styles.description}>{experience}</Text>
       </View>
-
       {/* <View style={styles.scheduleContainer}>
         <Text style={styles.titlesecond}>Lịch trình chăm sóc dự kiến:</Text>
         {console.log("Rendering scheduleData:", scheduleData)}
@@ -223,7 +222,6 @@ export default function CatSitterInformation({
           </Text>
         )}
       </View> */}
-
       <View style={styles.skillContainer}>
         <Text style={styles.titlesecond}>Kỹ năng:</Text>
         <View style={styles.skillsGrid}>
@@ -234,7 +232,6 @@ export default function CatSitterInformation({
           ))}
         </View>
       </View>
-
       {/* <View style={styles.locationInfoContainer}>
         <Text style={styles.titlesecond}>Thông tin về nơi ở:</Text>
         <View style={styles.locationGrid}>
@@ -246,7 +243,7 @@ export default function CatSitterInformation({
           ))}
         </View>
       </View> */}
-      {/* <View style={styles.trustSafetyContainer}>
+      <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>An toàn, tin cậy & môi trường:</Text>
         <Text style={styles.Description}>{environment}</Text>
         <Text style={styles.Description}>
@@ -258,7 +255,8 @@ export default function CatSitterInformation({
           Sau khi booking tôi sẽ gửi tài khoản mật khẩu để bạn có thể theo dõi
           quá trình chăm sóc.
         </Text>
-      </View> */}
+      </View>{" "}
+      */}
       {/* Thông tin chuồng gửi mèo */}
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>Thông tin chuồng gửi mèo:</Text>
@@ -293,7 +291,6 @@ export default function CatSitterInformation({
           </Text>
         </View>
       </View>
-
       <View style={styles.addressContainer}>
         <Text style={styles.titlesecond}>Vị trí</Text>
         <Text style={styles.addressText}>{location}</Text>

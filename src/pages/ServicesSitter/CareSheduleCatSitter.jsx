@@ -384,11 +384,7 @@ export default function CareScheduleSitter({ navigation, route }) {
           </ScrollView>
         ) : (
           <View style={styles.emptyMediaContainer}>
-            <Image
-              source={require("../../../assets/image77.png")}
-              style={styles.emptyMediaImage}
-            />
-            <Text style={styles.emptyMediaText}>Chưa có ảnh nào</Text>
+            
           </View>
         )}
         {!viewMode &&
@@ -431,11 +427,7 @@ export default function CareScheduleSitter({ navigation, route }) {
           </ScrollView>
         ) : (
           <View style={styles.emptyMediaContainer}>
-            <Image
-              source={require("../../../assets/image77.png")}
-              style={styles.emptyMediaImage}
-            />
-            <Text style={styles.emptyMediaText}>Chưa có video nào</Text>
+           
           </View>
         )}
         {!viewMode &&
@@ -614,18 +606,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   mediaButton: {
-    width: height * 0.2,
     flex: 1,
+    width: height * 0.2,
     height: height * 0.08,
-    marginHorizontal: 5,
     borderWidth: 1,
     borderColor: "#902C6C",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
     backgroundColor: "#FFF",
-    marginLeft: height * 0.13,
-    marginTop: height * 0.05,
+    marginLeft:100,
   },
   mediaButtonText: {
     color: "#902C6C",
