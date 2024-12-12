@@ -117,9 +117,19 @@ export default function Service() {
             ).values()
           );
 
-          const mainService = booking.bookingDetailWithPetAndServices.find(
-            (detail) => detail.service?.serviceType === "MAIN_SERVICE"
+          // Lấy dịch vụ duy nhất (MAIN_SERVICE hoặc ADDITION_SERVICE)
+          const service = booking.bookingDetailWithPetAndServices.find(
+            (detail) =>
+              detail.service?.serviceType === "MAIN_SERVICE" ||
+              detail.service?.serviceType === "ADDITION_SERVICE"
           );
+
+          // Thêm log để kiểm tra từng service
+          console.log("Service Details:", {
+            bookingId: booking.id,
+            serviceType: service?.service?.serviceType,
+            serviceName: service?.service?.name,
+          });
 
           return {
             id: booking.id,
@@ -137,7 +147,8 @@ export default function Service() {
             catName:
               uniquePets.map((pet) => pet.petName).join(", ") || "Unknown Pet",
             pets: uniquePets, // Thêm danh sách thú cưng
-            serviceName: mainService?.service?.name || "Unknown Service",
+            serviceName: service?.service?.name || "Unknown Service",
+            serviceType: service?.service?.serviceType || "UNKNOWN", // Lưu thêm serviceType để hiển thị nút
             status: finalStatus,
             statusColor: getStatusColor(getStatusLabel(finalStatus)),
             createdAt: new Date(booking.createdAt), // Ensure createdAt is a Date object
@@ -147,7 +158,7 @@ export default function Service() {
         // Sort formatted data by createdAt descending
         formattedData.sort((a, b) => b.createdAt - a.createdAt);
 
-        console.log("Đã filter ok!", formattedData);
+        console.log("Formatted Data:", formattedData);
 
         setBookingData((prevData) =>
           page === 1 ? formattedData : [...prevData, ...formattedData]
@@ -159,10 +170,6 @@ export default function Service() {
         console.log("No data returned from API");
         setBookingData((prevData) => (page === 1 ? [] : prevData));
       }
-
-      // Commented out the old API for non-pagination
-      // const response = await getData(`/booking-orders/sitter?id=${user.id}`);
-      // console.log("Old API Response:", response);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
@@ -359,18 +366,22 @@ export default function Service() {
                       { color: item.statusColor, alignSelf: "flex-end" },
                     ]}
                   >
-                    {getStatusLabel(item.status)}{" "}
+                    {getStatusLabel(item.status)}
                   </Text>
                 )}
               </View>
               <Text style={styles.label}>Dịch vụ: {item.serviceName}</Text>
+
               <Text style={styles.label}>
                 Mèo của người đặt: {item.catName}
               </Text>
               <Text style={styles.time}>{item.time}</Text>
-              {(item.status === "IN_PROGRESS" ||
+
+              {/* Hiển thị nút dựa trên serviceType */}
+              {item.serviceType === "MAIN_SERVICE" &&
+              (item.status === "IN_PROGRESS" ||
                 item.status === "CONFIRMED" ||
-                item.status === "COMPLETED") && (
+                item.status === "COMPLETED") ? (
                 <View style={styles.buttonRow}>
                   <CustomButton
                     title="Theo dõi lịch"
@@ -387,7 +398,21 @@ export default function Service() {
                     }
                   />
                 </View>
-              )}
+              ) : item.serviceType === "ADDITION_SERVICE" ? (
+                <View style={styles.buttonRow}>
+                  <CustomButton
+                    title="Xem chi tiết"
+                    onPress={() =>
+                      navigation.navigate("BookingDetailRequest", {
+                        bookingId: item.id,
+                        serviceName: item.serviceName,
+                        userName: item.userName,
+                        catName: item.catName,
+                      })
+                    }
+                  />
+                </View>
+              ) : null}
             </View>
           )}
           ListFooterComponent={

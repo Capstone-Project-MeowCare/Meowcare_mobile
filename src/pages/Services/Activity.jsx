@@ -80,8 +80,11 @@ export default function Activity() {
             ).values()
           );
 
-          const mainService = booking.bookingDetailWithPetAndServices.find(
-            (detail) => detail.service?.serviceType === "MAIN_SERVICE"
+          // Lấy dịch vụ duy nhất (MAIN_SERVICE hoặc ADDITION_SERVICE)
+          const service = booking.bookingDetailWithPetAndServices.find(
+            (detail) =>
+              detail.service?.serviceType === "MAIN_SERVICE" ||
+              detail.service?.serviceType === "ADDITION_SERVICE"
           );
 
           return {
@@ -91,10 +94,12 @@ export default function Activity() {
             userEmail: booking.user?.email,
             sitterEmail: booking.sitter?.email,
             sitterName: booking.sitter?.fullName,
+            sitterPhoneNumber: booking.sitter?.phoneNumber,
+            serviceType: service?.service?.serviceType, // Thêm serviceType
             catName:
               uniquePets.map((pet) => pet.petName).join(", ") || "Unknown Pet",
             pets: uniquePets,
-            serviceName: mainService?.service?.name || "Unknown Service",
+            serviceName: service?.service?.name || "Unknown Service",
             time: booking.startDate
               ? `${new Date(booking.startDate).toLocaleDateString(
                   "vi-VN"
@@ -128,7 +133,6 @@ export default function Activity() {
       setIsLoadingMore(false);
     }
   };
-
   const loadMoreData = () => {
     if (currentPage < totalPages && !isLoadingMore) {
       setIsLoadingMore(true);
@@ -249,33 +253,29 @@ export default function Activity() {
                 <Text style={styles.time}>{item.time}</Text>
               </Text>
               <View style={styles.buttonRow}>
-                {(item.status === "IN_PROGRESS" ||
-                  item.status === "CONFIRMED" ||
-                  item.status === "COMPLETED") && (
+                {item.serviceType === "MAIN_SERVICE" && (
                   <CustomButton
                     title="Theo dõi lịch"
                     onPress={() =>
                       navigation.navigate("CareMonitorUser", {
+                        bookingId: item.id,
                         userEmail: item.userEmail,
                         sitterEmail: item.sitterEmail,
-                        bookingId: item.id,
-                        userId: item.userId,
-                        sitterId: item.sitterId,
-                        mainServiceName: item.mainServiceName,
+                        sitterPhoneNumber: item.sitterPhoneNumber,
                       })
                     }
                   />
                 )}
-                {item.status === "Chờ xác nhận" && (
-                  <>
-                    <CustomButton title="Hủy lịch" />
-                    <CustomButton title="Cập nhật" />
-                  </>
-                )}
-                {item.status === "Đã hủy" && (
+                {item.serviceType === "ADDITION_SERVICE" && (
                   <CustomButton
-                    title="Theo dõi lịch"
-                    onPress={() => navigation.navigate("CareMonitorUser")}
+                    title="Xem chi tiết"
+                    onPress={() =>
+                      navigation.navigate("BookingDetailRequest", {
+                        bookingId: item.id,
+                        serviceName: item.serviceName,
+                        sitterName: item.sitterName,
+                      })
+                    }
                   />
                 )}
               </View>

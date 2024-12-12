@@ -7,6 +7,8 @@ import {
   Animated,
   Dimensions,
   Image,
+  Linking,
+  Alert,
 } from "react-native";
 import { AntDesign, Entypo, Feather } from "@expo/vector-icons";
 import StarRating from "react-native-star-rating-widget";
@@ -69,6 +71,7 @@ export default function CareMonitorUser({ navigation, route }) {
     userId,
     sitterId,
     mainServiceName,
+    sitterPhoneNumber,
   } = route.params;
   const [expandedStates, setExpandedStates] = useState([]);
   const [tasks, setTasks] = useState([]); // Để lưu trữ các nhiệm vụ từ API
@@ -86,6 +89,7 @@ export default function CareMonitorUser({ navigation, route }) {
       userId,
       sitterId,
       mainServiceName,
+      sitterPhoneNumber,
     });
   }, []);
 
@@ -311,44 +315,23 @@ export default function CareMonitorUser({ navigation, route }) {
     });
   };
 
-  const requestPermissions = async () => {
-    const cameraResult = await request(PERMISSIONS.ANDROID.CAMERA);
-    const micResult = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
-
-    if (cameraResult !== "granted" || micResult !== "granted") {
-      Alert.alert(
-        "Error",
-        "Camera and Microphone permissions are required for video calls."
-      );
-      return false;
-    }
-    return true;
-  };
-
   const handleVideoCallPress = async () => {
-    const hasPermissions = await requestPermissions();
-    if (!hasPermissions) return;
+    if (!sitterPhoneNumber) {
+      Alert.alert("Lỗi", "Không tìm thấy số điện thoại của người dùng.");
+      return;
+    }
 
-    const roomRef = doc(db, "rooms", bookingId);
-    const roomSnapshot = await getDoc(roomRef);
+    const url = `https://zalo.me/${sitterPhoneNumber}`;
 
-    if (roomSnapshot.exists()) {
-      // Nếu room đã tồn tại, tham gia cuộc gọi
-      console.log("Room exists. Joining call...");
-      navigation.navigate("JoinScreen", {
-        roomId: bookingId,
-        userEmail,
-        sitterEmail,
-      });
-    } else {
-      // Nếu room chưa tồn tại, tạo phòng mới
-      console.log("Room does not exist. Creating a new room...");
-      navigation.navigate("CallScreen", {
-        roomId: bookingId,
-        bookingId,
-        userEmail, // Thêm userEmail
-        sitterEmail, // Thêm sitterEmail
-      });
+    try {
+      // Mở trực tiếp URL Zalo với số điện thoại
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("Error opening Zalo URL:", error);
+      Alert.alert(
+        "Lỗi",
+        "Không thể mở Zalo để gọi video. Vui lòng thử lại sau."
+      );
     }
   };
 
