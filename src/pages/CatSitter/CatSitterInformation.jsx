@@ -10,36 +10,13 @@ import {
   Alert,
   FlatList,
   TouchableOpacity,
+  Linking,
 } from "react-native";
 import WebView from "react-native-webview";
 import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
-// const scheduleData = [
-//   {
-//     time: "6:00 - 7:00 AM : ",
-//     activity: "Cho mèo ăn sáng và vệ sinh khay cát",
-//   },
-//   { time: "7:00 - 9:00 AM :", activity: "Quan sát sức khỏe và chơi với mèo" },
-//   { time: "9:00 - 11:00 AM :", activity: "Thời gian yên tĩnh và giám sát" },
-//   { time: "11:00 - 12:00 PM :", activity: "Cho ăn bữa trưa và dọn dẹp" },
-//   {
-//     time: "12:00 - 2:00 PM :",
-//     activity: "Thời gian nghỉ ngơi và giám sát sức khỏe",
-//   },
-// ];
-const skills = [
-  "Hiểu về dinh dưỡng",
-  "Đảm bảo nguồn nước sạch",
-  "Đọc hiểu ngôn ngữ cơ thể",
-  "Vệ sinh khay cát",
-  "Tạo môi trường an toàn",
-  "Chăm sóc lông",
-  "Tạo điều kiện vui chơi",
-  "Cắt móng",
-  "Chăm sóc tai",
-];
 const cageImages = [
   require("../../../assets/VitaminSupplement.png"),
   require("../../../assets/catpeople.jpg"),
@@ -74,18 +51,32 @@ export default function CatSitterInformation({
   environment,
   location,
   userId,
+  profilePictures,
 }) {
   const [coordinates, setCoordinates] = useState(null);
   const webViewRef = useRef(null);
   const [scheduleData, setScheduleData] = useState([]);
+  const [certificatesData, setCertificatesData] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  console.log("Nhìn kĩ:", userId);
+
+  // Lọc ảnh chuồng từ profilePictures
+  const cageImages = profilePictures
+    ?.filter((picture) => picture.isCargoProfilePicture) // Chỉ lấy ảnh chuồng
+    ?.map((picture) => ({
+      imageUrl: picture.imageUrl,
+      description: picture.description || "Không có mô tả", // Mặc định nếu không có mô tả
+    }));
+
   // Số lượng ảnh muốn hiển thị cùng lúc
   const PAGE_SIZE = 3;
+
   // Lấy dữ liệu ảnh theo trang
   const visibleImages = cageImages.slice(
     currentIndex,
     currentIndex + PAGE_SIZE
   );
+
   // Xử lý khi ấn "Next"
   const handleNext = () => {
     if (currentIndex + PAGE_SIZE < cageImages.length) {
@@ -99,6 +90,7 @@ export default function CatSitterInformation({
       setCurrentIndex(currentIndex - PAGE_SIZE);
     }
   };
+
   const fetchCoordinates = async () => {
     try {
       const response = await axios.get("https://photon.komoot.io/api/", {
@@ -118,33 +110,19 @@ export default function CatSitterInformation({
       console.error("Lỗi khi fetch tọa độ:", error);
     }
   };
-
-  // Fetch lịch trình từ API
-  const fetchScheduleData = async () => {
+  // Fetch dữ liệu certificates từ API
+  const fetchCertificates = async () => {
     try {
-      const response = await getData(`/services/sitter/${userId}`); // userId truyền vào
-      console.log("Full API Response:", response.data);
+      const response = await getData(`/certificates/user/${userId}`); // Gọi API với userId
+      console.log("Certificates API Response:", response.data);
 
       if (Array.isArray(response.data)) {
-        // Lọc và định dạng chỉ lấy CHILD_SERVICE
-        const childServices = response.data
-          .filter((service) => service.serviceType === "CHILD_SERVICE")
-          .map((service) => ({
-            time: `${service.startTime} - ${service.endTime}`,
-            activity: service.name,
-          }));
-
-        console.log("Formatted Schedule Data:", childServices);
-        setScheduleData(childServices);
+        setCertificatesData(response.data);
       } else {
-        console.warn("Invalid API response format, expected an array.");
+        console.warn("Invalid certificates response format.");
       }
     } catch (error) {
-      console.error("Error fetching schedule data:", error);
-      Alert.alert(
-        "Error",
-        "Không thể tải dữ liệu lịch trình. Vui lòng thử lại."
-      );
+      console.error("Error fetching certificates:", error);
     }
   };
 
@@ -153,12 +131,9 @@ export default function CatSitterInformation({
       fetchCoordinates();
     }
     if (userId) {
-      fetchScheduleData();
+      fetchCertificates();
     }
   }, [location, userId]);
-  useEffect(() => {
-    console.log("Updated scheduleData:", scheduleData);
-  }, [scheduleData]);
   // HTML nhúng OpenStreetMap
   const osmHTML = coordinates
     ? `
@@ -246,7 +221,7 @@ export default function CatSitterInformation({
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>An toàn, tin cậy & môi trường:</Text>
         <Text style={styles.Description}>{environment}</Text>
-        <Text style={styles.Description}>
+        {/* <Text style={styles.Description}>
           Tôi có gắn camera theo dõi quá trình chăm sóc nếu bạn muốn xem quá
           trình
         </Text>
@@ -254,9 +229,54 @@ export default function CatSitterInformation({
         <Text style={styles.Description}>
           Sau khi booking tôi sẽ gửi tài khoản mật khẩu để bạn có thể theo dõi
           quá trình chăm sóc.
-        </Text>
-      </View>{" "}
-      */}
+        </Text> */}
+      </View>
+      <View style={styles.trustSafetyContainer}>
+        <Text style={styles.titlesecond}>Thông tin chứng chỉ:</Text>
+        <FlatList
+          data={certificatesData}
+          horizontal // Hiển thị ngang
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => {
+            if (item.certificateType === "IMAGE") {
+              return (
+                <Image
+                  source={{ uri: item.certificateUrl }}
+                  style={styles.certificateImage}
+                  onError={(error) =>
+                    console.error(
+                      "Failed to load image:",
+                      item.certificateUrl,
+                      error.nativeEvent
+                    )
+                  }
+                />
+              );
+            } else if (item.certificateType === "PDF") {
+              return (
+                <TouchableOpacity
+                  style={styles.pdfContainer}
+                  onPress={() => {
+                    if (item.certificateUrl) {
+                      Linking.openURL(item.certificateUrl)
+                        .then(() => console.log("PDF opened in browser"))
+                        .catch((err) =>
+                          console.error("Failed to open PDF:", err)
+                        );
+                    }
+                  }}
+                >
+                  <Text style={styles.pdfText}>PDF</Text>
+                </TouchableOpacity>
+              );
+            } else {
+              console.warn("Unknown certificate type:", item.certificateType);
+              return null; // Không render nếu loại không xác định
+            }
+          }}
+        />
+      </View>
+
       {/* Thông tin chuồng gửi mèo */}
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>Thông tin chuồng gửi mèo:</Text>
@@ -273,7 +293,7 @@ export default function CatSitterInformation({
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item }) => (
-              <Image source={item} style={styles.cageImage} />
+              <Image source={{ uri: item.imageUrl }} style={styles.cageImage} />
             )}
             contentContainerStyle={styles.imageList}
           />
@@ -285,9 +305,9 @@ export default function CatSitterInformation({
         </View>
         <View style={styles.descriptionContainer}>
           <Text style={styles.Description}>
-            Hiện tại tôi có 5 chuồng nuôi mèo, tất cả đều được thiết kế thoáng
-            mát, sạch sẽ, và đầy đủ tiện nghi để đảm bảo sự thoải mái cho mèo
-            cưng của bạn.
+            {visibleImages[0]?.description
+              ? `Mô tả chuồng: ${visibleImages[0]?.description}`
+              : "Hiện tại tôi có 5 chuồng nuôi mèo, tất cả đều được thiết kế thoáng mát, sạch sẽ, và đầy đủ tiện nghi để đảm bảo sự thoải mái cho mèo cưng của bạn."}
           </Text>
         </View>
       </View>
@@ -372,10 +392,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: height * 0.02,
   },
-
   skillTextInside: {
     fontSize: width * 0.03,
     color: "#000857",
+    fontWeight: "bold",
+  },
+  certificateImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 10, // Khoảng cách giữa các ảnh
+    resizeMode: "cover", // Đảm bảo ảnh không bị méo
+  },
+  pdfContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: "#FF5C5C",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  pdfText: {
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "bold",
   },
   locationInfoContainer: {

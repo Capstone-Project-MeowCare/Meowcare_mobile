@@ -14,7 +14,14 @@ import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
-function FirstRoute({ experience, skill, environment, location, userId }) {
+function FirstRoute({
+  experience,
+  skill,
+  environment,
+  location,
+  userId,
+  profilePictures,
+}) {
   return (
     <View style={styles.routeContainer}>
       <ScrollView
@@ -28,6 +35,7 @@ function FirstRoute({ experience, skill, environment, location, userId }) {
             environment={environment}
             location={location}
             userId={userId}
+            profilePictures={profilePictures}
           />
         </View>
       </ScrollView>
@@ -206,7 +214,8 @@ export default function CatSitterServicePage({ navigation }) {
                 skill={sitterDetails?.skill?.split(",").map((s) => s.trim())}
                 environment={sitterDetails?.environment}
                 location={sitterDetails?.location}
-                userId={user.id}
+                userId={userId}
+                profilePictures={profilePictures}
               />
             )}
           />
