@@ -24,6 +24,7 @@ export default function AdditionServiceManagement({ navigation }) {
   const [slotTimes, setSlotTimes] = useState([]);
   const [showSlots, setShowSlots] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState([]);
+  const [isChanged, setIsChanged] = useState(false);
   // Gọi API để lấy dịch vụ của sitter
   const fetchChildServices = async () => {
     try {
@@ -62,8 +63,9 @@ export default function AdditionServiceManagement({ navigation }) {
   useEffect(() => {
     fetchChildServices();
   }, []);
-  const fetchBookingSlots = async (serviceId) => {
+  const fetchBookingSlots = async (serviceId, serviceIndex) => {
     try {
+      // Gọi API lấy slot giờ
       const response = await getData(`/booking-slots?userId=${user.id}`);
       if (response?.status === 1000 && Array.isArray(response.data)) {
         const slots = response.data.map((slot) => ({
@@ -72,15 +74,18 @@ export default function AdditionServiceManagement({ navigation }) {
           endTime: slot.endTime,
         }));
 
-        const assignedSlotsResponse = await getData(
-          `/booking-slots/by-service-id?serviceId=${serviceId}`
-        );
         let assignedSlotIds = [];
-        if (
-          assignedSlotsResponse?.status === 1000 &&
-          Array.isArray(assignedSlotsResponse.data)
-        ) {
-          assignedSlotIds = assignedSlotsResponse.data.map((slot) => slot.id);
+        if (serviceId) {
+          // Nếu dịch vụ có `id`, lấy các slot đã được gán
+          const assignedSlotsResponse = await getData(
+            `/booking-slots/by-service-id?serviceId=${serviceId}`
+          );
+          if (
+            assignedSlotsResponse?.status === 1000 &&
+            Array.isArray(assignedSlotsResponse.data)
+          ) {
+            assignedSlotIds = assignedSlotsResponse.data.map((slot) => slot.id);
+          }
         }
 
         const updatedSlots = slots.map((slot) => ({
@@ -88,26 +93,19 @@ export default function AdditionServiceManagement({ navigation }) {
           isAssigned: assignedSlotIds.includes(slot.id),
         }));
 
-        // Lưu `selectedSlots` dựa trên trạng thái ban đầu
-        setSelectedSlots(
-          updatedSlots.filter((slot) => slot.isAssigned).map((slot) => slot.id)
-        );
-
-        setAdditionalServices((prevServices) =>
-          prevServices.map((service) =>
-            service.id === serviceId
-              ? {
-                  ...service,
-                  slotTimes: updatedSlots,
-                  showSlots: true,
-                  selectedSlots:
-                    updatedSlots
-                      .filter((slot) => slot.isAssigned)
-                      .map((slot) => slot.id) || [],
-                }
-              : service
-          )
-        );
+        // Cập nhật slot giờ cho dịch vụ trong state
+        setAdditionalServices((prevServices) => {
+          const newServices = [...prevServices];
+          newServices[serviceIndex] = {
+            ...newServices[serviceIndex],
+            slotTimes: updatedSlots,
+            showSlots: true,
+            selectedSlots: updatedSlots
+              .filter((slot) => slot.isAssigned)
+              .map((slot) => slot.id),
+          };
+          return newServices;
+        });
       } else {
         Alert.alert("Lỗi", "Không thể lấy danh sách slot giờ.");
       }
@@ -116,9 +114,10 @@ export default function AdditionServiceManagement({ navigation }) {
       Alert.alert("Lỗi", "Không thể tải danh sách slot giờ.");
     }
   };
+
   const toggleSlotSelection = (serviceId, slotId) => {
-    setAdditionalServices((prevServices) =>
-      prevServices.map((service) =>
+    setAdditionalServices((prevServices) => {
+      const updatedServices = prevServices.map((service) =>
         service.id === serviceId
           ? {
               ...service,
@@ -127,8 +126,10 @@ export default function AdditionServiceManagement({ navigation }) {
                 : [...service.selectedSlots, slotId], // Chọn thêm
             }
           : service
-      )
-    );
+      );
+      return updatedServices;
+    });
+    setIsChanged(true); // Đánh dấu dữ liệu đã thay đổi
   };
 
   // Thêm dịch vụ mới
@@ -137,11 +138,15 @@ export default function AdditionServiceManagement({ navigation }) {
       ...prevServices,
       {
         id: null,
-        name: "",
-        price: 0,
-        enabled: true,
+        name: "", // Tên dịch vụ mặc định
+        price: 0, // Giá tiền mặc định
+        enabled: true, // Mặc định là true
+        showSlots: false, // Mặc định không hiển thị slot giờ
+        slotTimes: [], // Mặc định không có slot giờ
+        selectedSlots: [], // Mặc định không có slot được chọn
       },
     ]);
+    setIsChanged(true); // Đánh dấu dữ liệu đã thay đổi
   };
 
   // Xóa dịch vụ
@@ -153,17 +158,22 @@ export default function AdditionServiceManagement({ navigation }) {
 
   // Cập nhật dịch vụ
   const updateAdditionalService = (id, field, value) => {
-    setAdditionalServices((prevServices) =>
-      prevServices.map((service) =>
+    setAdditionalServices((prevServices) => {
+      const updatedServices = prevServices.map((service) =>
         service.id === id ? { ...service, [field]: value } : service
-      )
-    );
+      );
+      return updatedServices;
+    });
+    setIsChanged(true); // Đánh dấu dữ liệu đã thay đổi
   };
 
   // Kiểm tra xem người dùng đã nhập đủ thông tin hay chưa
   const isFormComplete = () => {
     return additionalServices.every(
-      (service) => service.name && service.price >= 0
+      (service) =>
+        service.name && // Tên dịch vụ không được để trống
+        service.price >= 0 && // Giá tiền >= 0
+        service.selectedSlots.length > 0 // Ít nhất một slot giờ được chọn
     );
   };
 
@@ -178,6 +188,7 @@ export default function AdditionServiceManagement({ navigation }) {
           price: service.price,
         };
 
+        // Tạo hoặc cập nhật dịch vụ
         if (service.id) {
           await putData(`/services/${service.id}`, payload, accessToken);
         } else {
@@ -188,27 +199,32 @@ export default function AdditionServiceManagement({ navigation }) {
           };
           const response = await postData("/services", newPayload, accessToken);
           if (response?.status === 1000 && response?.data?.id) {
-            service.id = response.data.id;
+            service.id = response.data.id; // Lưu lại ID dịch vụ mới tạo
+          } else {
+            throw new Error("Không thể tạo dịch vụ mới");
           }
         }
 
-        const assignedSlotIds = service.slotTimes
+        // Quản lý slot giờ
+        const assignedSlotIds = (service.slotTimes || [])
           .filter((slot) => slot.isAssigned)
           .map((slot) => slot.id);
 
-        const slotsToAdd = service.selectedSlots.filter(
+        const slotsToAdd = (service.selectedSlots || []).filter(
           (slotId) => !assignedSlotIds.includes(slotId)
         );
         const slotsToRemove = assignedSlotIds.filter(
-          (slotId) => !service.selectedSlots.includes(slotId)
+          (slotId) => !(service.selectedSlots || []).includes(slotId)
         );
 
+        // Gọi API để assign slot giờ
         for (const slotId of slotsToAdd) {
           await postData(
             `/booking-slots/assign-service?bookingSlotTemplateId=${slotId}&serviceId=${service.id}`
           );
         }
 
+        // Gọi API để unassign slot giờ
         for (const slotId of slotsToRemove) {
           await postData(
             `/booking-slots/unassign-service?bookingSlotTemplateId=${slotId}&serviceId=${service.id}`
@@ -346,11 +362,11 @@ export default function AdditionServiceManagement({ navigation }) {
               style={styles.editButton}
               onPress={() => {
                 if (!service.showSlots) {
-                  fetchBookingSlots(service.id); // Lấy slot giờ nếu chưa mở
+                  fetchBookingSlots(service.id, index); // Lấy slot giờ
                 } else {
                   setAdditionalServices((prevServices) =>
-                    prevServices.map((s) =>
-                      s.id === service.id ? { ...s, showSlots: false } : s
+                    prevServices.map((s, i) =>
+                      i === index ? { ...s, showSlots: false } : s
                     )
                   );
                 }
@@ -431,7 +447,7 @@ export default function AdditionServiceManagement({ navigation }) {
         </TouchableOpacity>
       </ScrollView>
 
-      {isFormComplete() && (
+      {(isFormComplete() || isChanged) && (
         <View style={styles.fixedFooter}>
           <TouchableOpacity
             style={styles.confirmButton}

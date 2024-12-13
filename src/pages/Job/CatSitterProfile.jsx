@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -8,9 +8,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useFocusEffect } from "@react-navigation/native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../../auth/useAuth";
 import CustomToast from "../../components/CustomToast";
@@ -18,6 +19,7 @@ import { getData, putData } from "../../api/api";
 
 export default function CatSitterProfile({ navigation }) {
   const { user } = useAuth(); // Lấy thông tin người dùng
+  const [loading, setLoading] = useState(true);
   const [sitterInfo, setSitterInfo] = useState({
     fullName: "",
     avatar: "",
@@ -29,28 +31,61 @@ export default function CatSitterProfile({ navigation }) {
   // Gọi API lấy thông tin user
   const fetchUserProfile = async () => {
     try {
-      const response = await getData(`/users/${user.id}`);
-      if (response?.data) {
-        const { id, sitterProfile } = response.data;
-        setSitterInfo({
-          fullName: sitterProfile?.fullName || "Người dùng",
-          avatar: sitterProfile?.avatar || null, // Sử dụng null nếu không có avatar
-          sitterId: id || "",
-          sitterProfileId: sitterProfile?.id || "",
-          status: sitterProfile?.status,
-        });
+      setLoading(true); // Bắt đầu trạng thái loading
+      const userResponse = await getData(`/users/${user.id}`);
+      if (userResponse?.data) {
+        const { id } = userResponse.data; // Đây là userId
+
+        try {
+          const sitterResponse = await getData(`/sitter-profiles/sitter/${id}`);
+          if (sitterResponse?.data) {
+            const {
+              fullName,
+              avatar,
+              id: sitterProfileId,
+              status,
+            } = sitterResponse.data;
+            setSitterInfo({
+              fullName: fullName || "Người dùng",
+              avatar: avatar || null,
+              sitterId: id,
+              sitterProfileId,
+              status,
+            });
+          }
+        } catch (sitterError) {
+          if (sitterError.response?.status === 404) {
+            console.log("Sitter profile chưa tồn tại. Người dùng cần tạo mới.");
+            setSitterInfo((prev) => ({
+              ...prev,
+              sitterId: id,
+              sitterProfileId: "",
+            }));
+          } else {
+            console.error("Lỗi khi lấy thông tin hồ sơ:", sitterError);
+            Alert.alert(
+              "Lỗi",
+              "Không thể tải thông tin hồ sơ. Vui lòng thử lại sau."
+            );
+          }
+        }
       } else {
-        console.error("Invalid response:", response);
+        console.error("Invalid response:", userResponse);
       }
     } catch (error) {
-      console.error("Lỗi khi lấy thông tin hồ sơ:", error);
-      Alert.alert("Lỗi", "Không thể tải thông tin hồ sơ. Vui lòng thử lại.");
+      console.error("Lỗi khi lấy thông tin user:", error);
+      Alert.alert("Lỗi", "Không thể tải thông tin user. Vui lòng thử lại.");
+    } finally {
+      setLoading(false); // Kết thúc trạng thái loading
     }
   };
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserProfile(); // Gọi API khi focus vào trang
+    }, [])
+  );
+
   const getStatusStyle = () => {
     if (sitterInfo.status === "ACTIVE") {
       return { color: "#4CAF50", text: "Đang hoạt động" }; // Màu xanh lá
@@ -119,7 +154,13 @@ export default function CatSitterProfile({ navigation }) {
       userId, // ID của user
     });
   };
-
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#A94B84" />
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -172,10 +213,19 @@ export default function CatSitterProfile({ navigation }) {
           <Text style={styles.menuText}>Chỉnh sửa hồ sơ dịch vụ</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
-
         <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate("SetupService")}
+          style={[
+            styles.menuItem,
+            !sitterInfo.sitterProfileId && styles.disabledMenu,
+          ]}
+          onPress={() =>
+            !sitterInfo.sitterProfileId
+              ? CustomToast({
+                  text: "Vui lòng thiết lập hồ sơ dịch vụ trước",
+                  position: 300,
+                })
+              : navigation.navigate("SetupService")
+          }
         >
           <Ionicons name="briefcase-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Chỉnh sửa dịch vụ</Text>
@@ -183,8 +233,18 @@ export default function CatSitterProfile({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate("SetupLocation")}
+          style={[
+            styles.menuItem,
+            !sitterInfo.sitterProfileId && styles.disabledMenu,
+          ]}
+          onPress={() =>
+            !sitterInfo.sitterProfileId
+              ? CustomToast({
+                  text: "Vui lòng thiết lập hồ sơ dịch vụ trước",
+                  position: 300,
+                })
+              : navigation.navigate("SetupLocation")
+          }
         >
           <Ionicons name="location-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Địa chỉ</Text>
@@ -192,21 +252,40 @@ export default function CatSitterProfile({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate("SetupShedule")}
+          style={[
+            styles.menuItem,
+            !sitterInfo.sitterProfileId && styles.disabledMenu,
+          ]}
+          onPress={() =>
+            !sitterInfo.sitterProfileId
+              ? CustomToast({
+                  text: "Vui lòng thiết lập hồ sơ dịch vụ trước",
+                  position: 300,
+                })
+              : navigation.navigate("SetupShedule")
+          }
         >
           <Ionicons name="calendar-outline" size={24} color="#000857" />
           <Text style={styles.menuText}>Lịch làm việc</Text>
           <Ionicons name="chevron-forward-outline" size={24} color="#000857" />
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[
+            styles.menuItem,
+            !sitterInfo.sitterProfileId && styles.disabledMenu,
+          ]}
           onPress={() =>
-            navigateToSitterServicePage(
-              navigation,
-              sitterInfo.sitterProfileId,
-              sitterInfo.sitterId
-            )
+            !sitterInfo.sitterProfileId
+              ? CustomToast({
+                  text: "Vui lòng thiết lập hồ sơ dịch vụ trước",
+                  position: 300,
+                })
+              : navigateToSitterServicePage(
+                  navigation,
+                  sitterInfo.sitterProfileId,
+                  sitterInfo.sitterId
+                )
           }
         >
           <FontAwesome5 name="cat" size={24} color="#000857" />
@@ -269,6 +348,12 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "#FFFAF5",
+    alignItems: "center",
+  },
   profileName: {
     fontSize: 18,
     fontWeight: "bold",
@@ -323,5 +408,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#902C6C",
     fontWeight: "bold",
+  },
+  disabledMenu: {
+    opacity: 0.5, // Làm nhạt nút bị vô hiệu hóa
+    backgroundColor: "#E0E0E0", // Màu nền xám (tuỳ chỉnh theo yêu cầu)
   },
 });
