@@ -227,7 +227,7 @@ export default function CatSitterServicePage({ navigation }) {
         </Tab.Navigator>
       </View>
 
-      {activeTab === "Thông tin" && user.id !== sitterDetails?.user?.id && (
+      {user.id !== sitterDetails?.user?.id && (
         <TouchableOpacity
           style={styles.bookingButton}
           onPress={() =>
@@ -239,7 +239,7 @@ export default function CatSitterServicePage({ navigation }) {
           <Text style={styles.bookingText}>Đặt Lịch</Text>
         </TouchableOpacity>
       )}
-      {activeTab === "Đánh giá" && user.id !== sitterDetails?.user?.id && (
+      {/* {activeTab === "Đánh giá" && user.id !== sitterDetails?.user?.id && (
         <TouchableOpacity
           style={styles.bookingButton}
           onPress={() =>
@@ -250,7 +250,7 @@ export default function CatSitterServicePage({ navigation }) {
         >
           <Text style={styles.bookingText}>Đánh giá ngay</Text>
         </TouchableOpacity>
-      )}
+      )} */}
     </ScrollView>
   );
 }

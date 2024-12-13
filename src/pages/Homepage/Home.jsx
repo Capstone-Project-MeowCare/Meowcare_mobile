@@ -16,6 +16,7 @@ import { createMaterialTopTabNavigator } from "@react-navigation/material-top-ta
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { getData } from "../../api/api";
+import axios from "axios";
 
 const { width, height } = Dimensions.get("window");
 
@@ -164,6 +165,35 @@ function SecondRoute() {
 const Tab = createMaterialTopTabNavigator();
 
 export default function Home({ navigation }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  // Hàm tìm kiếm địa chỉ qua Geoapify
+  const fetchAddressSuggestions = async (query) => {
+    try {
+      const response = await axios.get(
+        `https://api.geoapify.com/v1/geocode/autocomplete`,
+        {
+          params: {
+            text: query,
+            apiKey: "7eaa555d1d1f4dbe9b2792ee9c726f10",
+            limit: 5,
+          },
+        }
+      );
+      setSearchResults(response.data.features || []);
+    } catch (error) {
+      console.error("Error fetching address suggestions:", error);
+    }
+  };
+
+  const handleAddressSelect = (address) => {
+    const { geometry } = address;
+    const { coordinates } = geometry;
+    const [longitude, latitude] = coordinates;
+
+    // Điều hướng sang trang Map với tọa độ đã chọn
+    navigation.navigate("Map", { latitude, longitude });
+  };
   return (
     <View style={styles.container}>
       <FlatList
@@ -173,6 +203,7 @@ export default function Home({ navigation }) {
         contentContainerStyle={styles.flatListContentContainer}
         ListHeaderComponent={
           <>
+            {/* Header */}
             <View style={styles.headerContainer}>
               <Image
                 source={require("../../../assets/Group358.png")}
@@ -180,7 +211,9 @@ export default function Home({ navigation }) {
               />
             </View>
 
+            {/* Top Bar */}
             <View style={styles.topBarContainer}>
+              {/* Map Button */}
               <TouchableOpacity
                 onPress={() => navigation.navigate("Map")}
                 style={styles.squareContainer}
@@ -188,23 +221,43 @@ export default function Home({ navigation }) {
                 <FontAwesome name="map-o" size={24} color="#000857" />
               </TouchableOpacity>
 
+              {/* Search Bar Container */}
               <View style={styles.searchBarContainer}>
                 <TextInput
                   placeholder="Tìm kiếm người chăm sóc theo vị trí"
-                  style={styles.searchBar}
+                  style={[styles.searchBar, { fontSize: 14 }]}
+                  value={searchQuery}
+                  onChangeText={(text) => {
+                    setSearchQuery(text);
+                    if (text.length > 2) {
+                      fetchAddressSuggestions(text);
+                    } else {
+                      setSearchResults([]);
+                    }
+                  }}
                 />
                 <TouchableOpacity
                   onPress={() => navigation.navigate("Yêu thích")}
+                  style={styles.searchIcon}
                 >
-                  <FontAwesome
-                    name="heart-o"
-                    size={24}
-                    color="#000857"
-                    style={styles.searchIcon}
-                  />
+                  <FontAwesome name="heart-o" size={24} color="#000857" />
                 </TouchableOpacity>
               </View>
             </View>
+            {searchResults.length > 0 && (
+              <ScrollView style={styles.suggestionsList}>
+                {searchResults.map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleAddressSelect(item)}
+                    style={styles.suggestionItem}
+                  >
+                    <Text>{item.properties.formatted}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            {/* Tabs */}
             <View style={{ flex: 1, height: height * 0.6 }}>
               <Tab.Navigator
                 screenOptions={({ route }) => ({
@@ -224,7 +277,6 @@ export default function Home({ navigation }) {
                       />
                       <Text
                         style={[
-                          // Áp dụng các style riêng biệt dựa trên tên tab
                           route.name === "Gửi thú cưng"
                             ? styles.tabTextStyle1
                             : styles.tabTextStyle2,
@@ -329,6 +381,17 @@ const styles = StyleSheet.create({
   searchIcon: {
     padding: height * 0.01,
     marginRight: height * 0.009,
+  },
+  suggestionsList: {
+    backgroundColor: "#FFF",
+    paddingHorizontal: 16,
+  },
+  suggestionItem: {
+    padding: 8,
+    fontSize: 16,
+    color: "#333",
+    borderBottomWidth: 1,
+    borderBottomColor: "#DDD",
   },
   tabLabelContainer: {
     flexDirection: "row",

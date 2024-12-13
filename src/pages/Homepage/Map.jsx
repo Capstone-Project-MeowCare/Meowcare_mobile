@@ -10,10 +10,9 @@ import {
   Alert,
 } from "react-native";
 import { WebView } from "react-native-webview";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import StarRating from "react-native-star-rating-widget";
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from "expo-location";
 import axios from "axios";
 import { getData } from "../../api/api";
 
@@ -21,11 +20,16 @@ const { width, height } = Dimensions.get("window");
 
 export default function FindSitterByMap() {
   const webViewRef = useRef(null);
+  const route = useRoute();
   const navigation = useNavigation();
   const [catSitters, setCatSitters] = useState([]);
   const [coordinatesMap, setCoordinatesMap] = useState([]);
   const [selectedSitterId, setSelectedSitterId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { latitude, longitude } = route.params || {
+    latitude: 10.73507,
+    longitude: 106.632935,
+  };
   const handleLikePress = (id) => {
     setCatSitters((prevCatSitters) =>
       prevCatSitters.map((sitter) =>
@@ -121,9 +125,7 @@ export default function FindSitterByMap() {
       }
 
       const sitters = response.data;
-      console.log("Sitter profiles fetched:", sitters);
 
-      // Lấy chi tiết user và tọa độ
       const sittersWithDetails = await Promise.all(
         sitters.map(async (sitter) => {
           const userDetails = await fetchUserById(sitter.sitterId);
@@ -132,16 +134,13 @@ export default function FindSitterByMap() {
           return {
             ...sitter,
             avatar: userDetails?.avatar || null,
-            email: userDetails?.email || null, // Thêm các field khác nếu cần
+            email: userDetails?.email || null,
             latitude: coordinates?.latitude || null,
             longitude: coordinates?.longitude || null,
           };
         })
       );
 
-      console.log("Sitters with details and coordinates:", sittersWithDetails);
-
-      // Lưu dữ liệu sitters
       setCatSitters(sittersWithDetails);
       setCoordinatesMap(
         sittersWithDetails.filter((s) => s.latitude && s.longitude)
@@ -159,6 +158,7 @@ export default function FindSitterByMap() {
   }, []);
 
   // Tạo HTML để hiển thị bản đồ
+
   const osmHTML = `
   <!DOCTYPE html>
   <html>
@@ -181,7 +181,7 @@ export default function FindSitterByMap() {
     <body>
       <div id="map"></div>
       <script>
-        var map = L.map('map').setView([10.73507, 106.632935], 13);
+        var map = L.map('map').setView([${latitude}, ${longitude}], 13); // Sử dụng tọa độ từ Home
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
         }).addTo(map);
@@ -197,7 +197,8 @@ export default function FindSitterByMap() {
       </script>
     </body>
   </html>
-`;
+  `;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
