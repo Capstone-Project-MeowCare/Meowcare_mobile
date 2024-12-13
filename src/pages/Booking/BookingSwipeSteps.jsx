@@ -204,14 +204,19 @@ export default function SwipeStep({ navigation }) {
               if (step5Checked) {
                 const serializedStep1Info = {
                   ...step1Info,
+                  childServices: step1Info.childServices.map((service) => ({
+                    ...service,
+                    startTime: service.startTime?.toISOString(), // Chuyển đổi Date thành chuỗi ISO
+                    endTime: service.endTime?.toISOString(), // Chuyển đổi Date thành chuỗi ISO
+                  })),
                   selectedSlot: Object.fromEntries(
                     Object.entries(step1Info.selectedSlot || {}).map(
                       ([serviceId, slot]) => [
                         serviceId,
                         {
                           ...slot,
-                          startTime: slot.startTime?.toISOString(),
-                          endTime: slot.endTime?.toISOString(),
+                          startTime: slot.startTime?.toISOString(), // Chuyển đổi Date thành chuỗi ISO
+                          endTime: slot.endTime?.toISOString(), // Chuyển đổi Date thành chuỗi ISO
                         },
                       ]
                     )

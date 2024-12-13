@@ -186,6 +186,7 @@ export default function Home({ navigation }) {
     }
   };
 
+  // Xử lý khi chọn một địa chỉ
   const handleAddressSelect = (address) => {
     const { geometry } = address;
     const { coordinates } = geometry;
@@ -193,7 +194,20 @@ export default function Home({ navigation }) {
 
     // Điều hướng sang trang Map với tọa độ đã chọn
     navigation.navigate("Map", { latitude, longitude });
+
+    // Xóa nội dung tìm kiếm và gợi ý
+    setSearchQuery("");
+    setSearchResults([]);
   };
+
+  // Reset trạng thái khi quay lại trang
+  useFocusEffect(
+    useCallback(() => {
+      setSearchQuery("");
+      setSearchResults([]);
+    }, [])
+  );
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -236,6 +250,17 @@ export default function Home({ navigation }) {
                     }
                   }}
                 />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSearchQuery("");
+                      setSearchResults([]);
+                    }}
+                    style={styles.clearButton}
+                  >
+                    <FontAwesome name="times-circle" size={20} color="#000" />
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   onPress={() => navigation.navigate("Yêu thích")}
                   style={styles.searchIcon}
@@ -244,6 +269,8 @@ export default function Home({ navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Suggestions List */}
             {searchResults.length > 0 && (
               <ScrollView style={styles.suggestionsList}>
                 {searchResults.map((item, index) => (

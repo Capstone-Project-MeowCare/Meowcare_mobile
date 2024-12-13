@@ -297,16 +297,21 @@ export default function SetupService({ navigation }) {
                       <>
                         <TouchableOpacity
                           style={styles.saveButton}
-                          onPress={() =>
+                          onPress={async () => {
+                            // Tắt chế độ chỉnh sửa
                             setMainServices((prev) =>
                               prev.map((s, i) =>
                                 i === index ? { ...s, isEditing: false } : s
                               )
-                            )
-                          }
+                            );
+
+                            // Gọi hàm handleComplete để cập nhật giá
+                            await handleComplete();
+                          }}
                         >
                           <Text style={styles.saveButtonText}>Lưu</Text>
                         </TouchableOpacity>
+
                         <TouchableOpacity
                           style={styles.cancelButton}
                           onPress={() =>
