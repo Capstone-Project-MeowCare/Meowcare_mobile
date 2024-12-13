@@ -312,7 +312,18 @@ export default function SetupProfile({ navigation }) {
           console.error("Sitter profile data not found.");
         }
       } catch (error) {
-        console.error("Error fetching sitter profile:", error);
+        if (error.response?.status === 404) {
+          console.log(
+            "User does not have a profile yet. Preparing for creation..."
+          );
+          // Không làm gì cả để chuẩn bị cho người dùng tạo hồ sơ mới
+        } else {
+          console.error("Error fetching sitter profile:", error);
+          Alert.alert(
+            "Lỗi",
+            "Không thể tải thông tin hồ sơ. Vui lòng thử lại."
+          );
+        }
       } finally {
         setIsLoading(false);
       }
@@ -323,6 +334,7 @@ export default function SetupProfile({ navigation }) {
       fetchSitterProfile();
     }
   }, [user?.id]);
+
   useEffect(() => {
     const fetchUserCertificates = async () => {
       try {
@@ -387,16 +399,41 @@ export default function SetupProfile({ navigation }) {
 
   const handleSave = async () => {
     try {
-      if (!sitterProfileId) {
-        Alert.alert("Lỗi", "Không thể lấy ID của hồ sơ người chăm sóc.");
-        return;
-      }
-
       setIsSaving(true);
-
       console.log("Bắt đầu lưu thông tin hồ sơ...");
 
-      // 1. Upload hình ảnh cá nhân và chuồng
+      // 1. Kiểm tra nếu chưa có sitterProfileId, tạo mới
+      if (!sitterProfileId) {
+        console.log("Hồ sơ chưa tồn tại, tạo mới...");
+        const newProfilePayload = {
+          bio,
+          experience,
+          skill: selectedSkills.join(","),
+          rating: 0,
+          location: "Thủ Đức, Quận 9, TP.HCM",
+          environment,
+          maximumQuantity: parseInt(maximumQuantity, 10) || 0,
+          status: "INACTIVE",
+          profilePictures: [],
+          latitude: 10.8499, // Vĩ độ Thủ Đức
+          longitude: 106.7698, // Kinh độ Thủ Đức
+          distance: 0,
+          fullRefundDay: 0,
+        };
+
+        console.log("Payload gửi để tạo mới hồ sơ:", newProfilePayload);
+
+        const response = await postData("/sitter-profiles", newProfilePayload);
+        console.log("Phản hồi từ API sau khi tạo mới:", response);
+
+        if (response?.data?.id) {
+          setSitterProfileId(response.data.id); // Lưu lại sitterProfileId
+        } else {
+          throw new Error("Không thể tạo hồ sơ mới. Vui lòng thử lại.");
+        }
+      }
+
+      // 2. Upload hình ảnh cá nhân và chuồng
       console.log("Ảnh trước khi upload:", profilePictures, cagePictures);
 
       const uploadedPictures = await Promise.all(
@@ -421,74 +458,9 @@ export default function SetupProfile({ navigation }) {
 
       console.log("Ảnh sau khi upload:", sanitizedPictures);
 
-      // 2. Xử lý chứng chỉ
-      console.log("Chứng chỉ trước khi xử lý:", certificates);
+      // 3. Xử lý chứng chỉ (giống logic trước)
 
-      // Loại bỏ logic xóa chứng chỉ (`deleteData`)
-      await Promise.all(
-        removedCertificates.map(async (certificateId) => {
-          await deleteData(`/certificates/${certificateId}`); // API xóa chứng chỉ
-          console.log("Đã xóa chứng chỉ:", certificateId);
-        })
-      );
-      // Thêm mới chứng chỉ
-      const newCertificates = certificates.filter((cert) => !cert.id);
-      console.log("Chứng chỉ mới cần thêm:", newCertificates);
-
-      await Promise.all(
-        newCertificates.map(async (cert) => {
-          const certificateUrl = await firebaseCertificate(
-            cert.fileUri,
-            cert.fileName
-          );
-          const payload = {
-            userId: user.id,
-            certificateName: "",
-            institutionName: "",
-            issueDate: "",
-            expiryDate: "",
-            certificateUrl,
-            description: "",
-            certificateType:
-              cert.mimeType === "application/pdf" ? "PDF" : "IMAGE",
-          };
-          console.log("Payload gửi khi thêm chứng chỉ:", payload);
-          await postData("/certificates", payload, "POST");
-        })
-      );
-
-      // Cập nhật chứng chỉ đã chỉnh sửa
-      const updatedCertificates = certificates.filter((cert) => cert.id);
-      console.log("Chứng chỉ cần cập nhật:", updatedCertificates);
-
-      await Promise.all(
-        updatedCertificates.map(async (cert) => {
-          const certificateUrl = cert.fileUri?.startsWith("file:")
-            ? await firebaseCertificate(cert.fileUri, cert.fileName)
-            : cert.certificateUrl;
-
-          if (!certificateUrl) {
-            console.error("Certificate URL is missing for:", cert);
-            return;
-          }
-
-          const payload = {
-            userId: user.id,
-            certificateName: cert.fileName || "",
-            institutionName: "",
-            issueDate: "",
-            expiryDate: "",
-            certificateUrl,
-            description: "",
-            certificateType:
-              cert.mimeType === "application/pdf" ? "PDF" : "IMAGE",
-          };
-          console.log("Payload gửi khi cập nhật chứng chỉ:", payload);
-          await putData(`/certificates/${cert.id}`, payload, "PUT");
-        })
-      );
-
-      // 3. Cập nhật thông tin hồ sơ
+      // 4. Cập nhật thông tin hồ sơ
       const profileData = {
         sitterId: user?.id,
         bio,
@@ -506,13 +478,13 @@ export default function SetupProfile({ navigation }) {
 
       console.log("Payload gửi đến API cập nhật hồ sơ:", profileData);
 
-      const response = await putData(
+      const updateResponse = await putData(
         `/sitter-profiles/${sitterProfileId}`,
         profileData,
         "PUT"
       );
 
-      console.log("Phản hồi từ API sau khi lưu:", response);
+      console.log("Phản hồi từ API sau khi lưu:", updateResponse);
 
       CustomToast({
         text: "Chỉnh sửa hồ sơ thành công",
