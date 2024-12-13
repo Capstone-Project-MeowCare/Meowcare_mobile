@@ -52,37 +52,6 @@ export default function ServicePayment() {
     }
   }, []);
 
-  // useEffect(() => {
-  //   const fetchServices = () => {
-  //     const selectedServices = [];
-
-  //     // Dịch vụ chính
-  //     if (step1Info.selectedServiceId) {
-  //       selectedServices.push({
-  //         name: step1Info.selectedService,
-  //         price: step1Info.price || 0,
-  //       });
-  //     }
-
-  //     // Dịch vụ thêm (bao gồm cả Child Service)
-  //     selectedExtras.forEach((extra) => {
-  //       selectedServices.push({
-  //         name: extra.name,
-  //         price: extra.price || 0,
-  //       });
-  //     });
-
-  //     // Tính tổng giá
-  //     const total = selectedServices.reduce(
-  //       (sum, service) => sum + service.price,
-  //       0
-  //     );
-  //     setTotalPrice(total);
-  //     setServices(selectedServices);
-  //   };
-
-  //   fetchServices();
-  // }, [step1Info, selectedExtras]);
   useEffect(() => {
     const fetchServices = () => {
       const selectedServices = [];
@@ -115,10 +84,24 @@ export default function ServicePayment() {
         step1Info.childServices.length > 0
       ) {
         step1Info.childServices.forEach((child) => {
+          const startTime = child.startTime
+            ? new Date(child.startTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "";
+          const endTime = child.endTime
+            ? new Date(child.endTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "";
           selectedServices.push({
             name: child.name || "Dịch vụ con không xác định",
-            price: (child.price || 0) * days * numberOfCats, // Giá phải có giá trị
+            price: (child.price || 0) * days * numberOfCats,
             type: "CHILD_SERVICE",
+            startTime,
+            endTime,
           });
         });
       }
@@ -228,6 +211,38 @@ export default function ServicePayment() {
       // Nếu cần, lưu trữ bản sao này vào state
     }
   }, [step1Info.selectedSlot]);
+  useEffect(() => {
+    if (step1Info?.childServices) {
+      const deserializedChildServices = step1Info.childServices.map(
+        (service) => ({
+          ...service,
+          startTime: service.startTime ? new Date(service.startTime) : null,
+          endTime: service.endTime ? new Date(service.endTime) : null,
+        })
+      );
+
+      const deserializedStep1Info = {
+        ...step1Info,
+        childServices: deserializedChildServices,
+        selectedSlot: Object.fromEntries(
+          Object.entries(step1Info.selectedSlot || {}).map(
+            ([serviceId, slot]) => [
+              serviceId,
+              {
+                ...slot,
+                startTime: slot.startTime ? new Date(slot.startTime) : null,
+                endTime: slot.endTime ? new Date(slot.endTime) : null,
+              },
+            ]
+          )
+        ),
+      };
+
+      console.log("Deserialized step1Info:", deserializedStep1Info);
+
+      // Nếu cần, lưu trữ lại vào state hoặc xử lý tiếp
+    }
+  }, [step1Info]);
 
   useEffect(() => {
     const handleDeepLink = async ({ url }) => {

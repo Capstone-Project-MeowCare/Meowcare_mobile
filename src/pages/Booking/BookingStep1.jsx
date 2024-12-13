@@ -98,10 +98,35 @@ export default function BookingStep1({
                     service.serviceType === "CHILD_SERVICE" &&
                     service.status === "ACTIVE"
                 )
-                .map((service) => ({
-                  id: service.id,
-                  name: service.name,
-                }))
+                .map((service) => {
+                  // Tạo ngày hiện tại
+                  const today = new Date();
+                  const [hourStart, minuteStart, secondStart] =
+                    service.startTime.split(":");
+                  const [hourEnd, minuteEnd, secondEnd] =
+                    service.endTime.split(":");
+
+                  return {
+                    id: service.id,
+                    name: service.name,
+                    startTime: new Date(
+                      today.getFullYear(),
+                      today.getMonth(),
+                      today.getDate(),
+                      parseInt(hourStart, 10),
+                      parseInt(minuteStart, 10),
+                      parseInt(secondStart, 10)
+                    ),
+                    endTime: new Date(
+                      today.getFullYear(),
+                      today.getMonth(),
+                      today.getDate(),
+                      parseInt(hourEnd, 10),
+                      parseInt(minuteEnd, 10),
+                      parseInt(secondEnd, 10)
+                    ),
+                  };
+                })
             );
 
             // Lọc và gán các ADDITION_SERVICE đang hoạt động
@@ -406,11 +431,24 @@ export default function BookingStep1({
                 </Text>
                 {childServices.map((child) => (
                   <View key={child.id} style={styles.childServiceRow}>
-                    <Text
-                      style={styles.childServiceText}
-                      onPress={() => handleServiceSelection(child)}
-                    >
-                      {`_ ${child.name}`}
+                    {/* Hiển thị tên dịch vụ con kèm thời gian */}
+                    <Text style={styles.childServiceText}>
+                      {`_ ${child.name}`}{" "}
+                      {child.startTime && child.endTime
+                        ? `(${new Date(child.startTime).toLocaleTimeString(
+                            "vi-VN",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )} - ${new Date(child.endTime).toLocaleTimeString(
+                            "vi-VN",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )})`
+                        : ""}
                     </Text>
                   </View>
                 ))}

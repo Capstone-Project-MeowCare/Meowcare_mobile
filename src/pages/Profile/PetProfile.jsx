@@ -122,7 +122,7 @@ export default function PetProfile({ navigation, route }) {
       // Log phản hồi từ server
       console.log("Response from server:", response);
 
-      if (response && response.status === 200) {
+      if (response && response.status === 1002) {
         console.log("Conditions updated successfully.");
         setHasChanges(false);
       } else {
