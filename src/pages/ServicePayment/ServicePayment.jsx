@@ -33,7 +33,7 @@ export default function ServicePayment() {
   } = route.params || {};
 
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedOption, setSelectedOption] = useState(1);
   const [services, setServices] = useState([]); // Lưu thông tin dịch vụ
   const [totalPrice, setTotalPrice] = useState(0); // Lưu tổng giá
   const [bookingId, setBookingId] = useState(null);
@@ -115,18 +115,20 @@ export default function ServicePayment() {
 
           if (additionalService) {
             const slot = step1Info.selectedSlot?.[serviceId]; // Lấy slot đã chọn
-            const startTime = slot?.startTime
-              ? new Date(slot.startTime).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "";
-            const endTime = slot?.endTime
-              ? new Date(slot.endTime).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "";
+            const startTime =
+              slot && slot.startTime
+                ? new Date(slot.startTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "";
+            const endTime =
+              slot && slot.endTime
+                ? new Date(slot.endTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "";
 
             selectedServices.push({
               name: additionalService.name || "Dịch vụ bổ sung không xác định",
@@ -190,27 +192,24 @@ export default function ServicePayment() {
   useEffect(() => {
     if (step1Info.selectedSlot) {
       const deserializedSelectedSlot = Object.fromEntries(
-        Object.entries(step1Info.selectedSlot).map(([serviceId, slot]) => [
-          serviceId,
-          {
-            ...slot,
-            startTime: slot.startTime ? new Date(slot.startTime) : null,
-            endTime: slot.endTime ? new Date(slot.endTime) : null,
-          },
-        ])
+        Object.entries(step1Info.selectedSlot || {}).map(
+          ([serviceId, slot]) => [
+            serviceId,
+            slot
+              ? {
+                  ...slot,
+                  startTime: slot.startTime ? new Date(slot.startTime) : null,
+                  endTime: slot.endTime ? new Date(slot.endTime) : null,
+                }
+              : null, // Đảm bảo slot null không gây lỗi
+          ]
+        )
       );
 
       console.log("Deserialized Selected Slot:", deserializedSelectedSlot);
-
-      // Sử dụng một bản sao để lưu trữ
-      const updatedStep1Info = {
-        ...step1Info,
-        selectedSlot: deserializedSelectedSlot,
-      };
-
-      // Nếu cần, lưu trữ bản sao này vào state
     }
   }, [step1Info.selectedSlot]);
+
   useEffect(() => {
     if (step1Info?.childServices) {
       const deserializedChildServices = step1Info.childServices.map(
@@ -243,6 +242,22 @@ export default function ServicePayment() {
       // Nếu cần, lưu trữ lại vào state hoặc xử lý tiếp
     }
   }, [step1Info]);
+  useEffect(() => {
+    if (step1Info?.childServices) {
+      const deserializedChildServices = step1Info.childServices.map(
+        (service) => ({
+          ...service,
+          startTime: service.startTime ? new Date(service.startTime) : null,
+          endTime: service.endTime ? new Date(service.endTime) : null,
+        })
+      );
+
+      console.log(
+        "Deserialized step1Info childServices:",
+        deserializedChildServices
+      );
+    }
+  }, [step1Info.childServices]);
 
   useEffect(() => {
     const handleDeepLink = async ({ url }) => {
@@ -300,100 +315,133 @@ export default function ServicePayment() {
   // const handlePayment = async () => {
   //   setIsLoading(true);
 
-  //   const bookingPayload = {
-  //     bookingDetails: step3Info.selectedCats.flatMap((cat) => [
-  //       {
-  //         quantity: 1,
-  //         petProfileId: cat.id,
-  //         serviceId: step1Info.selectedServiceId,
-  //       },
-  //       ...step1Info.childServices.map((child) => ({
-  //         quantity: 1,
-  //         petProfileId: cat.id,
-  //         serviceId: child.id,
-  //       })),
-  //     ]),
-  //     sitterId,
-  //     time: new Date().toISOString(),
-  //     startDate: new Date(step2Info.startDate).toISOString(),
-  //     endDate: new Date(step2Info.endDate || step2Info.startDate).toISOString(),
-  //     numberOfPet: step3Info.selectedCats.length,
-  //     name: contactInfo.name,
-  //     phoneNumber: contactInfo.phoneNumber,
-  //     address: step1Info.selectedLocation,
-  //     note: contactInfo.note,
-  //   };
-
   //   try {
-  //     console.log("=== START: Creating Booking ===");
-  //     const bookingResponse = await postData(
-  //       "/booking-orders/with-details",
-  //       bookingPayload
-  //     );
-  //     console.log("Booking Response:", bookingResponse);
+  //     let currentBookingId = bookingId;
 
-  //     if (bookingResponse.status === 1000 && bookingResponse.data?.id) {
-  //       const bookingId = bookingResponse.data.id;
+  //     if (!currentBookingId) {
+  //       const bookingPayload = {
+  //         time: new Date().toISOString(),
+  //         startDate: new Date(step2Info.startDate).toISOString(),
+  //         endDate: new Date(
+  //           step2Info.endDate || step2Info.startDate
+  //         ).toISOString(),
+  //         numberOfPet: step3Info.selectedCats.length,
+  //         name: contactInfo.name,
+  //         phoneNumber: contactInfo.phoneNumber,
+  //         address: step1Info.selectedLocation,
+  //         note: contactInfo.note,
+  //         sitterId,
+  //         isHouseSitting: step1Info.selectedServiceId === "HOUSE_SITTING", // Example logic
+  //         orderType: "OVERNIGHT", // Example order type
+  //         paymentMethod: "MOMO",
+  //         bookingDetails: step3Info.selectedCats.flatMap((cat) => {
+  //           // Dịch vụ chính (MAIN_SERVICE)
+  //           const mainService =
+  //             step1Info.selectedServiceId &&
+  //             step1Info.selectedServiceId !== "OTHER_SERVICES"
+  //               ? [
+  //                   {
+  //                     quantity: 1,
+  //                     petProfileId: cat.id,
+  //                     serviceId: step1Info.selectedServiceId,
+  //                   },
+  //                 ]
+  //               : [];
 
-  //       console.log("Booking created successfully with ID:", bookingId);
+  //           // Dịch vụ con (CHILD_SERVICE)
+  //           const childServices =
+  //             step1Info.childServices?.map((child) => ({
+  //               quantity: 1,
+  //               petProfileId: cat.id,
+  //               serviceId: child.id,
+  //             })) || [];
 
-  //       // Gửi thông báo đến sitter
-  //       await sendNotification({
-  //         userId: sitterId, // Gửi thông báo đến sitter
-  //         title: "Yêu cầu booking mới",
-  //         message: `Bạn nhận được yêu cầu chăm sóc từ ${contactInfo.name}.`,
-  //         relatedId: bookingId,
-  //         relatedType: "BOOKING",
-  //         type: "REQUEST_BOOKING",
-  //         status: "NEW",
-  //       });
+  //           // Dịch vụ bổ sung (ADDITIONAL_SERVICE)
+  //           const additionalServices =
+  //             step1Info.selectedAdditionalServices?.map((serviceId) => {
+  //               const additionalService = step1Info.additionalServices.find(
+  //                 (service) => service.id === serviceId
+  //               );
+  //               const slot = step1Info.selectedSlot?.[serviceId]; // Lấy thông tin slot
+  //               return {
+  //                 quantity: 1,
+  //                 petProfileId: cat.id,
+  //                 serviceId: serviceId,
+  //                 startTime: slot?.startTime || null,
+  //                 endTime: slot?.endTime || null,
+  //                 bookingSlotId: slot?.id || null, // Thêm bookingSlotId
+  //               };
+  //             }) || [];
 
-  //       console.log("Thông báo đã gửi đến sitter:", sitterId);
+  //           return [...mainService, ...childServices, ...additionalServices];
+  //         }),
+  //       };
 
-  //       // Thanh toán
-  //       const redirectUrl = encodeURIComponent(
-  //         "com.meowcare.mobile://payment-complete"
+  //       // Log toàn bộ payload để kiểm tra
+  //       console.log(
+  //         "Booking Payload for Payment:",
+  //         JSON.stringify(bookingPayload, null, 2)
   //       );
-  //       const queryParams = `?id=${bookingId}&requestType=CAPTURE_WALLET&redirectUrl=${redirectUrl}`;
-  //       const paymentUrl = `/booking-orders/payment-url${queryParams}`;
 
-  //       console.log("Payment URL:", paymentUrl);
+  //       console.log("=== START: Creating Booking ===");
+  //       const bookingResponse = await postData(
+  //         "/booking-orders/with-details",
+  //         bookingPayload
+  //       );
+  //       console.log("Booking Response:", bookingResponse);
 
-  //       try {
-  //         const paymentResponse = await postData(paymentUrl);
-  //         console.log("Payment Response:", paymentResponse);
+  //       if (bookingResponse.status === 1000 && bookingResponse.data?.id) {
+  //         currentBookingId = bookingResponse.data.id;
+  //         setBookingId(currentBookingId);
+  //         console.log(
+  //           "Booking created successfully with ID:",
+  //           currentBookingId
+  //         );
+  //       } else {
+  //         throw new Error("Không thể tạo booking. Vui lòng thử lại sau.");
+  //       }
+  //     }
 
-  //         if (paymentResponse.status === 1000 && paymentResponse.data) {
-  //           const { payUrl, deeplink, applink } = paymentResponse.data;
+  //     if (!currentBookingId) {
+  //       throw new Error("Booking ID is null. Unable to proceed with payment.");
+  //     }
 
-  //           if (payUrl) {
-  //             Linking.openURL(payUrl);
-  //           } else if (deeplink) {
-  //             Linking.openURL(deeplink);
-  //           } else if (applink) {
-  //             Linking.openURL(applink);
-  //           } else {
-  //             Alert.alert(
-  //               "Lỗi thanh toán",
-  //               "Không thể mở liên kết thanh toán. Vui lòng thử lại sau."
-  //             );
-  //           }
-  //         } else {
-  //           Alert.alert(
-  //             "Lỗi thanh toán",
-  //             "Không thể tạo liên kết thanh toán. Vui lòng thử lại sau."
-  //           );
-  //         }
-  //       } catch (error) {
-  //         console.error("Payment Error:", error);
-  //         Alert.alert("Lỗi thanh toán", "Không thể xử lý thanh toán.");
+  //     // Tạo Payment URL
+  //     console.log("Using Booking ID:", currentBookingId);
+  //     const redirectUrl = encodeURIComponent(
+  //       "com.meowcare.mobile://payment-complete"
+  //     );
+  //     const queryParams = `?id=${currentBookingId}&requestType=CAPTURE_WALLET&redirectUrl=${redirectUrl}`;
+  //     const paymentUrl = `/booking-orders/payment-url${queryParams}`;
+
+  //     console.log("Payment URL:", paymentUrl);
+
+  //     const paymentResponse = await postData(paymentUrl);
+  //     console.log("Payment Response:", paymentResponse);
+
+  //     if (paymentResponse.status === 1000 && paymentResponse.data) {
+  //       const { payUrl, deeplink, applink } = paymentResponse.data;
+
+  //       if (payUrl) {
+  //         Linking.openURL(payUrl);
+  //       } else if (deeplink) {
+  //         Linking.openURL(deeplink);
+  //       } else if (applink) {
+  //         Linking.openURL(applink);
+  //       } else {
+  //         Alert.alert(
+  //           "Lỗi thanh toán",
+  //           "Không thể mở liên kết thanh toán. Vui lòng thử lại sau."
+  //         );
   //       }
   //     } else {
-  //       Alert.alert("Lỗi", "Không thể tạo booking. Vui lòng thử lại sau.");
+  //       throw new Error(
+  //         "Không thể tạo liên kết thanh toán. Vui lòng thử lại sau."
+  //       );
   //     }
   //   } catch (error) {
-  //     console.error("Booking Error:", error);
-  //     Alert.alert("Lỗi", "Đặt lịch thất bại.");
+  //     console.error("Payment Error:", error);
+  //     Alert.alert("Thất bại", "Thanh toán thất bại. Vui lòng thử lại.");
   //   } finally {
   //     setIsLoading(false);
   //   }
@@ -405,6 +453,10 @@ export default function ServicePayment() {
       let currentBookingId = bookingId;
 
       if (!currentBookingId) {
+        const isMainService =
+          step1Info.selectedServiceId &&
+          step1Info.selectedServiceId !== "OTHER_SERVICES";
+
         const bookingPayload = {
           time: new Date().toISOString(),
           startDate: new Date(step2Info.startDate).toISOString(),
@@ -417,22 +469,21 @@ export default function ServicePayment() {
           address: step1Info.selectedLocation,
           note: contactInfo.note,
           sitterId,
-          isHouseSitting: step1Info.selectedServiceId === "HOUSE_SITTING", // Example logic
-          orderType: "OVERNIGHT", // Example order type
-          paymentMethod: "MOMO",
+          isHouseSitting: step1Info.selectedServiceId === "HOUSE_SITTING",
+          orderType: isMainService ? "OVERNIGHT" : "BUY_SERVICE",
+          paymentMethod: selectedOption === 2 ? "PAY_LATER" : "MOMO",
           bookingDetails: step3Info.selectedCats.flatMap((cat) => {
             // Dịch vụ chính (MAIN_SERVICE)
-            const mainService =
-              step1Info.selectedServiceId &&
-              step1Info.selectedServiceId !== "OTHER_SERVICES"
-                ? [
-                    {
-                      quantity: 1,
-                      petProfileId: cat.id,
-                      serviceId: step1Info.selectedServiceId,
-                    },
-                  ]
-                : [];
+            const mainService = isMainService
+              ? [
+                  {
+                    quantity: 1,
+                    petProfileId: cat.id,
+                    serviceId: step1Info.selectedServiceId,
+                    bookingSlotId: null, // MAIN_SERVICE không có slot
+                  },
+                ]
+              : [];
 
             // Dịch vụ con (CHILD_SERVICE)
             const childServices =
@@ -440,6 +491,7 @@ export default function ServicePayment() {
                 quantity: 1,
                 petProfileId: cat.id,
                 serviceId: child.id,
+                bookingSlotId: null, // CHILD_SERVICE không có slot
               })) || [];
 
             // Dịch vụ bổ sung (ADDITIONAL_SERVICE)
@@ -448,14 +500,14 @@ export default function ServicePayment() {
                 const additionalService = step1Info.additionalServices.find(
                   (service) => service.id === serviceId
                 );
-                const slot = step1Info.selectedSlot?.[serviceId]; // Lấy thông tin slot
+                const slot = step1Info.selectedSlot?.[serviceId]; // Lấy slot đã chọn
                 return {
                   quantity: 1,
                   petProfileId: cat.id,
                   serviceId: serviceId,
                   startTime: slot?.startTime || null,
                   endTime: slot?.endTime || null,
-                  bookingSlotId: slot?.id || null, // Thêm bookingSlotId
+                  bookingSlotId: slot?.id || null, // Gắn đúng bookingSlotId
                 };
               }) || [];
 
@@ -463,26 +515,20 @@ export default function ServicePayment() {
           }),
         };
 
-        // Log toàn bộ payload để kiểm tra
         console.log(
           "Booking Payload for Payment:",
           JSON.stringify(bookingPayload, null, 2)
         );
 
-        console.log("=== START: Creating Booking ===");
         const bookingResponse = await postData(
           "/booking-orders/with-details",
           bookingPayload
         );
-        console.log("Booking Response:", bookingResponse);
 
         if (bookingResponse.status === 1000 && bookingResponse.data?.id) {
           currentBookingId = bookingResponse.data.id;
           setBookingId(currentBookingId);
-          console.log(
-            "Booking created successfully with ID:",
-            currentBookingId
-          );
+          console.log("Booking created successfully:", currentBookingId);
         } else {
           throw new Error("Không thể tạo booking. Vui lòng thử lại sau.");
         }
@@ -492,18 +538,18 @@ export default function ServicePayment() {
         throw new Error("Booking ID is null. Unable to proceed with payment.");
       }
 
-      // Tạo Payment URL
-      console.log("Using Booking ID:", currentBookingId);
+      if (selectedOption === 2) {
+        navigation.navigate("ServicePaymentComplete");
+        return;
+      }
+
       const redirectUrl = encodeURIComponent(
         "com.meowcare.mobile://payment-complete"
       );
       const queryParams = `?id=${currentBookingId}&requestType=CAPTURE_WALLET&redirectUrl=${redirectUrl}`;
       const paymentUrl = `/booking-orders/payment-url${queryParams}`;
 
-      console.log("Payment URL:", paymentUrl);
-
       const paymentResponse = await postData(paymentUrl);
-      console.log("Payment Response:", paymentResponse);
 
       if (paymentResponse.status === 1000 && paymentResponse.data) {
         const { payUrl, deeplink, applink } = paymentResponse.data;
@@ -582,9 +628,11 @@ export default function ServicePayment() {
                   }`}
                 </Text>
               </View>
-              <Text style={styles.price}>
-                {`${service.price.toLocaleString()}đ`}
-              </Text>
+              {service.type !== "CHILD_SERVICE" && (
+                <Text
+                  style={styles.price}
+                >{`${service.price.toLocaleString()}đ`}</Text>
+              )}
             </View>
           ))}
 
@@ -602,7 +650,7 @@ export default function ServicePayment() {
           </View>
         </View>
 
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={styles.radioButtonContainerWithPrice}
           onPress={() => setSelectedOption(2)}
         >
@@ -612,12 +660,10 @@ export default function ServicePayment() {
                 <View style={styles.radioButtonSelected} />
               ) : null}
             </View>
-            <Text style={styles.radioButtonText}>
-              Thanh toán đặt cọc trước:
-            </Text>
+            <Text style={styles.radioButtonText}>Thanh toán trả sau</Text>
           </View>
-          <Text style={styles.price1}>50.000đ</Text>
-        </TouchableOpacity> */}
+          {/* <Text style={styles.price1}>50.000đ</Text> */}
+        </TouchableOpacity>
         {/* 
         <View style={styles.separator1} /> */}
 

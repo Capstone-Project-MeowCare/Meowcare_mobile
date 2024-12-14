@@ -286,16 +286,10 @@ export default function BookingDetailRequest({ navigation }) {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.acceptButton}
-            onPress={() => handleStatusUpdate("accept")}
-          >
-            <Text style={styles.buttonText}>Chấp nhận yêu cầu</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.rejectButton}
+            style={styles.rejectButton} // Sử dụng style của nút "Từ chối"
             onPress={() => handleStatusUpdate("reject")}
           >
-            <Text style={styles.buttonText}>Từ chối</Text>
+            <Text style={styles.buttonText}>Hủy yêu cầu</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -529,11 +523,11 @@ const styles = StyleSheet.create({
   rejectButton: {
     backgroundColor: "#FF003D",
     borderRadius: 8,
-    width: width * 0.3,
+    width: width * 0.9,
     height: height * 0.05,
     justifyContent: "center",
     alignItems: "center",
-    right: height * 0.01,
+    right: height * 0.02,
   },
   buttonText: {
     color: "#FFFFFF",

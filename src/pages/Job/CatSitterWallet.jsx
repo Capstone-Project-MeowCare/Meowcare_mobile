@@ -59,7 +59,7 @@ export default function CatSitterProfile({ navigation }) {
 
         <TouchableOpacity
           style={styles.historyButton}
-          onPress={() => navigation.navigate("HistoryWallet")}
+          onPress={() => navigation.navigate("Giao dịch")}
         >
           <Ionicons name="time-outline" size={20} color="#000857" />
           <Text style={styles.historyText}>Lịch sử</Text>

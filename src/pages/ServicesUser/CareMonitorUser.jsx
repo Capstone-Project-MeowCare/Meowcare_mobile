@@ -149,7 +149,7 @@ export default function CareMonitorUser({ navigation, route }) {
                     2,
                     "0"
                   )}:${String(endDate.getMinutes()).padStart(2, "0")}`,
-                  description: task.description || "Không có mô tả",
+                  name: task.name || "Không có mô tả",
                   status: mapStatus(task.status),
                   statusColor: getStatusColor(task.status),
                   petProfile: task.petProfile || null,
@@ -163,6 +163,7 @@ export default function CareMonitorUser({ navigation, route }) {
             setTasks(groupedTasks);
           } else {
             console.warn("No tasks received from API");
+
             setTasks([]);
           }
 
@@ -445,7 +446,7 @@ export default function CareMonitorUser({ navigation, route }) {
                           },
                         ]}
                       >
-                        {task.description || "Không có mô tả"}
+                        {task.name || "Không có mô tả"}
                       </Text>
 
                       {/* Nút trong một hàng riêng biệt */}
