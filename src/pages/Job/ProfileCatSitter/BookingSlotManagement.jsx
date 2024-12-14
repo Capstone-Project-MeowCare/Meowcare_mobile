@@ -133,7 +133,8 @@ export default function BookingSlotManagement({ navigation }) {
     try {
       for (const slot of bookingSlots) {
         if (!slot.startTime || !slot.endTime) {
-          throw new Error("Thời gian không hợp lệ.");
+          Alert.alert("Lỗi", "Thời gian không hợp lệ.");
+          return;
         }
 
         // Chuyển đổi thời gian sang định dạng ISO 8601
@@ -148,21 +149,26 @@ export default function BookingSlotManagement({ navigation }) {
             endTime,
           };
 
-          console.log("Payload gửi đi:", payload); // Log để kiểm tra
+          console.log("Payload gửi đi:", payload);
 
           try {
             await postData("/booking-slots", payload, accessToken);
           } catch (apiError) {
             if (apiError.response && apiError.response.status === 409) {
-              console.error(
-                "Trùng lặp thời gian:",
-                apiError.response.data.message
-              );
               Alert.alert(
                 "Lỗi trùng lặp",
                 "Thời gian của slot đang bị trùng lặp với slot khác. Vui lòng kiểm tra lại."
               );
-              return; // Dừng xử lý nếu gặp lỗi
+              return;
+            } else if (
+              apiError.response &&
+              apiError.response.data?.status === 2014
+            ) {
+              Alert.alert(
+                "Lỗi thời gian",
+                "Khoảng cách giữa giờ bắt đầu và giờ kết thúc phải từ 1 đến 3 giờ. Vui lòng kiểm tra lại."
+              );
+              return;
             } else {
               throw apiError; // Ném lỗi khác để xử lý bên dưới
             }
@@ -175,7 +181,12 @@ export default function BookingSlotManagement({ navigation }) {
       Alert.alert("Thành công", "Lưu danh sách slot thành công.");
     } catch (error) {
       console.error("Lỗi khi lưu slot:", error);
-      Alert.alert("Lỗi", "Không thể lưu danh sách slot.");
+
+      // Thông báo lỗi chung
+      Alert.alert(
+        "Lỗi",
+        "Không thể lưu danh sách slot. Vui lòng kiểm tra lại hoặc thử lại sau."
+      );
     }
   };
 

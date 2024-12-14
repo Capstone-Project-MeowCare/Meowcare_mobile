@@ -281,7 +281,7 @@ export default function Activity() {
                 )} */}
                 {item.status === "CONFIRMED" && (
                   <CustomButton
-                    title="Hủy lịch"
+                    title="Xem chi tiết"
                     style={styles.cancelButton}
                     onPress={() =>
                       navigation.navigate("BookingDetailRequest", {
