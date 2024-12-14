@@ -88,7 +88,7 @@ export default function FindSitterByMap() {
         return null;
       }
     } catch (error) {
-      console.error(`Lỗi khi fetch tọa độ cho: ${location}`, error);
+      // console.error(`Lỗi khi fetch tọa độ cho: ${location}`, error);
       return null;
     }
   };
@@ -116,11 +116,10 @@ export default function FindSitterByMap() {
   // Fetch sitter profiles và kết hợp dữ liệu
   const fetchSitterProfiles = async () => {
     try {
-      console.log("Fetching sitter profiles...");
       const response = await getData("/sitter-profiles");
 
       if (!response || !response.data || !Array.isArray(response.data)) {
-        console.error("API trả về dữ liệu không hợp lệ.");
+        console.error("Invalid data from API");
         return;
       }
 
@@ -141,13 +140,16 @@ export default function FindSitterByMap() {
         })
       );
 
-      setCatSitters(sittersWithDetails);
-      setCoordinatesMap(
-        sittersWithDetails.filter((s) => s.latitude && s.longitude)
+      // Lọc các sitter chỉ có status ACTIVE
+      const activeSitters = sittersWithDetails.filter(
+        (sitter) => sitter.status === "ACTIVE"
       );
+
+      setCatSitters(activeSitters);
+      setCoordinatesMap(activeSitters.filter((s) => s.latitude && s.longitude));
     } catch (error) {
-      console.error("Lỗi khi fetch sitter profiles:", error);
-      Alert.alert("Lỗi", "Không thể tải dữ liệu. Vui lòng thử lại sau.");
+      console.error("Error fetching sitter profiles:", error);
+      Alert.alert("Error", "Unable to load data. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -249,7 +251,13 @@ export default function FindSitterByMap() {
                   {/* <Text style={styles.description}>{item.bio}</Text>
                   <Text style={styles.price}>150.000đ</Text> */}
                   {item.bio ? (
-                    <Text style={styles.description}>{item.bio}</Text>
+                    <Text
+                      style={styles.description}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {item.bio}
+                    </Text>
                   ) : null}
                   {item.price ? (
                     <Text
@@ -415,6 +423,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    position: "relative", // Giữ layout chuẩn xác
   },
   addressRow: {
     flexDirection: "row",
@@ -429,12 +438,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: height * 0.02,
     textAlign: "right",
+    flex: 0, // Cố định kích thước, không bị giãn
   },
   description: {
     fontSize: height * 0.015,
     color: "#000",
     marginBottom: height * 0.01,
     fontWeight: "600",
+    flex: 1, // Cho phép chiếm không gian còn lại
+    flexWrap: "wrap", // Cho phép xuống dòng
+    marginRight: 10, // Khoảng cách giữa bio và price
   },
   address: {
     fontSize: height * 0.015,

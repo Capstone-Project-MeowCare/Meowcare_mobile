@@ -206,8 +206,14 @@ export default function SwipeStep({ navigation }) {
                   ...step1Info,
                   childServices: step1Info.childServices.map((service) => ({
                     ...service,
-                    startTime: service.startTime?.toISOString(), // Chuyển đổi Date thành chuỗi ISO
-                    endTime: service.endTime?.toISOString(), // Chuyển đổi Date thành chuỗi ISO
+                    startTime:
+                      service.startTime instanceof Date
+                        ? service.startTime.toISOString()
+                        : service.startTime,
+                    endTime:
+                      service.endTime instanceof Date
+                        ? service.endTime.toISOString()
+                        : service.endTime,
                   })),
                   selectedSlot: Object.fromEntries(
                     Object.entries(step1Info.selectedSlot || {}).map(
@@ -215,8 +221,14 @@ export default function SwipeStep({ navigation }) {
                         serviceId,
                         {
                           ...slot,
-                          startTime: slot.startTime?.toISOString(), // Chuyển đổi Date thành chuỗi ISO
-                          endTime: slot.endTime?.toISOString(), // Chuyển đổi Date thành chuỗi ISO
+                          startTime:
+                            slot.startTime instanceof Date
+                              ? slot.startTime.toISOString()
+                              : slot.startTime,
+                          endTime:
+                            slot.endTime instanceof Date
+                              ? slot.endTime.toISOString()
+                              : slot.endTime,
                         },
                       ]
                     )

@@ -7,6 +7,7 @@ import {
   Image,
   Dimensions,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import CatSitterCard from "./CatSitterCard";
@@ -17,6 +18,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { getData } from "../../api/api";
 import axios from "axios";
+import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -61,13 +63,16 @@ function FirstRoute() {
       const response = await getData("/sitter-profiles");
       console.log("Response Data:", response.data);
 
-      // Lấy dữ liệu đúng định dạng từ response.data
-      const formattedData = response.data.map((item) => ({
-        id: item.id, // ID cũ
-        sitterId: item.sitterId, // Sitter ID (bây giờ chính là `user.id`)
-        fullName: item.fullName,
-        location: item.location,
-      }));
+      // Lấy dữ liệu đúng định dạng từ response.data và chỉ lấy sitter có status ACTIVE
+      const formattedData = response.data
+        .filter((item) => item.status === "ACTIVE") // Chỉ lấy sitter có status ACTIVE
+        .map((item) => ({
+          id: item.id, // ID cũ
+          sitterId: item.sitterId, // Sitter ID (bây giờ chính là `user.id`)
+          fullName: item.fullName,
+          location: item.location,
+        }))
+        .slice(0, 4); // Lấy tối đa 4 sitter
 
       setSitterData(formattedData);
     } catch (error) {
@@ -89,10 +94,12 @@ function FirstRoute() {
       userId, // ID của user
     });
   };
+
   return (
     <ScrollView
       style={styles.fullScreenContainer}
       contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
     >
       <View style={styles.catSitterGridContainer}>
         {sitterData.map((item) => (
@@ -165,8 +172,31 @@ function SecondRoute() {
 const Tab = createMaterialTopTabNavigator();
 
 export default function Home({ navigation }) {
+  const { user } = useAuth();
+  const [hasSitterProfile, setHasSitterProfile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const checkSitterProfile = async () => {
+      if (user?.id) {
+        try {
+          const response = await getData(`/users/${user.id}`);
+          if (response?.data?.sitterProfile?.id) {
+            setHasSitterProfile(true); // Người dùng đã có `sitterProfile`
+          } else {
+            setHasSitterProfile(false); // Không có `sitterProfile`
+          }
+        } catch (error) {
+          console.error("Error checking sitter profile:", error);
+        } finally {
+          setLoading(false); // Kết thúc loading
+        }
+      }
+    };
+
+    checkSitterProfile();
+  }, [user?.id]);
   // Hàm tìm kiếm địa chỉ qua Geoapify
   const fetchAddressSuggestions = async (query) => {
     try {
@@ -207,7 +237,20 @@ export default function Home({ navigation }) {
       setSearchResults([]);
     }, [])
   );
-
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#FFFAF5",
+        }}
+      >
+        <ActivityIndicator size="large" color="#A94B84" />
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       <FlatList
@@ -327,7 +370,7 @@ export default function Home({ navigation }) {
                 })}
               >
                 <Tab.Screen name="Gửi thú cưng" component={FirstRoute} />
-                <Tab.Screen name="Trông tại nhà" component={SecondRoute} />
+                <Tab.Screen name="Dịch vụ khác" component={SecondRoute} />
               </Tab.Navigator>
             </View>
           </>
@@ -335,7 +378,12 @@ export default function Home({ navigation }) {
         ListFooterComponent={
           <>
             <View style={styles.centeredContainer}>
-              <BecomeCatSitterCard />
+              {!hasSitterProfile ? (
+                <BecomeCatSitterCard />
+              ) : (
+                // View trống giữ chỗ
+                <View style={styles.placeholder} />
+              )}
             </View>
 
             <View style={styles.footerWrapper}>
@@ -452,6 +500,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: height * 0.025,
     backgroundColor: "#FFFAF5",
+  },
+  placeholder: {
+    height: 150,
+    width: "100%",
+    backgroundColor: "transparent",
   },
   footerWrapper: {
     justifyContent: "center",

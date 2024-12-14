@@ -253,7 +253,8 @@ export default function Activity() {
                 <Text style={styles.time}>{item.time}</Text>
               </Text>
               <View style={styles.buttonRow}>
-                {item.serviceType === "MAIN_SERVICE" && (
+                {(item.serviceType === "MAIN_SERVICE" ||
+                  item.serviceType === "ADDITION_SERVICE") && (
                   <CustomButton
                     title="Theo dõi lịch"
                     onPress={() =>
@@ -266,9 +267,22 @@ export default function Activity() {
                     }
                   />
                 )}
-                {item.serviceType === "ADDITION_SERVICE" && (
+                {/* {item.serviceType === "ADDITION_SERVICE" && (
                   <CustomButton
                     title="Xem chi tiết"
+                    onPress={() =>
+                      navigation.navigate("BookingDetailRequest", {
+                        bookingId: item.id,
+                        serviceName: item.serviceName,
+                        sitterName: item.sitterName,
+                      })
+                    }
+                  />
+                )} */}
+                {item.status === "CONFIRMED" && (
+                  <CustomButton
+                    title="Hủy lịch"
+                    style={styles.cancelButton}
                     onPress={() =>
                       navigation.navigate("BookingDetailRequest", {
                         bookingId: item.id,

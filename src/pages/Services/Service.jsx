@@ -124,12 +124,19 @@ export default function Service() {
               detail.service?.serviceType === "ADDITION_SERVICE"
           );
 
-          // Thêm log để kiểm tra từng service
-          console.log("Service Details:", {
-            bookingId: booking.id,
-            serviceType: service?.service?.serviceType,
-            serviceName: service?.service?.name,
-          });
+          // Xử lý thời gian
+          const startDate = booking.startDate
+            ? new Date(booking.startDate).toLocaleDateString("vi-VN")
+            : null;
+          const endDate = booking.endDate
+            ? new Date(booking.endDate).toLocaleDateString("vi-VN")
+            : null;
+
+          const timeText = startDate
+            ? endDate && startDate !== endDate
+              ? `Thời gian: ${startDate} - ${endDate}` // Nếu startDate và endDate khác nhau
+              : `Thời gian: ${startDate}` // Nếu startDate và endDate giống nhau hoặc endDate không hợp lệ
+            : "Thời gian: Không xác định";
 
           return {
             id: booking.id,
@@ -139,11 +146,7 @@ export default function Service() {
             userEmail: booking.user?.email,
             sitterEmail: booking.sitter?.email,
             userName: booking.user?.fullName || "Unknown User",
-            time: booking.startDate
-              ? `Thời gian: ${new Date(booking.startDate).toLocaleDateString(
-                  "vi-VN"
-                )} - ${new Date(booking.endDate).toLocaleDateString("vi-VN")}`
-              : "Thời gian: Không xác định",
+            time: timeText, // Cập nhật thời gian
             catName:
               uniquePets.map((pet) => pet.petName).join(", ") || "Unknown Pet",
             pets: uniquePets, // Thêm danh sách thú cưng
@@ -378,7 +381,8 @@ export default function Service() {
               <Text style={styles.time}>{item.time}</Text>
 
               {/* Hiển thị nút dựa trên serviceType */}
-              {item.serviceType === "MAIN_SERVICE" &&
+              {(item.serviceType === "MAIN_SERVICE" ||
+                item.serviceType === "ADDITION_SERVICE") &&
               (item.status === "IN_PROGRESS" ||
                 item.status === "CONFIRMED" ||
                 item.status === "COMPLETED") ? (
@@ -398,21 +402,24 @@ export default function Service() {
                     }
                   />
                 </View>
-              ) : item.serviceType === "ADDITION_SERVICE" ? (
-                <View style={styles.buttonRow}>
-                  <CustomButton
-                    title="Xem chi tiết"
-                    onPress={() =>
-                      navigation.navigate("BookingDetailRequest", {
-                        bookingId: item.id,
-                        serviceName: item.serviceName,
-                        userName: item.userName,
-                        catName: item.catName,
-                      })
-                    }
-                  />
-                </View>
-              ) : null}
+              ) : /*
+  item.serviceType === "ADDITION_SERVICE" ? (
+    <View style={styles.buttonRow}>
+      <CustomButton
+        title="Xem chi tiết"
+        onPress={() =>
+          navigation.navigate("BookingDetailRequest", {
+            bookingId: item.id,
+            serviceName: item.serviceName,
+            userName: item.userName,
+            catName: item.catName,
+          })
+        }
+      />
+    </View>
+  ) : 
+  */
+              null}
             </View>
           )}
           ListFooterComponent={

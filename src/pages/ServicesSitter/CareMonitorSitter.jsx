@@ -109,7 +109,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
                 2,
                 "0"
               )}:${String(endDate.getMinutes()).padStart(2, "0")}`,
-              description: task.description || "Không có mô tả",
+              name: task.name || "Không có mô tả",
               status: mapStatus(task.status),
               statusColor: getStatusColor(task.status),
               petProfile: task.petProfile || null,
@@ -282,21 +282,6 @@ export default function CareMonitorCatSitter({ navigation, route }) {
       sitterId,
     });
   };
-
-  const requestPermissions = async () => {
-    const cameraResult = await request(PERMISSIONS.ANDROID.CAMERA);
-    const micResult = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
-
-    if (cameraResult !== "granted" || micResult !== "granted") {
-      Alert.alert(
-        "Error",
-        "Camera and Microphone permissions are required for video calls."
-      );
-      return false;
-    }
-    return true;
-  };
-
   const handleVideoCallPress = async () => {
     if (!userPhoneNumber) {
       Alert.alert("Lỗi", "Không tìm thấy số điện thoại của người dùng.");
@@ -465,7 +450,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
                               },
                             ]}
                           >
-                            {task.description || "Không có mô tả"}
+                            {task.name || "Không có mô tả"}
                           </Text>
 
                           {/* Nút xem chi tiết */}
