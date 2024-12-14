@@ -402,7 +402,18 @@ export default function SetupProfile({ navigation }) {
       setIsSaving(true);
       console.log("Bắt đầu lưu thông tin hồ sơ...");
 
-      // 1. Kiểm tra nếu chưa có sitterProfileId, tạo mới
+      // 1. Xóa chứng chỉ bị loại bỏ
+      console.log("Danh sách chứng chỉ bị xóa:", removedCertificates);
+      for (const certId of removedCertificates) {
+        try {
+          await deleteData(`/certificates/${certId}`);
+          console.log(`Đã xóa chứng chỉ với ID: ${certId}`);
+        } catch (error) {
+          console.error(`Lỗi khi xóa chứng chỉ với ID ${certId}:`, error);
+        }
+      }
+
+      // 2. Kiểm tra nếu chưa có sitterProfileId, tạo mới
       if (!sitterProfileId) {
         console.log("Hồ sơ chưa tồn tại, tạo mới...");
         const newProfilePayload = {
@@ -433,7 +444,7 @@ export default function SetupProfile({ navigation }) {
         }
       }
 
-      // 2. Upload hình ảnh cá nhân và chuồng
+      // 3. Upload hình ảnh cá nhân và chuồng
       console.log("Ảnh trước khi upload:", profilePictures, cagePictures);
 
       const uploadedPictures = await Promise.all(
@@ -458,9 +469,61 @@ export default function SetupProfile({ navigation }) {
 
       console.log("Ảnh sau khi upload:", sanitizedPictures);
 
-      // 3. Xử lý chứng chỉ (giống logic trước)
+      // 4. Upload chứng chỉ
+      console.log("Chứng chỉ trước khi upload:", certificates);
 
-      // 4. Cập nhật thông tin hồ sơ
+      const uploadedCertificates = await Promise.all(
+        certificates.map(async (cert) => {
+          if (
+            !cert.certificateUrl ||
+            !cert.certificateUrl.startsWith("https://")
+          ) {
+            if (cert.fileUri) {
+              const uploadedUrl = await firebaseCertificate(cert.fileUri);
+              console.log("Uploaded certificate URL:", uploadedUrl);
+              return {
+                ...cert,
+                certificateUrl: uploadedUrl,
+              };
+            } else {
+              console.warn("Certificate fileUri is missing or invalid:", cert);
+              return cert; // Bỏ qua nếu không có fileUri
+            }
+          }
+          return cert; // Giữ nguyên nếu đã có URL
+        })
+      );
+
+      console.log("Chứng chỉ sau khi upload:", uploadedCertificates);
+
+      // Gửi API để lưu chứng chỉ
+      for (const cert of uploadedCertificates) {
+        if (!cert.id) {
+          const certificatePayload = {
+            userId: user?.id, // Thêm userId theo yêu cầu
+            certificateName: cert.fileName || "Chứng chỉ không tên", // Giá trị mặc định
+            certificateUrl: cert.certificateUrl,
+            certificateType: cert.certificateType || "UNKNOWN", // Giá trị mặc định nếu không có
+          };
+
+          console.log("Payload gửi để tạo mới chứng chỉ:", certificatePayload);
+          try {
+            const certResponse = await postData(
+              "/certificates",
+              certificatePayload
+            );
+            console.log("Phản hồi từ API sau khi tạo chứng chỉ:", certResponse);
+          } catch (error) {
+            console.error(
+              "Lỗi khi gửi chứng chỉ:",
+              certificatePayload,
+              error?.response?.data || error
+            );
+          }
+        }
+      }
+
+      // 5. Cập nhật thông tin hồ sơ
       const profileData = {
         sitterId: user?.id,
         bio,
