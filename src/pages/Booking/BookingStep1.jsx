@@ -155,10 +155,12 @@ export default function BookingStep1({
 
     fetchServices();
   }, [userId]);
-  const fetchSlotsForService = async (serviceId, dateRange = "2024-12-09") => {
+  const fetchSlotsForService = async (serviceId, dateRange) => {
     try {
       const sitterId = userId; // Dùng userId từ props làm sitterId
-      const date = dateRange; // Ngày lọc
+
+      // Nếu không có dateRange, sử dụng ngày hiện tại
+      const date = dateRange || new Date().toISOString().split("T")[0]; // Lấy ngày hiện tại (YYYY-MM-DD)
       const status = "AVAILABLE"; // Trạng thái slot
 
       // Endpoint với query parameters
