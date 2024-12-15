@@ -58,7 +58,7 @@ export default function CatSitterInformation({
   const [scheduleData, setScheduleData] = useState([]);
   const [certificatesData, setCertificatesData] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  console.log("Nhìn kĩ:", userId);
+  // console.log("Nhìn kĩ:", userId);
 
   // Lọc ảnh chuồng từ profilePictures
   const cageImages = profilePictures

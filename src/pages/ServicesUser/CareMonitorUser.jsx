@@ -115,78 +115,6 @@ export default function CareMonitorUser({ navigation, route }) {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchCareSchedule = async () => {
-        try {
-          const endpoint = `/care-schedules/booking/${bookingId}`;
-          const response = await getData(endpoint);
-
-          if (response?.data?.tasks && Array.isArray(response.data.tasks)) {
-            const tasks = response.data.tasks
-              .map((task) => {
-                if (!task.startTime || !task.endTime) {
-                  console.warn("Task missing time:", task);
-                  return null;
-                }
-
-                const startDate = new Date(task.startTime);
-                const endDate = new Date(task.endTime);
-                startDate.setHours(startDate.getHours() + 7);
-                endDate.setHours(endDate.getHours() + 7);
-
-                return {
-                  id: task.id,
-                  day: `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")}`,
-                  time: `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")} - ${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`,
-                  name: task.name || "Nhiệm vụ không có tên",
-                  description: task.description || "Không có mô tả chi tiết",
-                  status: mapStatus(task.status),
-                  statusColor: getStatusColor(task.status),
-                  petProfile: task.petProfile || null,
-                  haveEvidence: task.haveEvidence || false,
-                };
-              })
-              .filter((task) => task !== null);
-
-            console.log("Parsed Tasks:", tasks);
-
-            const groupedTasks = groupTasks(tasks);
-            originalTasksRef.current = groupedTasks;
-            setTasks(groupedTasks);
-
-            // Đồng bộ currentDate
-            if (!currentDate && groupedTasks.length > 0) {
-              const firstTaskDay = groupedTasks[0].day;
-              setCurrentDate(new Date(firstTaskDay));
-            }
-          } else {
-            console.warn("No tasks received from API");
-            setTasks([]);
-          }
-
-          if (response?.data?.startTime && response?.data?.endTime) {
-            const scheduleStart = new Date(response.data.startTime);
-            const scheduleEnd = new Date(response.data.endTime);
-            scheduleStart.setHours(scheduleStart.getHours() + 7);
-            scheduleEnd.setHours(scheduleEnd.getHours() + 7);
-
-            setCareSchedule({
-              startTime: scheduleStart,
-              endTime: scheduleEnd,
-            });
-
-            // Nếu currentDate chưa khớp với lịch trình, sửa lại
-            if (
-              !currentDate ||
-              currentDate < scheduleStart ||
-              currentDate > scheduleEnd
-            ) {
-              setCurrentDate(scheduleStart);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching care schedule:", error);
-        }
-      };
       // const fetchCareSchedule = async () => {
       //   try {
       //     const endpoint = `/care-schedules/booking/${bookingId}`;
@@ -200,8 +128,10 @@ export default function CareMonitorUser({ navigation, route }) {
       //             return null;
       //           }
 
-      //           const startDate = new Date(task.startTime); // Không cộng thêm giờ
-      //           const endDate = new Date(task.endTime); // Không cộng thêm giờ
+      //           const startDate = new Date(task.startTime);
+      //           const endDate = new Date(task.endTime);
+      //           startDate.setHours(startDate.getHours() + 7);
+      //           endDate.setHours(endDate.getHours() + 7);
 
       //           return {
       //             id: task.id,
@@ -234,8 +164,10 @@ export default function CareMonitorUser({ navigation, route }) {
       //     }
 
       //     if (response?.data?.startTime && response?.data?.endTime) {
-      //       const scheduleStart = new Date(response.data.startTime); // Không cộng thêm giờ
-      //       const scheduleEnd = new Date(response.data.endTime); // Không cộng thêm giờ
+      //       const scheduleStart = new Date(response.data.startTime);
+      //       const scheduleEnd = new Date(response.data.endTime);
+      //       scheduleStart.setHours(scheduleStart.getHours() + 7);
+      //       scheduleEnd.setHours(scheduleEnd.getHours() + 7);
 
       //       setCareSchedule({
       //         startTime: scheduleStart,
@@ -255,6 +187,74 @@ export default function CareMonitorUser({ navigation, route }) {
       //     console.error("Error fetching care schedule:", error);
       //   }
       // };
+      const fetchCareSchedule = async () => {
+        try {
+          const endpoint = `/care-schedules/booking/${bookingId}`;
+          const response = await getData(endpoint);
+
+          if (response?.data?.tasks && Array.isArray(response.data.tasks)) {
+            const tasks = response.data.tasks
+              .map((task) => {
+                if (!task.startTime || !task.endTime) {
+                  console.warn("Task missing time:", task);
+                  return null;
+                }
+
+                const startDate = new Date(task.startTime); // Không cộng thêm giờ
+                const endDate = new Date(task.endTime); // Không cộng thêm giờ
+
+                return {
+                  id: task.id,
+                  day: `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")}`,
+                  time: `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")} - ${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`,
+                  name: task.name || "Nhiệm vụ không có tên",
+                  description: task.description || "Không có mô tả chi tiết",
+                  status: mapStatus(task.status),
+                  statusColor: getStatusColor(task.status),
+                  petProfile: task.petProfile || null,
+                  haveEvidence: task.haveEvidence || false,
+                };
+              })
+              .filter((task) => task !== null);
+
+            console.log("Parsed Tasks:", tasks);
+
+            const groupedTasks = groupTasks(tasks);
+            originalTasksRef.current = groupedTasks;
+            setTasks(groupedTasks);
+
+            // Đồng bộ currentDate
+            if (!currentDate && groupedTasks.length > 0) {
+              const firstTaskDay = groupedTasks[0].day;
+              setCurrentDate(new Date(firstTaskDay));
+            }
+          } else {
+            console.warn("No tasks received from API");
+            setTasks([]);
+          }
+
+          if (response?.data?.startTime && response?.data?.endTime) {
+            const scheduleStart = new Date(response.data.startTime); // Không cộng thêm giờ
+            const scheduleEnd = new Date(response.data.endTime); // Không cộng thêm giờ
+
+            setCareSchedule({
+              startTime: scheduleStart,
+              endTime: scheduleEnd,
+            });
+
+            // Nếu currentDate chưa khớp với lịch trình, sửa lại
+            if (
+              !currentDate ||
+              currentDate < scheduleStart ||
+              currentDate > scheduleEnd
+            ) {
+              setCurrentDate(scheduleStart);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching care schedule:", error);
+        }
+      };
 
       fetchCareSchedule();
     }, [bookingId, currentDate])

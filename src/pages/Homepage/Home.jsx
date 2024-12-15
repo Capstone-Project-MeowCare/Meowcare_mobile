@@ -63,18 +63,31 @@ function FirstRoute() {
       const response = await getData("/sitter-profiles");
       console.log("Response Data:", response.data);
 
-      // Lấy dữ liệu đúng định dạng từ response.data và chỉ lấy sitter có status ACTIVE
+      // Xử lý dữ liệu đúng định dạng từ API
       const formattedData = response.data
         .filter((item) => item.status === "ACTIVE") // Chỉ lấy sitter có status ACTIVE
-        .map((item) => ({
-          id: item.id, // ID cũ
-          sitterId: item.sitterId, // Sitter ID (bây giờ chính là `user.id`)
-          fullName: item.fullName,
-          location: item.location,
-        }))
+        .map((item) => {
+          // Chỉ định hình ảnh đầu tiên có isCargoProfilePicture === false
+          const firstProfilePicture = item.profilePictures.find(
+            (picture) => !picture.isCargoProfilePicture
+          );
+
+          return {
+            id: item.id,
+            sitterId: item.sitterId,
+            fullName: item.fullName,
+            location: item.location,
+            profileImage: firstProfilePicture
+              ? firstProfilePicture.imageUrl
+              : null, // Lưu cố định hình đầu tiên
+          };
+        })
         .slice(0, 4); // Lấy tối đa 4 sitter
 
-      setSitterData(formattedData);
+      // Nếu state chưa có dữ liệu, lưu nó lại
+      if (sitterData.length === 0) {
+        setSitterData(formattedData);
+      }
     } catch (error) {
       console.error("Error fetching sitter profiles:", error);
     }
@@ -82,8 +95,10 @@ function FirstRoute() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchSitterData();
-    }, []) // Dependencies rỗng, chạy lại khi màn hình được focus
+      if (sitterData.length === 0) {
+        fetchSitterData();
+      }
+    }, [sitterData]) // Chỉ gọi lại nếu `sitterData` rỗng
   );
 
   const disableParentPress = () => setParentPressEnabled(false);
@@ -114,7 +129,11 @@ function FirstRoute() {
             <CatSitterCard
               sitterName={item.fullName}
               address={item.location}
-              imageSource={require("../../../assets/catpeople.jpg")}
+              imageSource={
+                item.profileImage
+                  ? { uri: item.profileImage }
+                  : require("../../../assets/catpeople.jpg")
+              }
               isVerified={true}
               disableParentPress={disableParentPress}
               enableParentPress={enableParentPress}
@@ -188,7 +207,7 @@ export default function Home({ navigation }) {
             setHasSitterProfile(false); // Không có `sitterProfile`
           }
         } catch (error) {
-          console.error("Error checking sitter profile:", error);
+          // console.error("Error checking sitter profile:", error);
         } finally {
           setLoading(false); // Kết thúc loading
         }

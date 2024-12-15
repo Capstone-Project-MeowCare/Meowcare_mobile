@@ -85,15 +85,22 @@ export default function CatSitterServicePage({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [profilePictures, setProfilePictures] = useState([]);
   const [activeTab, setActiveTab] = useState("Thông tin");
+  const [currentIndex, setCurrentIndex] = useState(0);
   useEffect(() => {
     const fetchSitterDetails = async () => {
       try {
         const response = await getData(`/sitter-profiles/${sitterId}`);
         const { profilePictures: fetchedPictures } = response.data;
 
+        // Lọc chỉ những hình ảnh có isCargoProfilePicture === false
+        const filteredPictures = Array.isArray(fetchedPictures)
+          ? fetchedPictures.filter((picture) => !picture.isCargoProfilePicture)
+          : [];
+
+        // Nếu không có hình ảnh hợp lệ, đặt giá trị mặc định
         setProfilePictures(
-          Array.isArray(fetchedPictures) && fetchedPictures.length > 0
-            ? fetchedPictures
+          filteredPictures.length > 0
+            ? filteredPictures
             : [{ imageUrl: "https://example.com/default-image.jpg" }]
         );
 
@@ -141,12 +148,15 @@ export default function CatSitterServicePage({ navigation }) {
       <View style={styles.swiperContainer}>
         <Swiper
           style={styles.wrapper}
-          showsButtons={false}
           autoplay={true}
           autoplayTimeout={3}
+          showsPagination={true}
           dotStyle={styles.dotStyle}
           activeDotStyle={styles.activeDotStyle}
           paginationStyle={styles.pagination}
+          loop={true}
+          onIndexChanged={(index) => setCurrentIndex(index)}
+          key={profilePictures.length}
         >
           {profilePictures.map((item, index) => (
             <View key={index} style={styles.carouselItem}>
