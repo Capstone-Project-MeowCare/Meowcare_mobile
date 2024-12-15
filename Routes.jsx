@@ -93,6 +93,7 @@ const linking = {
   config: {
     screens: {
       ServicePaymentComplete: "payment-complete",
+      CatSitterWallet: "wallet-top-up-complete",
       // ServicePayment: "*",
     },
   },

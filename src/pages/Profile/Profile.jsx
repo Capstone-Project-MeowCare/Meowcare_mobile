@@ -110,7 +110,7 @@ export default function Profile() {
 
       <TouchableOpacity
         style={styles.emptyContainer}
-        onPress={() => navigation.navigate("Thanh toán")}
+        onPress={() => navigation.navigate("CatSitterWallet")}
       >
         <AntDesign
           name="creditcard"

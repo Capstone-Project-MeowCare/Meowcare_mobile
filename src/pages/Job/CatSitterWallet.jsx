@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Linking,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getData } from "../../api/api";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../../../auth/useAuth";
+import CustomToast from "../../components/CustomToast";
 
 export default function CatSitterProfile({ navigation }) {
   const [isVisible, setIsVisible] = useState(false); // Trạng thái ẩn/hiện số tiền
@@ -40,7 +48,22 @@ export default function CatSitterProfile({ navigation }) {
       fetchWalletBalance();
     }, [user?.id])
   );
+  useEffect(() => {
+    const handleDeepLink = ({ url }) => {
+      if (url && url.includes("wallet-top-up-complete")) {
+        CustomToast({
+          text: "Nạp tiền thành công!",
+          position: 300,
+        });
+      }
+    };
 
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
   // Hàm toggle hiển thị số tiền
   const toggleVisibility = () => {
     setIsVisible(!isVisible);
