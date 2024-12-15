@@ -118,7 +118,7 @@ export default function Profile() {
           color="#902C6C"
           style={styles.icon}
         />
-        <Text style={styles.emptyText}>Phương thức thanh toán</Text>
+        <Text style={styles.emptyText}>Ví tiền</Text>
       </TouchableOpacity>
 
       <TouchableOpacity

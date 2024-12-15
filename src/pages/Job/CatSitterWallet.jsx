@@ -138,7 +138,7 @@ export default function CatSitterProfile({ navigation }) {
           </View>
           <Ionicons name="chevron-forward-outline" size={24} color="#902C6C" />
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.optionItem}
           onPress={() => navigation.navigate("Thống kê thu nhập")}
         >
@@ -147,7 +147,7 @@ export default function CatSitterProfile({ navigation }) {
             <Text style={styles.optionText}>Thống kê thu nhập</Text>
           </View>
           <Ionicons name="chevron-forward-outline" size={24} color="#902C6C" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

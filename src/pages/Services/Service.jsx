@@ -287,13 +287,13 @@ export default function Service() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconContainer}
-            onPress={() => navigation.navigate("CatSitterWallet")}
+            onPress={() => navigation.navigate("Thống kê thu nhập")}
           >
             <Image
-              source={require("../../../assets/IconWallet.png")}
+              source={require("../../../assets/dashboard.png")}
               style={styles.icon}
             />
-            <Text style={styles.iconText}>Ví tiền</Text>
+            <Text style={styles.iconText}>Thống kê thu nhập</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconContainer}
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
   functionBox: {
     flexDirection: "row",
     justifyContent: "space-around",
-    width: width * 0.8,
+    width: width * 0.9,
     padding: height * 0.02,
     backgroundColor: "#fff",
     borderRadius: 20,
@@ -522,6 +522,8 @@ const styles = StyleSheet.create({
     width: width * 0.13,
     height: width * 0.13,
     marginHorizontal: width * 0.025,
+    borderRadius: (width * 0.13) / 2, 
+    overflow: 'hidden',
   },
   searchContainer: {
     flexDirection: "row",
