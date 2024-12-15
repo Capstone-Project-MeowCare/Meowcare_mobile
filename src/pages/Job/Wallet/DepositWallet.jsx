@@ -6,16 +6,19 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getData, postData, putData } from "../../../api/api";
 import CustomToast from "../../../components/CustomToast";
+import { useAuth } from "../../../../auth/useAuth";
 
 export default function DepositWallet({ navigation, route }) {
   const [amount, setAmount] = useState("");
-  const [selectedMethod, setSelectedMethod] = useState("bank");
+  const { user } = useAuth();
+  const [selectedMethod, setSelectedMethod] = useState("momo");
   const { walletId } = route.params;
-
+  const [loading, setLoading] = useState(true);
   const handleAmountChange = (text) => {
     // Loại bỏ các ký tự không phải số
     const numericValue = text.replace(/[^0-9]/g, "");
@@ -23,6 +26,64 @@ export default function DepositWallet({ navigation, route }) {
     setAmount(numericValue);
   };
 
+  // const handleDeposit = async () => {
+  //   if (!amount) {
+  //     CustomToast({
+  //       text: "Vui lòng nhập số tiền muốn nạp",
+  //       position: 300,
+  //     });
+  //     return;
+  //   }
+
+  //   const numericAmount = parseFloat(amount.replace(/[^0-9]/g, ""));
+
+  //   try {
+  //     // Lấy thông tin ví hiện tại
+  //     const walletResponse = await getData(`/wallets/${walletId}`);
+  //     if (!walletResponse?.data?.balance) {
+  //       CustomToast({
+  //         text: "Không tìm thấy số dư hiện tại.",
+  //         position: 300,
+  //       });
+  //       return;
+  //     }
+
+  //     const currentBalance = walletResponse.data.balance;
+
+  //     // Tạo payload với số dư mới
+  //     const payload = {
+  //       balance: currentBalance + numericAmount, // Cộng thêm số tiền nạp
+  //       updatedAt: new Date().toISOString(),
+  //     };
+
+  //     console.log("Payload chuẩn bị gửi:", payload);
+
+  //     // Gửi yêu cầu cập nhật ví
+  //     const response = await putData(`/wallets/${walletId}`, payload);
+
+  //     if (response?.status === 1002) {
+  //       CustomToast({
+  //         text: `Bạn đã nạp thành công ${numericAmount.toLocaleString(
+  //           "vi-VN"
+  //         )} VND`,
+  //         position: 300,
+  //       });
+  //       setAmount("");
+  //       navigation.goBack();
+  //     } else {
+  //       CustomToast({
+  //         text: "Không thể thực hiện nạp tiền. Vui lòng thử lại.",
+  //         position: 300,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Lỗi khi nạp tiền:", error);
+  //     CustomToast({
+  //       text: "Đã xảy ra lỗi khi nạp tiền.",
+  //       position: 300,
+  //     });
+  //   }
+  // };
   const handleDeposit = async () => {
     if (!amount) {
       CustomToast({
@@ -33,54 +94,72 @@ export default function DepositWallet({ navigation, route }) {
     }
 
     const numericAmount = parseFloat(amount.replace(/[^0-9]/g, ""));
+    if (numericAmount <= 0) {
+      CustomToast({
+        text: "Số tiền nạp phải lớn hơn 0",
+        position: 300,
+      });
+      return;
+    }
 
     try {
-      // Lấy thông tin ví hiện tại
-      const walletResponse = await getData(`/wallets/${walletId}`);
-      if (!walletResponse?.data?.balance) {
-        CustomToast({
-          text: "Không tìm thấy số dư hiện tại.",
-          position: 300,
-        });
-        return;
-      }
+      setLoading(true);
 
-      const currentBalance = walletResponse.data.balance;
+      const redirectUrl = encodeURIComponent(
+        "com.meowcare.mobile://wallet-top-up-complete"
+      );
+      const queryParams = `?userId=${user.id}&amount=${numericAmount}&redirectUrl=${redirectUrl}&requestType=CAPTURE_WALLET`;
 
-      // Tạo payload với số dư mới
-      const payload = {
-        balance: currentBalance + numericAmount, // Cộng thêm số tiền nạp
-        updatedAt: new Date().toISOString(),
-      };
+      const topUpUrl = `/wallets/top-up/momo${queryParams}`;
+      const response = await postData(topUpUrl);
 
-      console.log("Payload chuẩn bị gửi:", payload);
+      if (response.status === 1000 && response.data) {
+        const { payUrl, deeplink, applink } = response.data;
 
-      // Gửi yêu cầu cập nhật ví
-      const response = await putData(`/wallets/${walletId}`, payload);
-
-      if (response?.status === 1002) {
-        CustomToast({
-          text: `Bạn đã nạp thành công ${numericAmount.toLocaleString(
-            "vi-VN"
-          )} VND`,
-          position: 300,
-        });
-        setAmount("");
-        navigation.goBack();
+        if (payUrl) {
+          Linking.openURL(payUrl);
+        } else if (deeplink) {
+          Linking.openURL(deeplink);
+        } else if (applink) {
+          Linking.openURL(applink);
+        } else {
+          CustomToast({
+            text: "Không thể mở liên kết thanh toán. Vui lòng thử lại sau.",
+            position: 300,
+          });
+        }
       } else {
         CustomToast({
-          text: "Không thể thực hiện nạp tiền. Vui lòng thử lại.",
+          text: "Không thể tạo liên kết thanh toán. Vui lòng thử lại.",
           position: 300,
         });
       }
     } catch (error) {
-      console.error("Lỗi khi nạp tiền:", error);
+      console.error("Lỗi nạp tiền:", error);
       CustomToast({
         text: "Đã xảy ra lỗi khi nạp tiền.",
         position: 300,
       });
+    } finally {
+      setLoading(false);
     }
   };
+  useEffect(() => {
+    const handleDeepLink = ({ url }) => {
+      if (url && url.includes("wallet-top-up-complete")) {
+        CustomToast({
+          text: "Nạp tiền thành công!",
+          position: 300,
+        });
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -107,7 +186,7 @@ export default function DepositWallet({ navigation, route }) {
         />
         <Text style={styles.label}>Chọn phương thức thanh toán</Text>
         <View style={styles.paymentMethods}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[
               styles.paymentMethod,
               selectedMethod === "bank" && styles.paymentMethodSelected,
@@ -116,7 +195,7 @@ export default function DepositWallet({ navigation, route }) {
           >
             <Ionicons name="card-outline" size={24} color="#902C6C" />
             <Text style={styles.paymentMethodText}>Ngân hàng</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             style={[
               styles.paymentMethod,
