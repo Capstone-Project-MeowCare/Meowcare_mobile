@@ -181,7 +181,7 @@ export default function Activity() {
     const colorMapping = {
       "Chờ xác nhận": "#9E9E9E",
       "Chờ thanh toán": "#9E9E9E",
-      "Đã xác nhận": "#4CAF50",
+      "Đã xác nhận": "#2E67D1",
       "Đang diễn ra": "#FFC107",
       "Hoàn thành": "#4CAF50",
       "Đã hủy": "#FF4343",

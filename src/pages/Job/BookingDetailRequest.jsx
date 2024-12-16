@@ -7,9 +7,13 @@ import {
   ScrollView,
   Dimensions,
   Image,
+  Modal,
+  TextInput,
+  TouchableOpacity,
 } from "react-native";
+import { Ionicons } from '@expo/vector-icons'
 import { getData, putData } from "../../api/api";
-import { TouchableOpacity } from "react-native-gesture-handler";
+
 import { ActivityIndicator } from "react-native-paper";
 
 const { width, height } = Dimensions.get("window");
@@ -19,6 +23,29 @@ export default function BookingDetailRequest({ navigation }) {
   const { bookingId } = route.params;
   const [bookingDetails, setBookingDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const handleOpenModal = () => {
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setCancelReason(""); // Reset lý do hủy
+  };
+
+  const handleConfirmCancel = () => {
+    if (!cancelReason) {
+      alert("Vui lòng nhập lý do hủy yêu cầu!");
+      return;
+    }
+
+    // Gửi yêu cầu hủy
+    handleStatusUpdate("reject", cancelReason);
+
+    // Đóng modal
+    handleCloseModal();
+  };
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
@@ -59,17 +86,12 @@ export default function BookingDetailRequest({ navigation }) {
     }
   }, [bookingId]);
 
-  const handleStatusUpdate = async (action) => {
+  const handleStatusUpdate = async (action, reason) => {
     try {
       const updatedStatus = action === "accept" ? "CONFIRMED" : "CANCELLED";
       const endpoint = `/booking-orders/status/${bookingId}?status=${updatedStatus}`;
 
-      await putData(endpoint);
-
-      setBookingDetails((prevData) => ({
-        ...prevData,
-        status: updatedStatus,
-      }));
+      await putData(endpoint, { reason }); // Truyền lý do hủy qua API
 
       navigation.navigate("Công Việc");
     } catch (error) {
@@ -118,18 +140,15 @@ export default function BookingDetailRequest({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
+      <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Image
-            source={require("../../../assets/BackArrow.png")}
-            style={styles.backArrow}
-          />
+          <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
-        <Text style={styles.label}>Chi tiết yêu cầu</Text>
+        <Text style={styles.headerTitle}>Chi tiết yêu cầu</Text>
       </View>
-      <View style={styles.separator} />
+      <View style={styles.divider} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -287,11 +306,45 @@ export default function BookingDetailRequest({ navigation }) {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.rejectButton} // Sử dụng style của nút "Từ chối"
-            onPress={() => handleStatusUpdate("reject")}
-          >
-            <Text style={styles.buttonText}>Hủy yêu cầu</Text>
-          </TouchableOpacity>
+            onPress={handleOpenModal} // Mở Modal
+        >
+          <Text style={styles.buttonText}>Hủy yêu cầu đặt lịch</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Modal Lý Do Hủy */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Lý do bạn muốn hủy đặt lịch?</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Nhập lý do..."
+              value={cancelReason}
+              onChangeText={setCancelReason}
+              multiline
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCloseModal}
+              >
+                <Text style={styles.modalButtonText}>Quay lại</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirmCancel}
+              >
+                <Text style={styles.modalButtonText}>Xác nhận hủy</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
+      </Modal>
       </ScrollView>
     </View>
   );
@@ -305,16 +358,28 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingTop: height * 0.02,
-    paddingHorizontal: width * 0.04,
-    backgroundColor: "#FFFAF5",
-    position: "relative",
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    height: 50,
+    backgroundColor: "#FFF7F0", // Màu nền của header (tùy chỉnh theo yêu cầu)
+    justifyContent: "space-between", // Để căn đều các phần tử
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1F1F1F", // Màu sắc tiêu đề
+    textAlign: "center", // Để căn giữa tiêu đề
+    flex: 1,
   },
   backButton: {
-    position: "absolute",
-    right: width * 0.2,
-    top: -width * 0.034,
+    width: 30,
+    height: 30,
+    tintColor: "#000857", // Màu sắc của mũi tên quay lại
+  },
+  divider: {
+    borderBottomColor: "#D3D3D3", // Màu của đường kẻ ngang
+    borderBottomWidth: 1, // Độ dày của đường kẻ
+   
   },
   backArrow: {
     width: 30,
@@ -533,6 +598,61 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: width * 0.8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#000857",
+  },
+  textInput: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    color: "#333",
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    width: "100%",
+  },
+  cancelButton: {
+    backgroundColor: "#E0E0E0",
+    borderRadius: 8,
+    padding: 10,
+    flex: 1,
+    alignItems: "center",
+    marginRight: 10,
+  },
+  confirmButton: {
+    backgroundColor: "#FF003D",
+    borderRadius: 8,
+    padding: 10,
+    flex: 1,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   loadingContainer: {
     flex: 1,

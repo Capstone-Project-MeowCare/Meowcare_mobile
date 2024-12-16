@@ -518,22 +518,19 @@ export default function BookingStep1({
                   <View key={child.id} style={styles.childServiceRow}>
                     {/* Hiển thị tên dịch vụ con kèm thời gian */}
                     <Text style={styles.childServiceText}>
-                      {`_ ${child.name}`}{" "}
-                      {child.startTime && child.endTime
-                        ? `(${new Date(child.startTime).toLocaleTimeString(
-                            "vi-VN",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )} - ${new Date(child.endTime).toLocaleTimeString(
-                            "vi-VN",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )})`
-                        : ""}
+                     
+                    {child.startTime && child.endTime && (
+                    <Text style={styles.includedText}>
+                       {`[${new Date(child.startTime).toLocaleTimeString("vi-VN", {
+                         hour: "2-digit",
+                         minute: "2-digit",
+                         })} - ${new Date(child.endTime).toLocaleTimeString("vi-VN", {
+                         hour: "2-digit",
+                         minute: "2-digit",
+                          })}]`}
+                        </Text>
+                         )}
+                        {`: ${child.name}`}{" "}
                     </Text>
                   </View>
                 ))}
@@ -762,11 +759,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   childServicesContainer: {
-    overflow: "hidden",
+    
     backgroundColor: "#FFFAF5",
     marginTop: height * 0.01,
     borderRadius: 5,
-    paddingHorizontal: 10,
+    
   },
   includedText: {
     fontSize: 16,

@@ -37,6 +37,10 @@ export default function FindSitterByMap() {
       )
     );
   };
+  const handleReload = () => {
+    // Replace màn hình hiện tại để reload
+    navigation.replace(navigation.getState().routes[navigation.getState().index].name);
+  };
   const handleSitterPress = (sitter) => {
     if (selectedSitterId === sitter.id) {
       // Nếu đã chọn, điều hướng đến SitterServicePage
@@ -223,7 +227,7 @@ export default function FindSitterByMap() {
         >
           <View style={styles.redoSearchWrapper}>
             <View style={styles.redoSearch}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handleReload}>
                 <Text style={styles.redoSearchText}>Tải lại tìm kiếm</Text>
               </TouchableOpacity>
             </View>
