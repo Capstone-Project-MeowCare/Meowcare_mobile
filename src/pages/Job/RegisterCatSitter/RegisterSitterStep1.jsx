@@ -118,15 +118,15 @@ export default function RegisterSitterStep1({ navigation }) {
           </Text>
         </View>
 
-        <Text style={styles.label}>Nôi dung tin nhắn</Text>
+        {/* <Text style={styles.label}>Nôi dung tin nhắn</Text> */}
         {/* Nội dung tin nhắn */}
-        <TextInput
+        {/* <TextInput
           style={styles.textArea}
           placeholder="Nhập nôi dung "
           placeholderTextColor="#999"
           multiline={true}
           numberOfLines={4}
-        />
+        /> */}
       </View>
       
       </View>

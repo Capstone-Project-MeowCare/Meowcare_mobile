@@ -3,10 +3,19 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView,Alert } from 'reac
 import { Ionicons } from "@expo/vector-icons";
 
 const questions = [
-  { id: 1, question: 'Câu hỏi 1', answers: ['Đáp án 1', 'Đáp án 2', 'Đáp án 3'] },
-  { id: 2, question: 'Câu hỏi 2', answers: ['Đáp án 1', 'Đáp án 2', 'Đáp án 3'] },
-  { id: 3, question: 'Câu hỏi 3', answers: ['Đáp án 1', 'Đáp án 2', 'Đáp án 3'] },
-  { id: 4, question: 'Câu hỏi 4', answers: ['Đáp án 1', 'Đáp án 2', 'Đáp án 3'] },
+  { id: 1, question: 'Câu hỏi: Khi mèo mới được đưa đến nơi chăm sóc, bạn nên làm gì để mèo cảm thấy thoải mái?'
+    , answers: ['A. Đưa mèo đi chơi ngay lập tức', 'B. Cung cấp không gian yên tĩnh, đồ chơi và khay vệ sinh riêng', 
+      'C. Ép mèo phải làm quen với các vật nuôi khác ngay lập tức','D. Không cần làm gì, mèo sẽ tự quen với môi trường mới'] },
+  { id: 2, question: 'Câu hỏi: Là người chăm sóc, bạn nên dành bao nhiêu thời gian mỗi ngày để chơi đùa hoặc vận động cho mèo?', 
+    answers: ['Không cần chơi, mèo sẽ tự chơi', 'Chỉ chơi khi mèo yêu cầu', '1 giờ liên tục','15-30 phút'] },
+  { id: 3, question: 'Câu hỏi: Mèo cần được cho ăn bao nhiêu bữa mỗi ngày?', 
+    answers: ['A. 1 bữa', 'B. 2 bữa', 'C. 3-4 bữa nhỏ trong ngày','D. Mèo có thể ăn bất cứ khi nào chúng muốn'] },
+  { id: 4, question: 'Câu hỏi: Nếu phát hiện mèo không ăn uống hoặc có dấu hiệu ốm, bạn nên làm gì?', 
+    answers: ['A. Chờ thêm một ngày xem mèo có tự ăn không', 'B. Liên lạc ngay với chủ mèo để thông báo tình hình', 
+    'C. Đưa mèo đến bác sĩ thú y mà không cần hỏi chủ','D. Thay đổi thức ăn để xem mèo có ăn không'] },
+  { id: 5, question: 'Câu hỏi: Loại thực phẩm nào dưới đây là không an toàn cho mèo?', 
+      answers: ['A. Cá hồi', 'B. Sô-cô-la', 
+     'C. Gà luộc','D. Rau chân vịt'] },
   // Thêm nhiều câu hỏi ở đây
 ];
 export default function DoQuiz({ navigation }) {

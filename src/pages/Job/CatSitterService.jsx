@@ -145,7 +145,7 @@ export default function CatSitterService({ navigation }) {
     const colorMapping = {
       "Chờ thanh toán": "#FFA500",
       "Chờ xác nhận": "#FF9900",
-      "Đã xác nhận": "#4CAF50",
+      "Đã xác nhận": "#2E67D1",
       "Đang diễn ra": "#FFC107",
       "Hoàn thành": "#4CAF50",
       "Đã hủy": "#FF4343",

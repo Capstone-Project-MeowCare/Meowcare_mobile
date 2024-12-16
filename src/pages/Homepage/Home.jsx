@@ -52,7 +52,7 @@ const catSitterData = [
     imageSource: require("../../../assets/catpeople.jpg"),
   },
 ];
-
+{/* List Cat sitter có dịch vụ Gửi thú cưng */}
 function FirstRoute() {
   const navigation = useNavigation();
   const [parentPressEnabled, setParentPressEnabled] = useState(true);
@@ -71,6 +71,7 @@ function FirstRoute() {
           const firstProfilePicture = item.profilePictures.find(
             (picture) => !picture.isCargoProfilePicture
           );
+        
 
           return {
             id: item.id,
@@ -80,6 +81,7 @@ function FirstRoute() {
             profileImage: firstProfilePicture
               ? firstProfilePicture.imageUrl
               : null, // Lưu cố định hình đầu tiên
+            
           };
         })
         .slice(0, 4); // Lấy tối đa 4 sitter
@@ -153,38 +155,107 @@ function FirstRoute() {
   );
 }
 
-function SecondRoute() {
-  const [parentPressEnabled, setParentPressEnabled] = useState(true);
 
-  const disableParentPress = () => {
-    setParentPressEnabled(false);
+{/* List Cat sitter có dịch vụ khác */}
+function SecondRoute() {
+  const navigation = useNavigation();
+  const [parentPressEnabled, setParentPressEnabled] = useState(true);
+  const [sitterData, setSitterData] = useState([]);
+
+  const fetchSitterData = async () => {
+    try {
+      const response = await getData("/sitter-profiles");
+      console.log("Response Data:", response.data);
+
+      // Xử lý dữ liệu đúng định dạng từ API
+      const formattedData = response.data
+        .filter((item) => item.status === "ACTIVE") // Chỉ lấy sitter có status ACTIVE
+        .map((item) => {
+          // Chỉ định hình ảnh đầu tiên có isCargoProfilePicture === false
+          const firstProfilePicture = item.profilePictures.find(
+            (picture) => !picture.isCargoProfilePicture
+          );
+        
+
+          return {
+            id: item.id,
+            sitterId: item.sitterId,
+            fullName: item.fullName,
+            location: item.location,
+            profileImage: firstProfilePicture
+              ? firstProfilePicture.imageUrl
+              : null, // Lưu cố định hình đầu tiên
+            
+          };
+        })
+        .slice(0, 4); // Lấy tối đa 4 sitter
+
+      // Nếu state chưa có dữ liệu, lưu nó lại
+      if (sitterData.length === 0) {
+        setSitterData(formattedData);
+      }
+    } catch (error) {
+      console.error("Error fetching sitter profiles:", error);
+    }
   };
 
-  const enableParentPress = () => {
-    setParentPressEnabled(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (sitterData.length === 0) {
+        fetchSitterData();
+      }
+    }, [sitterData]) // Chỉ gọi lại nếu `sitterData` rỗng
+  );
+
+  const disableParentPress = () => setParentPressEnabled(false);
+  const enableParentPress = () => setParentPressEnabled(true);
+  const navigateToSitterServicePage = (navigation, sitterProfileId, userId) => {
+    navigation.navigate("SitterServicePage", {
+      sitterId: sitterProfileId, // ID của sitter profile
+      userId, // ID của user
+    });
   };
 
   return (
     <ScrollView
-      style={styles.fullScreenContainer}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <View style={styles.catSitterGridContainer}>
-        {catSitterData.map((item) => (
-          <TouchableOpacity key={item.id} style={styles.catSitterItemContainer}>
-            <CatSitterCard
-              sitterName={item.sitterName}
-              address={item.address}
-              imageSource={item.imageSource}
-              overlayText={item.overlayText}
-              isVerified={item.isVerified}
-              disableParentPress={disableParentPress}
-              enableParentPress={enableParentPress}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+    style={styles.fullScreenContainer}
+    contentContainerStyle={styles.contentContainer}
+    showsVerticalScrollIndicator={false}
+  >
+    <View style={styles.catSitterGridContainer}>
+      {sitterData.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.catSitterItemContainer}
+          onPress={() =>
+            parentPressEnabled &&
+            navigateToSitterServicePage(navigation, item.id, item.sitterId)
+          }
+        >
+          <CatSitterCard
+            sitterName={item.fullName}
+            address={item.location}
+            imageSource={
+              item.profileImage
+                ? { uri: item.profileImage }
+                : require("../../../assets/catpeople.jpg")
+            }
+            isVerified={true}
+            disableParentPress={disableParentPress}
+            enableParentPress={enableParentPress}
+          />
+        </TouchableOpacity>
+      ))}
+    </View>
+    {/* Nút Xem Tất Cả */}
+    <View style={{ alignItems: "center", marginTop: 10 }}>
+      <TouchableOpacity onPress={() => navigation.navigate("ListCatSitter")}>
+        <Text style={{ color: "#000", fontSize: 16, fontWeight: "bold" }}>
+          Xem tất cả
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </ScrollView>
   );
 }
 

@@ -51,94 +51,41 @@ export default function BookingStep5({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.mainContent}>
-          <Text style={[styles.textBold, { fontSize: 18 }]}>
-            HỢP ĐỒNG DỊCH VỤ CHO KHÁCH HÀNG
-          </Text>
-          <Text style={styles.textBold}>• Ngày hiệu lực: [Ngày booking]</Text>
-          <Text style={styles.textBold}>• Giữa:</Text>
-          <Text style={styles.textBold}>
-            • Nền tảng cung cấp dịch vụ:
-            <Text style={styles.textNormal}> MeowCare</Text>
-          </Text>
-          <Text style={styles.textBold}>• Khách hàng (Bên A):</Text>
-          <Text style={styles.textBold}>
-            • Tên:
-            <Text style={styles.textNormal}> [Tên khách hàng]</Text>
-          </Text>
+        <Text style={[styles.textBold, { fontSize: 18 }]}>
+  ĐIỀU KHOẢN DỊCH VỤ
+</Text>
 
-          <Text style={styles.textBold}>
-            • Địa chỉ:
-            <Text style={styles.textNormal}> [Địa chỉ khách hàng]</Text>
-          </Text>
+<Text style={styles.textBold}>1. Trách nhiệm của nền tảng:</Text>
+<Text style={styles.text}>
+  • Nền tảng chỉ cung cấp dịch vụ kết nối giữa khách hàng và người chăm sóc thú cưng.
+</Text>
+<Text style={styles.text}>
+  • Nền tảng <Text style={styles.textBold}>không chịu trách nhiệm</Text> trực tiếp đối với tổn thất hoặc thiệt hại trong quá trình cung cấp dịch vụ bởi người chăm sóc.
+</Text>
+{/* <Text style={styles.text}>
+  • Khuyến khích khách hàng sử dụng <Text style={styles.textBold}>bảo hiểm bên thứ ba</Text> để bảo vệ quyền lợi.
+</Text> */}
 
-          <Text style={styles.textBold}>
-            • Số điện thoại:
-            <Text style={styles.textNormal}> [Số điện thoại khách hàng]</Text>
-          </Text>
+<Text style={styles.textBold}>2. Trách nhiệm của khách hàng:</Text>
+<Text style={styles.text}>
+  • Cung cấp thông tin chính xác, đầy đủ về thú cưng và các yêu cầu đặc biệt.
+</Text>
+{/* <Text style={styles.text}>
+  • Chọn mua gói bảo hiểm bên thứ ba để đảm bảo bồi thường rủi ro nếu thú cưng có giá trị cao.
+</Text> */}
 
-          <Text style={styles.textBold}>
-            • Email:
-            <Text style={styles.textNormal}> [Email khách hàng]</Text>
-          </Text>
-
-          <Text style={styles.textBold}>• Điều khoản và điều kiện:</Text>
-
-          <Text style={styles.textBold}>1. Trách nhiệm của Nền tảng:</Text>
-          <Text style={styles.text}>
-            • Nền tảng chỉ cung cấp dịch vụ kết nối giữa khách hàng và người
-            chăm sóc thú cưng.
-          </Text>
-          <Text style={styles.text}>
-            • Nền tảng{" "}
-            <Text style={styles.textBold}>không chịu trách nhiệm</Text> trực
-            tiếp đối với bất kỳ tổn thất, thiệt hại nào phát sinh trong quá
-            trình cung cấp dịch vụ bởi người chăm sóc.
-          </Text>
-          <Text style={styles.text}>
-            • Nền tảng khuyến khích khách hàng sử dụng{" "}
-            <Text style={styles.textBold}>bảo hiểm bên thứ ba</Text> để bảo vệ
-            quyền lợi của mình trong trường hợp có sự cố xảy ra.
-          </Text>
-
-          <Text style={styles.textBold}>
-            2. Trách nhiệm của khách hàng (Bên A):
-          </Text>
-          <Text style={styles.text}>
-            • Cung cấp thông tin chính xác và đầy đủ về thú cưng, bao gồm giá
-            trị tài sản và các yêu cầu đặc biệt.
-          </Text>
-          <Text style={styles.text}>
-            • Khách hàng có thể chọn mua gói bảo hiểm bên thứ ba để đảm bảo bồi
-            thường cho các rủi ro xảy ra đối với thú cưng có giá trị cao.
-          </Text>
-
-          <Text style={styles.textBold}>3. Chi phí và thanh toán:</Text>
-          <Text style={styles.text}>
-            • Tổng chi phí dịch vụ là [Số tiền] đồng, bao gồm chi phí dịch vụ
-            chăm sóc và các chi phí khác nếu có (ví dụ: bảo hiểm, phụ phí).
-          </Text>
-          <Text style={styles.text}>
-            • Khách hàng thanh toán một phần cọc trước khi dịch vụ bắt đầu.
-            Khoản còn lại sẽ được thanh toán sau khi dịch vụ hoàn tất.
-          </Text>
-
-          <Text style={styles.textBold}>4. Trách nhiệm pháp lý:</Text>
-          <Text style={styles.text}>
-            • Trong trường hợp xảy ra sự cố liên quan đến thú cưng có giá trị
-            cao (ví dụ: bệnh tật, mất mát, thiệt hại),{" "}
-            <Text style={styles.textBold}>
-              trách nhiệm thuộc về người chăm sóc
-            </Text>{" "}
-            (Bên B), trừ khi khách hàng đã mua bảo hiểm bên thứ ba, trong đó bảo
-            hiểm sẽ chi trả các tổn thất theo chính sách đã chọn.
-          </Text>
-
-          <Text style={styles.textBold}>5. Giải quyết tranh chấp:</Text>
-          <Text style={styles.text}>
-            • Mọi tranh chấp sẽ được giải quyết thông qua thương lượng hoặc tòa
-            án tại [Địa điểm xét xử].
-          </Text>
-          <Text style={styles.label}>Dịch vụ thêm có phí</Text>
+<Text style={styles.textBold}>3. Chi phí và thanh toán:</Text>
+<Text style={styles.text}>
+  • Tổng chi phí bao gồm chi phí dịch vụ chăm sóc và các khoản phụ phí nếu có (ví dụ: bảo hiểm).
+</Text>
+<Text style={styles.text}>
+  • Khách hàng có thể chọn thanh toán toàn bộ trước khi đặt lịch hoặcthanh toán trả sau khi dịch vụ hoàn tất.
+</Text>
+<Text style={styles.textBold}>4. Giải quyết tranh chấp:</Text>
+<Text style={styles.text}>
+• Nền tảng sẽ hỗ trợ khách hàng và người chăm sóc giải quyết các vấn đề phát sinh trong quá trình sử dụng dịch vụ.
+</Text>
+          
           <View style={styles.checkboxContainer}>
             <Checkbox
               value={step5Checked}
