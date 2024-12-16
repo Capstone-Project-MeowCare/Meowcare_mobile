@@ -71,6 +71,7 @@ function FirstRoute() {
           const firstProfilePicture = item.profilePictures.find(
             (picture) => !picture.isCargoProfilePicture
           );
+        
 
           return {
             id: item.id,
@@ -80,6 +81,7 @@ function FirstRoute() {
             profileImage: firstProfilePicture
               ? firstProfilePicture.imageUrl
               : null, // Lưu cố định hình đầu tiên
+            
           };
         })
         .slice(0, 4); // Lấy tối đa 4 sitter

@@ -21,6 +21,9 @@ function FirstRoute({
   location,
   userId,
   profilePictures,
+  profilePicturesCargo,
+  maximumQuantity,
+
 }) {
   return (
     <View style={styles.routeContainer}>
@@ -36,6 +39,9 @@ function FirstRoute({
             location={location}
             userId={userId}
             profilePictures={profilePictures}
+            profilePicturesCargo={profilePicturesCargo}
+            maximumQuantity={maximumQuantity}
+            
           />
         </View>
       </ScrollView>
@@ -84,6 +90,7 @@ export default function CatSitterServicePage({ navigation }) {
   const userId = route.params?.userId; // ID mới
   const [loading, setLoading] = useState(true);
   const [profilePictures, setProfilePictures] = useState([]);
+  const [profilePicturesCargo, setProfilePicturesCargo] = useState([]);
   const [activeTab, setActiveTab] = useState("Thông tin");
   const [currentIndex, setCurrentIndex] = useState(0);
   useEffect(() => {
@@ -96,11 +103,20 @@ export default function CatSitterServicePage({ navigation }) {
         const filteredPictures = Array.isArray(fetchedPictures)
           ? fetchedPictures.filter((picture) => !picture.isCargoProfilePicture)
           : [];
+        const filteredPicturesCargo = Array.isArray(fetchedPictures)
+          ? fetchedPictures.filter((picture) => picture.isCargoProfilePicture)
+          : [];
+
 
         // Nếu không có hình ảnh hợp lệ, đặt giá trị mặc định
         setProfilePictures(
           filteredPictures.length > 0
             ? filteredPictures
+            : [{ imageUrl: "https://example.com/default-image.jpg" }]
+        );
+        setProfilePicturesCargo(
+          filteredPicturesCargo.length > 0
+            ? filteredPicturesCargo
             : [{ imageUrl: "https://example.com/default-image.jpg" }]
         );
 
@@ -226,6 +242,9 @@ export default function CatSitterServicePage({ navigation }) {
                 location={sitterDetails?.location}
                 userId={userId}
                 profilePictures={profilePictures}
+                profilePicturesCargo={profilePicturesCargo}
+                maximumQuantity={sitterDetails?.maximumQuantity}
+           
               />
             )}
           />
