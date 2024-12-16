@@ -84,7 +84,7 @@ export default function FindSitterByMap() {
         );
         return { latitude: lat, longitude: lon };
       } else {
-        console.warn(`Không tìm thấy tọa độ cho: ${location}`);
+        // console.warn(`Không tìm thấy tọa độ cho: ${location}`);
         return null;
       }
     } catch (error) {

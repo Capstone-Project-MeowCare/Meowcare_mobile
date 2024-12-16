@@ -1,5 +1,5 @@
-import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -14,15 +14,37 @@ const { width, height } = Dimensions.get("window");
 
 export default function ServicePaymentMethod() {
   const navigation = useNavigation();
-  const [selectedOption, setSelectedOption] = useState(null);
+  const route = useRoute();
+  const {
+    selectedPaymentMethod = "Tiền mặt", // Mặc định
+    step1Info = {}, // Đảm bảo không bị lỗi nếu không truyền
+    step2Info = {},
+    step3Info = {},
+    contactInfo = {},
+    sitterId,
+  } = route.params || {};
+
+  const [selectedOption, setSelectedOption] = useState(selectedPaymentMethod);
 
   const handlePaymentMethodSelection = (method, iconType) => {
     setSelectedOption(method);
+
     navigation.navigate("ServicePayment", {
-      paymentMethod: method,
+      paymentMethod: method, // Đặt đúng giá trị được chọn
       icon: iconType,
+      step1Info, // Truyền lại đầy đủ dữ liệu
+      step2Info,
+      step3Info,
+      contactInfo,
+      sitterId,
     });
   };
+
+  // useEffect(() => {
+  //   if (!selectedOption) {
+  //     handlePaymentMethodSelection("Tiền mặt", "cash");
+  //   }
+  // }, []);
 
   return (
     <View style={styles.container}>
@@ -82,7 +104,7 @@ export default function ServicePaymentMethod() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => handlePaymentMethodSelection("Ví", "wallet")}
+        onPress={() => handlePaymentMethodSelection("Ví điện tử", "wallet")}
       >
         <View style={styles.paymentMethodRow}>
           <Ionicons name="wallet-outline" size={25} color="black" />
