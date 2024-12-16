@@ -52,114 +52,109 @@ export default function ServicePayment() {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchServices = () => {
-      const selectedServices = [];
-      const selectedCats = step3Info.selectedCats || []; // Lấy số lượng mèo đã chọn
-      const numberOfCats = selectedCats.length; // Số lượng mèo đã chọn
+  const fetchServices = () => {
+    const selectedServices = [];
+    const selectedCats = step3Info.selectedCats || [];
+    const numberOfCats = selectedCats.length;
 
-      // Tính số ngày (đảm bảo tính toán chính xác)
-      const start = new Date(step2Info.startDate).setHours(0, 0, 0, 0);
-      const end = new Date(step2Info.endDate).setHours(0, 0, 0, 0);
-      const numberOfDays =
-        Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    const start = new Date(step2Info.startDate).setHours(0, 0, 0, 0);
+    const end = new Date(step2Info.endDate).setHours(0, 0, 0, 0);
+    const numberOfDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    const days = numberOfDays > 0 ? numberOfDays : 1;
 
-      const days = numberOfDays > 0 ? numberOfDays : 1;
+    if (
+      step1Info.selectedServiceId &&
+      step1Info.selectedServiceId !== "OTHER_SERVICES"
+    ) {
+      selectedServices.push({
+        name: step1Info.selectedService || "Không xác định",
+        price: (step1Info.price || 0) * days * numberOfCats,
+        type: "MAIN_SERVICE",
+      });
+    }
 
-      // Dịch vụ chính
-      if (
-        step1Info.selectedServiceId &&
-        step1Info.selectedServiceId !== "OTHER_SERVICES"
-      ) {
+    if (
+      Array.isArray(step1Info.childServices) &&
+      step1Info.childServices.length > 0
+    ) {
+      step1Info.childServices.forEach((child) => {
+        const startTime = child.startTime
+          ? new Date(child.startTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "";
+        const endTime = child.endTime
+          ? new Date(child.endTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "";
         selectedServices.push({
-          name: step1Info.selectedService || "Không xác định",
-          price: (step1Info.price || 0) * days * numberOfCats,
-          type: "MAIN_SERVICE",
+          name: child.name || "Dịch vụ con không xác định",
+          price: (child.price || 0) * days * numberOfCats,
+          type: "CHILD_SERVICE",
+          startTime,
+          endTime,
         });
-      }
+      });
+    }
 
-      // Dịch vụ con (CHILD_SERVICE)
-      if (
-        Array.isArray(step1Info.childServices) &&
-        step1Info.childServices.length > 0
-      ) {
-        step1Info.childServices.forEach((child) => {
-          const startTime = child.startTime
-            ? new Date(child.startTime).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "";
-          const endTime = child.endTime
-            ? new Date(child.endTime).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "";
+    if (Array.isArray(step1Info.selectedAdditionalServices)) {
+      step1Info.selectedAdditionalServices.forEach((serviceId) => {
+        const additionalService = step1Info.additionalServices?.find(
+          (service) => service.id === serviceId
+        );
+
+        if (additionalService) {
+          const slot = step1Info.selectedSlot?.[serviceId];
+          const startTime =
+            slot && slot.startTime
+              ? new Date(slot.startTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
+          const endTime =
+            slot && slot.endTime
+              ? new Date(slot.endTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
+
           selectedServices.push({
-            name: child.name || "Dịch vụ con không xác định",
-            price: (child.price || 0) * days * numberOfCats,
-            type: "CHILD_SERVICE",
+            name: additionalService.name || "Dịch vụ bổ sung không xác định",
+            price: additionalService.price || 0,
+            type: "ADDITIONAL_SERVICE",
             startTime,
             endTime,
           });
-        });
-      }
+        }
+      });
+    }
 
-      // Dịch vụ bổ sung (ADDITIONAL_SERVICE)
-      if (Array.isArray(step1Info.selectedAdditionalServices)) {
-        step1Info.selectedAdditionalServices.forEach((serviceId) => {
-          const additionalService = step1Info.additionalServices?.find(
-            (service) => service.id === serviceId
-          );
+    const total = selectedServices.reduce(
+      (sum, service) => sum + (service.price || 0),
+      0
+    );
 
-          if (additionalService) {
-            const slot = step1Info.selectedSlot?.[serviceId]; // Lấy slot đã chọn
-            const startTime =
-              slot && slot.startTime
-                ? new Date(slot.startTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "";
-            const endTime =
-              slot && slot.endTime
-                ? new Date(slot.endTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "";
-
-            selectedServices.push({
-              name: additionalService.name || "Dịch vụ bổ sung không xác định",
-              price: additionalService.price || 0, // Giá của dịch vụ bổ sung
-              type: "ADDITIONAL_SERVICE",
-              startTime, // Chỉ giờ bắt đầu
-              endTime, // Chỉ giờ kết thúc
-            });
-          } else {
-            console.warn(`Dịch vụ bổ sung với ID ${serviceId} không tìm thấy.`);
-          }
-        });
-      }
-
-      // Thêm log để kiểm tra dịch vụ
-      console.log("Selected Services:", selectedServices);
-
-      // Tính tổng giá trị
-      const total = selectedServices.reduce(
-        (sum, service) => sum + (service.price || 0), // Kiểm tra giá trị `price` trước khi cộng
-        0
-      );
-
+    if (
+      JSON.stringify(selectedServices) !== JSON.stringify(services) ||
+      total !== totalPrice ||
+      days !== days ||
+      numberOfCats !== catsCount
+    ) {
       setTotalPrice(total);
       setServices(selectedServices);
       setDays(days);
       setCatsCount(numberOfCats);
-    };
+    }
+  };
 
+  useEffect(() => {
     fetchServices();
-  }, [step1Info, selectedExtras, step2Info, step3Info.selectedCats]);
+  }, []); // <-- Loại bỏ dependency không cần thiết
 
   useEffect(() => {
     if (route.params?.paymentMethod) {
@@ -452,6 +447,13 @@ export default function ServicePayment() {
     try {
       let currentBookingId = bookingId;
 
+      const paymentMethod =
+        selectedPaymentMethod === "Ví điện tử"
+          ? "WALLET"
+          : selectedPaymentMethod === "Tiền mặt"
+            ? "PAY_LATER"
+            : "MOMO";
+
       if (!currentBookingId) {
         const isMainService =
           step1Info.selectedServiceId &&
@@ -471,43 +473,40 @@ export default function ServicePayment() {
           sitterId,
           isHouseSitting: step1Info.selectedServiceId === "HOUSE_SITTING",
           orderType: isMainService ? "OVERNIGHT" : "BUY_SERVICE",
-          paymentMethod: selectedOption === 2 ? "PAY_LATER" : "MOMO",
+          paymentMethod, // Sử dụng giá trị từ logic phía trên
           bookingDetails: step3Info.selectedCats.flatMap((cat) => {
-            // Dịch vụ chính (MAIN_SERVICE)
             const mainService = isMainService
               ? [
                   {
                     quantity: 1,
                     petProfileId: cat.id,
                     serviceId: step1Info.selectedServiceId,
-                    bookingSlotId: null, // MAIN_SERVICE không có slot
+                    bookingSlotId: null,
                   },
                 ]
               : [];
 
-            // Dịch vụ con (CHILD_SERVICE)
             const childServices =
               step1Info.childServices?.map((child) => ({
                 quantity: 1,
                 petProfileId: cat.id,
                 serviceId: child.id,
-                bookingSlotId: null, // CHILD_SERVICE không có slot
+                bookingSlotId: null,
               })) || [];
 
-            // Dịch vụ bổ sung (ADDITIONAL_SERVICE)
             const additionalServices =
               step1Info.selectedAdditionalServices?.map((serviceId) => {
                 const additionalService = step1Info.additionalServices.find(
                   (service) => service.id === serviceId
                 );
-                const slot = step1Info.selectedSlot?.[serviceId]; // Lấy slot đã chọn
+                const slot = step1Info.selectedSlot?.[serviceId];
                 return {
                   quantity: 1,
                   petProfileId: cat.id,
                   serviceId: serviceId,
                   startTime: slot?.startTime || null,
                   endTime: slot?.endTime || null,
-                  bookingSlotId: slot?.id || null, // Gắn đúng bookingSlotId
+                  bookingSlotId: slot?.id || null,
                 };
               }) || [];
 
@@ -538,7 +537,7 @@ export default function ServicePayment() {
         throw new Error("Booking ID is null. Unable to proceed with payment.");
       }
 
-      if (selectedOption === 2) {
+      if (paymentMethod === "PAY_LATER") {
         navigation.navigate("ServicePaymentComplete");
         return;
       }
@@ -552,6 +551,11 @@ export default function ServicePayment() {
       const paymentResponse = await postData(paymentUrl);
 
       if (paymentResponse.status === 1000 && paymentResponse.data) {
+        if (paymentMethod === "WALLET") {
+          navigation.navigate("ServicePaymentComplete");
+          return;
+        }
+
         const { payUrl, deeplink, applink } = paymentResponse.data;
 
         if (payUrl) {
@@ -650,7 +654,7 @@ export default function ServicePayment() {
           </View>
         </View>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.radioButtonContainerWithPrice}
           onPress={() => setSelectedOption(2)}
         >
@@ -662,13 +666,24 @@ export default function ServicePayment() {
             </View>
             <Text style={styles.radioButtonText}>Thanh toán trả sau</Text>
           </View>
-          {/* <Text style={styles.price1}>50.000đ</Text> */}
-        </TouchableOpacity>
-        {/* 
-        <View style={styles.separator1} /> */}
+          
+        </TouchableOpacity> */}
 
-        {/* <TouchableOpacity
-          onPress={() => navigation.navigate("ServicePaymentMethod")}
+        <View style={styles.separator1} />
+      </ScrollView>
+      <View style={styles.fixedFooterContainer}>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("ServicePaymentMethod", {
+              selectedPaymentMethod, // Truyền phương thức hiện tại
+              selectedIcon, // Truyền icon hiện tại
+              step1Info,
+              step2Info,
+              step3Info,
+              contactInfo,
+              sitterId,
+            })
+          }
         >
           <View style={styles.paymentMethodContainer}>
             {renderIcon()}
@@ -677,14 +692,9 @@ export default function ServicePayment() {
             </Text>
             <Entypo name="chevron-right" size={25} color="#000857" />
           </View>
-        </TouchableOpacity> */}
-        <View style={styles.separator3} />
+        </TouchableOpacity>
 
-        {/* <View style={styles.totalPaymentContainer}>
-          <Text style={styles.totalPaymentLabel}>Tổng thanh toán:</Text>
-          <Text style={styles.totalPaymentPrice}>350.000đ</Text>
-        </View> */}
-
+        {/* Nút thanh toán */}
         <TouchableOpacity style={styles.paymentButton} onPress={handlePayment}>
           {isLoading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
@@ -692,7 +702,7 @@ export default function ServicePayment() {
             <Text style={styles.paymentButtonText}>Thanh toán</Text>
           )}
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -853,8 +863,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: width * 0.05,
-    marginTop: height * 0.3,
-    top: height * 0.03,
+    // marginTop: height * 0.3,
+    // top: height * 0.03,
   },
   paymentMethodText: {
     fontSize: 16,
@@ -877,6 +887,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#000857",
     fontWeight: "600",
+  },
+  fixedFooterContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFAF5",
+    borderTopWidth: 1,
+    borderTopColor: "#D9D9D9",
+    flexDirection: "column",
+    paddingBottom: height * 0.02,
+  },
+  paymentMethodContainer: {
+    width: "100%",
+    height: height * 0.07,
+    backgroundColor: "#FFE3D5",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: width * 0.05,
+    borderBottomWidth: 1,
+    borderBottomColor: "#D9D9D9",
   },
   paymentButton: {
     width: width * 0.85,
