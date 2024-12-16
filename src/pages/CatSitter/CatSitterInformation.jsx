@@ -52,6 +52,9 @@ export default function CatSitterInformation({
   location,
   userId,
   profilePictures,
+  profilePicturesCargo,
+  maximumQuantity,
+ 
 }) {
   const [coordinates, setCoordinates] = useState(null);
   const webViewRef = useRef(null);
@@ -207,30 +210,49 @@ export default function CatSitterInformation({
           ))}
         </View>
       </View>
-      {/* <View style={styles.locationInfoContainer}>
-        <Text style={styles.titlesecond}>Thông tin về nơi ở:</Text>
-        <View style={styles.locationGrid}>
-          {locationData.map((item, index) => (
-            <View key={index} style={styles.locationItem}>
-              <Image source={item.image} style={styles.locationImage} />
-              <Text style={styles.locationText}>{item.text}</Text>
-            </View>
-          ))}
-        </View>
-      </View> */}
+     
       <View style={styles.trustSafetyContainer}>
-        <Text style={styles.titlesecond}>An toàn, tin cậy & môi trường:</Text>
+        <Text style={styles.titlesecond}>Môi trường và chuồng cho mèo:</Text>
         <Text style={styles.Description}>{environment}</Text>
-        {/* <Text style={styles.Description}>
-          Tôi có gắn camera theo dõi quá trình chăm sóc nếu bạn muốn xem quá
-          trình
-        </Text>
-        <Text style={styles.Description}>Ứng dụng giám sát: App(name) IOS</Text>
-        <Text style={styles.Description}>
-          Sau khi booking tôi sẽ gửi tài khoản mật khẩu để bạn có thể theo dõi
-          quá trình chăm sóc.
-        </Text> */}
+        <Text style={styles.titlesecond}>Số lượng thú cưng có thể nhận: {maximumQuantity}</Text>
+       
       </View>
+
+  {/* Thông tin chuồng gửi mèo */}
+      <View style={styles.trustSafetyContainer}>
+        <Text style={styles.titlesecond}>Thông tin ảnh chuồng:</Text>
+
+        <View style={styles.imageContainer}>
+          {currentIndex > 0 && (
+            <TouchableOpacity onPress={handlePrev} style={styles.leftArrow}>
+              <Text style={styles.arrowText}>{"<"}</Text>
+            </TouchableOpacity>
+          )}
+          <FlatList
+            data={profilePicturesCargo}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <Image source={{ uri: item.imageUrl }} style={styles.cageImage} />
+            )}
+            contentContainerStyle={styles.imageList}
+          />
+          {currentIndex + PAGE_SIZE < cageImages.length && (
+            <TouchableOpacity onPress={handleNext} style={styles.rightArrow}>
+              <Text style={styles.arrowText}>{">"}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+         {/* <View style={styles.descriptionContainer}>
+          <Text style={styles.Description}>
+            {visibleImages[0]?.description
+              ? `Mô tả chuồng: ${visibleImages[0]?.description}`
+              : "Hiện tại tôi có 5 chuồng nuôi mèo, tất cả đều được thiết kế thoáng mát, sạch sẽ, và đầy đủ tiện nghi để đảm bảo sự thoải mái cho mèo cưng của bạn."}
+          </Text>
+        </View> */}
+      </View> 
+
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>Thông tin chứng chỉ:</Text>
         <FlatList
@@ -277,40 +299,7 @@ export default function CatSitterInformation({
         />
       </View>
 
-      {/* Thông tin chuồng gửi mèo */}
-      <View style={styles.trustSafetyContainer}>
-        <Text style={styles.titlesecond}>Thông tin chuồng gửi mèo:</Text>
-
-        <View style={styles.imageContainer}>
-          {currentIndex > 0 && (
-            <TouchableOpacity onPress={handlePrev} style={styles.leftArrow}>
-              <Text style={styles.arrowText}>{"<"}</Text>
-            </TouchableOpacity>
-          )}
-          <FlatList
-            data={visibleImages}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <Image source={{ uri: item.imageUrl }} style={styles.cageImage} />
-            )}
-            contentContainerStyle={styles.imageList}
-          />
-          {currentIndex + PAGE_SIZE < cageImages.length && (
-            <TouchableOpacity onPress={handleNext} style={styles.rightArrow}>
-              <Text style={styles.arrowText}>{">"}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        <View style={styles.descriptionContainer}>
-          <Text style={styles.Description}>
-            {visibleImages[0]?.description
-              ? `Mô tả chuồng: ${visibleImages[0]?.description}`
-              : "Hiện tại tôi có 5 chuồng nuôi mèo, tất cả đều được thiết kế thoáng mát, sạch sẽ, và đầy đủ tiện nghi để đảm bảo sự thoải mái cho mèo cưng của bạn."}
-          </Text>
-        </View>
-      </View>
+     
       <View style={styles.addressContainer}>
         <Text style={styles.titlesecond}>Vị trí</Text>
         <Text style={styles.addressText}>{location}</Text>

@@ -22,7 +22,7 @@ const ServiceItem = ({ image, mainText, price }) => (
     </View>
     <View style={styles.priceContainer}>
       <Text style={styles.price}>{price}</Text>
-      <Text style={styles.perNight}>mỗi đêm</Text>
+      <Text style={styles.perNight}>mỗi ngày</Text>
     </View>
   </View>
 );
@@ -45,6 +45,7 @@ export default function CatSitterAssistance({ id }) {
   const [additionalServices, setAdditionalServices] = useState([]);
   const [childServices, setChildServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  // const [sitterProfile, setSitterProfile] = useState();
   const [expandedServices, setExpandedServices] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const availableDays = {
@@ -73,6 +74,7 @@ export default function CatSitterAssistance({ id }) {
     const fetchServices = async () => {
       try {
         const response = await getData(`/services/sitter/${id}`);
+        // const reponseSitter = await getData(`/sitter-profiles/${id}`);
         if (response?.status === 1000 && Array.isArray(response.data)) {
           const services = response.data;
 
@@ -117,6 +119,9 @@ export default function CatSitterAssistance({ id }) {
           setAdditionalServices(additionals);
           setChildServices(children);
         }
+        // if(reponseSitter?.status === 1000){
+        //   setSitterProfile(reponseSitter.data)
+        // }
       } catch (error) {
         console.error("Error fetching sitter services:", error);
       } finally {
@@ -219,14 +224,15 @@ export default function CatSitterAssistance({ id }) {
 
           {/* Chính sách và thông tin cập nhật */}
           <View style={styles.footerTextContainer}>
-            <Text style={styles.updateText}>
+            {/* <Text style={styles.updateText}>
               Lịch được cập nhật 1 ngày trước
-            </Text>
+            </Text> */}
             <View style={styles.policyTextContainer}>
               <Text style={styles.policyText}>
-                Chính sách hủy lịch của MeowCare.
+                Chính sách hủy lịch MeowCare
               </Text>
-              <Text style={styles.readMoreText1}>Đọc thêm</Text>
+              <Text style={styles.readMoreText1}> Đọc thêm</Text>
+              {/* <Text style={styles.readMoreText1}>{sitterProfile?.fullRefundDay} ngày</Text> */}
             </View>
           </View>
         </>
