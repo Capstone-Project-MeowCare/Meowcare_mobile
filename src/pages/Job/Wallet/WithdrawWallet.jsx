@@ -8,18 +8,57 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../../../auth/useAuth";
+import { postData } from "../../../api/api";
 
 export default function WithdrawWallet({ navigation }) {
+  const { user } = useAuth();
   const [amount, setAmount] = useState("");
+  const [bankNumber, setBankNumber] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [bankName, setBankName] = useState("");
   const [selectedMethod, setSelectedMethod] = useState("bank");
 
-  const handleWithdraw = () => {
-    if (!amount) {
-      Alert.alert("Thông báo", "Vui lòng nhập số tiền muốn rút");
+  const handleWithdraw = async () => {
+    if (!amount || !bankNumber || !fullName || !bankName) {
+      Alert.alert("Thông báo", "Vui lòng nhập đầy đủ thông tin rút tiền");
       return;
     }
-    Alert.alert("Thông báo", `Bạn đã yêu cầu rút ${amount} VND thành công`);
-    setAmount("");
+
+    const requestData = {
+      userId: user.id, // Lấy từ useAuth
+      balance: parseInt(amount, 10), // Chuyển amount thành số
+      bankNumber,
+      fullName,
+      bankName,
+    };
+
+    try {
+      // Gọi hàm postData thay cho fetch
+      const responseData = await postData(
+        "/request-withdrawal/createNewRequest", // Endpoint API
+        requestData
+      );
+
+      if (responseData) {
+        Alert.alert(
+          "Thành công",
+          `Yêu cầu rút ${amount} VND đã được gửi thành công.`
+        );
+        setAmount("");
+        setBankNumber("");
+        setFullName("");
+        setBankName("");
+      } else {
+        Alert.alert(
+          "Lỗi",
+          "Không thể xử lý yêu cầu rút tiền, vui lòng thử lại."
+        );
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi gửi yêu cầu rút tiền.");
+    }
   };
 
   return (
@@ -48,6 +87,34 @@ export default function WithdrawWallet({ navigation }) {
           onChangeText={setAmount}
         />
 
+        {/* Bank Number Input */}
+        <Text style={styles.label}>Số tài khoản ngân hàng</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập số tài khoản"
+          keyboardType="numeric"
+          value={bankNumber}
+          onChangeText={setBankNumber}
+        />
+
+        {/* Full Name Input */}
+        <Text style={styles.label}>Họ và tên</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập họ và tên"
+          value={fullName}
+          onChangeText={setFullName}
+        />
+
+        {/* Bank Name Input */}
+        <Text style={styles.label}>Tên ngân hàng</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập tên ngân hàng"
+          value={bankName}
+          onChangeText={setBankName}
+        />
+
         {/* Payment Method Selection */}
         <Text style={styles.label}>Chọn phương thức rút tiền</Text>
         <View style={styles.paymentMethods}>
@@ -61,27 +128,19 @@ export default function WithdrawWallet({ navigation }) {
             <Ionicons name="card-outline" size={24} color="#902C6C" />
             <Text style={styles.paymentMethodText}>Ngân hàng</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.paymentMethod,
-              selectedMethod === "momo" && styles.paymentMethodSelected,
-            ]}
-            onPress={() => setSelectedMethod("momo")}
-          >
-            <Ionicons name="phone-portrait-outline" size={24} color="#902C6C" />
-            <Text style={styles.paymentMethodText}>Ví MoMo</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Confirm Withdraw Button */}
-        <TouchableOpacity style={styles.withdrawButton} onPress={handleWithdraw}>
+        <TouchableOpacity
+          style={styles.withdrawButton}
+          onPress={handleWithdraw}
+        >
           <Text style={styles.withdrawButtonText}>Xác nhận rút tiền</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
