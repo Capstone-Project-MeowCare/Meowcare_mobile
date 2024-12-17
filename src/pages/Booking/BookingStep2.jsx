@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Text,
   View,
@@ -21,66 +21,46 @@ export default function BookingStep2({
   step2Info,
   setStep2Info,
   step1Info,
+  setStep1Info,
 }) {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const isSingleDateMode = step1Info.selectedServiceId === "OTHER_SERVICES";
-  const validateForm = () => {
-    if (step2Info.startDate) {
-      setIsValid(true);
-    } else {
-      setIsValid(false);
+
+  // Thêm lastResetServiceId để theo dõi dịch vụ đã reset
+  useEffect(() => {
+    if (step2Info.lastResetServiceId !== step1Info.selectedServiceId) {
+      console.log("Service changed, resetting step2Info.");
+      setStep2Info({
+        startDate: null,
+        endDate: null,
+        lastResetServiceId: step1Info.selectedServiceId,
+      });
     }
+  }, [step1Info.selectedServiceId]);
+
+  const validateForm = () => {
+    setIsValid(!!step2Info.startDate); // Xác định trạng thái form hợp lệ
   };
 
   useEffect(() => {
     validateForm();
   }, [step2Info]);
 
-  // const onDayPress = (day) => {
-  //   const dayString = day.dateString;
-
-  //   // Nếu startDate đã chọn và ngày được nhấn lại là startDate
-  //   if (step2Info.startDate === dayString && !step2Info.endDate) {
-  //     setStep2Info({ startDate: null, endDate: null });
-  //     return;
-  //   }
-
-  //   // Nếu startDate đã chọn và ngày được nhấn lại là endDate
-  //   if (step2Info.endDate === dayString) {
-  //     setStep2Info({ ...step2Info, endDate: null });
-  //     return;
-  //   }
-
-  //   // Nếu chưa chọn startDate hoặc đã có cả startDate và endDate
-  //   if (!step2Info.startDate || (step2Info.startDate && step2Info.endDate)) {
-  //     setStep2Info({ startDate: dayString, endDate: null });
-  //   }
-  //   // Nếu đang chọn khoảng thời gian
-  //   else if (moment(dayString).isAfter(step2Info.startDate)) {
-  //     setStep2Info({ ...step2Info, endDate: dayString });
-  //   }
-  //   // Nếu nhấn ngày trước startDate thì đặt lại startDate
-  //   else {
-  //     setStep2Info({ startDate: dayString, endDate: null });
-  //   }
-  // };
   const onDayPress = (day) => {
     const dayString = day.dateString;
 
     if (isSingleDateMode) {
-      // Nếu chế độ chọn 1 ngày, chỉ đặt startDate và xóa endDate
-      setStep2Info({ startDate: dayString, endDate: null });
+      setStep2Info({ ...step2Info, startDate: dayString, endDate: null });
     } else {
-      // Chế độ chọn khoảng ngày
       if (!step2Info.startDate) {
-        setStep2Info({ startDate: dayString, endDate: null });
+        setStep2Info({ ...step2Info, startDate: dayString, endDate: null });
       } else if (
         !step2Info.endDate &&
         moment(dayString).isAfter(step2Info.startDate)
       ) {
         setStep2Info({ ...step2Info, endDate: dayString });
       } else {
-        setStep2Info({ startDate: dayString, endDate: null });
+        setStep2Info({ ...step2Info, startDate: dayString, endDate: null });
       }
     }
   };
@@ -91,7 +71,7 @@ export default function BookingStep2({
     let markedDates = {
       [step2Info.startDate]: {
         startingDay: true,
-        endingDay: isSingleDateMode, // Nếu chế độ 1 ngày, đánh dấu cả bắt đầu và kết thúc
+        endingDay: isSingleDateMode,
         color: "#902C6C",
         textColor: "white",
       },

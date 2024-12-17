@@ -108,6 +108,7 @@ export default function SwipeStep({ navigation }) {
             setIsValid={setIsValid}
             onGoBack={() => setCurrentStep(1)}
             step1Info={step1Info}
+            setStep1Info={setStep1Info}
           />
         );
       case 3:
