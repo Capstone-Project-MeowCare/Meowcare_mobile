@@ -74,9 +74,9 @@ export default function BookingStep1({
           if (response?.data) {
             const services = response.data;
 
-            // Lọc và gán các MAIN_SERVICE đang hoạt động
-            setBasicServices(
-              services
+            // MAIN_SERVICE
+            setBasicServices((prev) => {
+              const newServices = services
                 .filter(
                   (service) =>
                     service.serviceType === "MAIN_SERVICE" &&
@@ -86,26 +86,25 @@ export default function BookingStep1({
                   id: service.id,
                   name: service.name,
                   price: service.price,
-                  type: service.serviceType || "Additional Service",
-                }))
-            );
+                  type: service.serviceType,
+                }));
+              return JSON.stringify(prev) === JSON.stringify(newServices)
+                ? prev
+                : newServices;
+            });
 
-            // Lọc và gán các CHILD_SERVICE đang hoạt động
-            setChildServices(
-              services
+            // CHILD_SERVICE
+            setChildServices((prev) => {
+              const newServices = services
                 .filter(
                   (service) =>
                     service.serviceType === "CHILD_SERVICE" &&
                     service.status === "ACTIVE"
                 )
                 .map((service) => {
-                  // Tạo ngày hiện tại
                   const today = new Date();
-                  const [hourStart, minuteStart, secondStart] =
-                    service.startTime.split(":");
-                  const [hourEnd, minuteEnd, secondEnd] =
-                    service.endTime.split(":");
-
+                  const [hourStart, minuteStart] = service.startTime.split(":");
+                  const [hourEnd, minuteEnd] = service.endTime.split(":");
                   return {
                     id: service.id,
                     name: service.name,
@@ -114,121 +113,170 @@ export default function BookingStep1({
                       today.getMonth(),
                       today.getDate(),
                       parseInt(hourStart, 10),
-                      parseInt(minuteStart, 10),
-                      parseInt(secondStart, 10)
+                      parseInt(minuteStart, 10)
                     ),
                     endTime: new Date(
                       today.getFullYear(),
                       today.getMonth(),
                       today.getDate(),
                       parseInt(hourEnd, 10),
-                      parseInt(minuteEnd, 10),
-                      parseInt(secondEnd, 10)
+                      parseInt(minuteEnd, 10)
                     ),
                   };
-                })
-            );
+                });
+              return JSON.stringify(prev) === JSON.stringify(newServices)
+                ? prev
+                : newServices;
+            });
 
-            // Lọc và gán các ADDITION_SERVICE đang hoạt động
-            setAdditionalServices(
-              services
+            // ADDITION_SERVICE
+            setAdditionalServices((prev) => {
+              const newServices = services
                 .filter(
                   (service) =>
                     service.serviceType === "ADDITION_SERVICE" &&
                     service.status === "ACTIVE"
                 )
-                .map((service) => ({
-                  id: service.id,
-                  name: service.name,
-                  price: service.price,
-                  slots: [], // Khởi tạo danh sách slot trống
-                }))
-            );
+                .map((service) => {
+                  const selectedSlot = step1Info.selectedSlot?.[service.id];
+                  return {
+                    id: service.id,
+                    name: service.name,
+                    price: service.price,
+                    slots: selectedSlot
+                      ? [selectedSlot, ...(service.slots || [])]
+                      : [],
+                  };
+                });
+              return JSON.stringify(prev) === JSON.stringify(newServices)
+                ? prev
+                : newServices;
+            });
           }
-        } else {
-          console.warn("No userId provided for fetching sitter services.");
         }
       } catch (error) {
-        console.error("Error fetching sitter services:", error);
+        console.error("Error fetching services:", error);
       }
     };
 
     fetchServices();
   }, [userId]);
+
+  // const fetchSlotsForService = async (serviceId, dateRange) => {
+  //   try {
+  //     const sitterId = userId; // Dùng userId từ props làm sitterId
+
+  //     // Nếu không có dateRange, sử dụng ngày hiện tại
+  //     const date = dateRange || new Date().toISOString().split("T")[0]; // Lấy ngày hiện tại (YYYY-MM-DD)
+  //     const status = "AVAILABLE"; // Trạng thái slot
+
+  //     // Endpoint với query parameters
+  //     const endpoint = `/booking-slots/sitter-booking-slots-by-service?sitterId=${sitterId}&serviceId=${serviceId}&date=${date}&status=${status}`;
+  //     const response = await getData(endpoint);
+
+  //     if (response?.status === 1000 && Array.isArray(response.data)) {
+  //       const slots = response.data.map((slot, index) => {
+  //         const startTime = slot.startTime ? new Date(slot.startTime) : null;
+  //         const endTime = slot.endTime ? new Date(slot.endTime) : null;
+
+  //         return {
+  //           id: slot.id,
+  //           startTime: startTime ? startTime.toISOString() : null,
+  //           endTime: endTime ? endTime.toISOString() : null,
+  //           isSelected: index === 0, // Đặt slot đầu tiên là đã chọn
+  //         };
+  //       });
+
+  //       // Cập nhật slots trong additionalServices
+  //       setAdditionalServices((prevServices) =>
+  //         prevServices.map((service) =>
+  //           service.id === serviceId ? { ...service, slots } : service
+  //         )
+  //       );
+
+  //       // Cập nhật selectedSlot trong step1Info
+  //       setStep1Info((prev) => {
+  //         const updatedSelectedSlot = { ...(prev.selectedSlot || {}) };
+  //         updatedSelectedSlot[serviceId] = slots.length > 0 ? slots[0] : null; // Nếu không có slot, gán null
+
+  //         console.log(
+  //           `Updated selectedSlot for ${serviceId}:`,
+  //           JSON.stringify(updatedSelectedSlot[serviceId], null, 2)
+  //         );
+
+  //         return {
+  //           ...prev,
+  //           selectedSlot: Object.fromEntries(
+  //             Object.entries(updatedSelectedSlot).filter(
+  //               ([_, slot]) => slot !== null
+  //             ) // Loại bỏ key có giá trị null
+  //           ),
+  //         };
+  //       });
+  //     } else {
+  //       console.warn("Failed to fetch slots or no slots available:", response);
+
+  //       // Xóa key khỏi selectedSlot nếu không có slot hợp lệ
+  //       setStep1Info((prev) => {
+  //         const updatedSelectedSlot = { ...(prev.selectedSlot || {}) };
+  //         delete updatedSelectedSlot[serviceId];
+  //         return { ...prev, selectedSlot: updatedSelectedSlot };
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching slots:", error);
+
+  //     // Xóa key khỏi selectedSlot nếu xảy ra lỗi
+  //     setStep1Info((prev) => {
+  //       const updatedSelectedSlot = { ...(prev.selectedSlot || {}) };
+  //       delete updatedSelectedSlot[serviceId];
+  //       return { ...prev, selectedSlot: updatedSelectedSlot };
+  //     });
+  //   }
+  // };
+
+  // Hiển thị thời gian từ ISO string
   const fetchSlotsForService = async (serviceId, dateRange) => {
     try {
-      const sitterId = userId; // Dùng userId từ props làm sitterId
+      const sitterId = userId;
+      const date = dateRange || new Date().toISOString().split("T")[0];
+      const status = "AVAILABLE";
 
-      // Nếu không có dateRange, sử dụng ngày hiện tại
-      const date = dateRange || new Date().toISOString().split("T")[0]; // Lấy ngày hiện tại (YYYY-MM-DD)
-      const status = "AVAILABLE"; // Trạng thái slot
-
-      // Endpoint với query parameters
       const endpoint = `/booking-slots/sitter-booking-slots-by-service?sitterId=${sitterId}&serviceId=${serviceId}&date=${date}&status=${status}`;
       const response = await getData(endpoint);
 
       if (response?.status === 1000 && Array.isArray(response.data)) {
-        const slots = response.data.map((slot, index) => {
-          const startTime = slot.startTime ? new Date(slot.startTime) : null;
-          const endTime = slot.endTime ? new Date(slot.endTime) : null;
+        const newSlots = response.data.map((slot) => ({
+          id: slot.id,
+          startTime: slot.startTime
+            ? new Date(slot.startTime).toISOString()
+            : null,
+          endTime: slot.endTime ? new Date(slot.endTime).toISOString() : null,
+        }));
 
-          return {
-            id: slot.id,
-            startTime: startTime ? startTime.toISOString() : null,
-            endTime: endTime ? endTime.toISOString() : null,
-            isSelected: index === 0, // Đặt slot đầu tiên là đã chọn
-          };
-        });
+        const selectedSlot = step1Info.selectedSlot?.[serviceId];
 
-        // Cập nhật slots trong additionalServices
         setAdditionalServices((prevServices) =>
           prevServices.map((service) =>
-            service.id === serviceId ? { ...service, slots } : service
+            service.id === serviceId
+              ? {
+                  ...service,
+                  slots: selectedSlot
+                    ? [
+                        selectedSlot,
+                        ...newSlots.filter((s) => s.id !== selectedSlot.id),
+                      ]
+                    : [...newSlots],
+                }
+              : service
           )
         );
-
-        // Cập nhật selectedSlot trong step1Info
-        setStep1Info((prev) => {
-          const updatedSelectedSlot = { ...(prev.selectedSlot || {}) };
-          updatedSelectedSlot[serviceId] = slots.length > 0 ? slots[0] : null; // Nếu không có slot, gán null
-
-          console.log(
-            `Updated selectedSlot for ${serviceId}:`,
-            JSON.stringify(updatedSelectedSlot[serviceId], null, 2)
-          );
-
-          return {
-            ...prev,
-            selectedSlot: Object.fromEntries(
-              Object.entries(updatedSelectedSlot).filter(
-                ([_, slot]) => slot !== null
-              ) // Loại bỏ key có giá trị null
-            ),
-          };
-        });
-      } else {
-        console.warn("Failed to fetch slots or no slots available:", response);
-
-        // Xóa key khỏi selectedSlot nếu không có slot hợp lệ
-        setStep1Info((prev) => {
-          const updatedSelectedSlot = { ...(prev.selectedSlot || {}) };
-          delete updatedSelectedSlot[serviceId];
-          return { ...prev, selectedSlot: updatedSelectedSlot };
-        });
       }
     } catch (error) {
       console.error("Error fetching slots:", error);
-
-      // Xóa key khỏi selectedSlot nếu xảy ra lỗi
-      setStep1Info((prev) => {
-        const updatedSelectedSlot = { ...(prev.selectedSlot || {}) };
-        delete updatedSelectedSlot[serviceId];
-        return { ...prev, selectedSlot: updatedSelectedSlot };
-      });
     }
   };
 
-  // Hiển thị thời gian từ ISO string
   const displayTime = (isoString) => {
     if (!isoString) return "";
     const date = new Date(isoString);
@@ -239,24 +287,28 @@ export default function BookingStep1({
   };
 
   useEffect(() => {
-    const updatedSelectedSlot = { ...step1Info.selectedSlot };
+    setStep1Info((prev) => {
+      const updatedSelectedSlot = { ...prev.selectedSlot };
 
-    additionalServices.forEach((service) => {
-      if (
-        step1Info.selectedAdditionalServices?.includes(service.id) &&
-        service.slots.length > 0 &&
-        !updatedSelectedSlot[service.id]
-      ) {
-        updatedSelectedSlot[service.id] = service.slots[0]; // Gán slot đầu tiên thay vì null
-      }
-    });
+      additionalServices.forEach((service) => {
+        if (
+          prev.selectedAdditionalServices?.includes(service.id) &&
+          service.slots.length > 0 &&
+          !updatedSelectedSlot[service.id]
+        ) {
+          updatedSelectedSlot[service.id] = service.slots[0]; // Gán slot đầu tiên thay vì null
+        }
+      });
 
-    setStep1Info((prev) => ({
-      ...prev,
-      selectedSlot: Object.fromEntries(
+      const newSelectedSlot = Object.fromEntries(
         Object.entries(updatedSelectedSlot).filter(([_, slot]) => slot !== null)
-      ),
-    }));
+      );
+
+      return JSON.stringify(prev.selectedSlot) ===
+        JSON.stringify(newSelectedSlot)
+        ? prev
+        : { ...prev, selectedSlot: newSelectedSlot };
+    });
   }, [additionalServices, step1Info.selectedAdditionalServices]);
 
   useEffect(() => {
@@ -317,54 +369,44 @@ export default function BookingStep1({
     if (itemValue === "OTHER_SERVICES") {
       setStep1Info((prev) => ({
         ...prev,
-        selectedServiceId: "OTHER_SERVICES",
-        selectedService: "Đặt dịch vụ khác",
+        selectedServiceId: itemValue,
+        serviceChanged: true, // Thêm flag báo dịch vụ đã thay đổi
+        selectedService:
+          itemValue === "OTHER_SERVICES" ? "Đặt dịch vụ khác" : "",
         price: 0,
-        childServices: [], // Đặt childServices trống
-        additionalServices, // Hiển thị các dịch vụ bổ sung
+        childServices: [],
+        additionalServices: [],
         selectedAdditionalServices: [],
       }));
 
       setIsDisplayingAdditionalServices(true);
       setExpanded(false);
 
-      // Đặt chiều cao của `CHILD_SERVICE` về 0
       Animated.timing(animationHeight, {
         toValue: 0,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-
-      return;
-    }
-
-    const selectedService = basicServices.find(
-      (service) => service.id === itemValue
-    );
-
-    setStep1Info((prev) => ({
-      ...prev,
-      selectedServiceId: itemValue,
-      selectedService: selectedService?.name || "",
-      price: selectedService?.price || 0,
-      childServices, // Hiển thị childServices nếu có
-      additionalServices: [], // Đặt additionalServices trống
-      selectedAdditionalServices: [],
-    }));
-
-    setIsDisplayingAdditionalServices(false);
-
-    if (childServices.length > 0) {
-      setExpanded(true);
-      Animated.timing(animationHeight, {
-        toValue: childServices.length * 50,
         duration: 300,
         useNativeDriver: false,
       }).start();
     } else {
-      setExpanded(false);
+      const selectedService = basicServices.find(
+        (service) => service.id === itemValue
+      );
+
+      setStep1Info((prev) => ({
+        ...prev,
+        selectedServiceId: itemValue,
+        selectedService: selectedService?.name || "",
+        price: selectedService?.price || 0,
+        childServices,
+        additionalServices: [],
+        selectedAdditionalServices: [],
+      }));
+
+      setIsDisplayingAdditionalServices(false);
+      setExpanded(childServices.length > 0);
+
       Animated.timing(animationHeight, {
-        toValue: 0,
+        toValue: childServices.length > 0 ? childServices.length * 50 : 0,
         duration: 300,
         useNativeDriver: false,
       }).start();
@@ -448,6 +490,44 @@ export default function BookingStep1({
       setAdditionalServices(additionalServices);
     }
   }, [additionalServices, setAdditionalServices]);
+  useEffect(() => {
+    if (step1Info.selectedServiceId) {
+      if (step1Info.selectedServiceId === "OTHER_SERVICES") {
+        setIsDisplayingAdditionalServices(true);
+        setExpanded(false);
+      } else {
+        setIsDisplayingAdditionalServices(false);
+        setExpanded(childServices.length > 0);
+
+        // Chạy animation cho childServices nếu có
+        Animated.timing(animationHeight, {
+          toValue: childServices.length > 0 ? childServices.length * 50 : 0,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      }
+    }
+  }, [step1Info.selectedServiceId, childServices]);
+  useEffect(() => {
+    const loadSlotsForSelectedServices = async () => {
+      const selectedAdditionalServices =
+        step1Info.selectedAdditionalServices || [];
+
+      // Duyệt qua các dịch vụ đã chọn và fetch slots
+      for (const serviceId of selectedAdditionalServices) {
+        const service = additionalServices.find((s) => s.id === serviceId);
+
+        // Chỉ fetch nếu slots chưa có hoặc bị trống
+        if (!service?.slots || service.slots.length === 0) {
+          await fetchSlotsForService(serviceId);
+        }
+      }
+    };
+
+    if (step1Info.selectedAdditionalServices?.length > 0) {
+      loadSlotsForSelectedServices();
+    }
+  }, [step1Info.selectedAdditionalServices, additionalServices]);
 
   return (
     <View style={styles.container}>
@@ -518,19 +598,24 @@ export default function BookingStep1({
                   <View key={child.id} style={styles.childServiceRow}>
                     {/* Hiển thị tên dịch vụ con kèm thời gian */}
                     <Text style={styles.childServiceText}>
-                     
-                    {child.startTime && child.endTime && (
-                    <Text style={styles.includedText}>
-                       {`[${new Date(child.startTime).toLocaleTimeString("vi-VN", {
-                         hour: "2-digit",
-                         minute: "2-digit",
-                         })} - ${new Date(child.endTime).toLocaleTimeString("vi-VN", {
-                         hour: "2-digit",
-                         minute: "2-digit",
-                          })}]`}
+                      {child.startTime && child.endTime && (
+                        <Text style={styles.includedText}>
+                          {`[${new Date(child.startTime).toLocaleTimeString(
+                            "vi-VN",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )} - ${new Date(child.endTime).toLocaleTimeString(
+                            "vi-VN",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}]`}
                         </Text>
-                         )}
-                        {`: ${child.name}`}{" "}
+                      )}
+                      {`: ${child.name}`}{" "}
                     </Text>
                   </View>
                 ))}
@@ -578,24 +663,19 @@ export default function BookingStep1({
                                 (slot) => slot.id === slotId
                               );
 
-                              console.log("Selected slot:", selectedSlot);
-
                               setStep1Info((prev) => ({
                                 ...prev,
                                 selectedSlot: {
                                   ...(prev.selectedSlot || {}),
-                                  [service.id]: selectedSlot || null, // Gán slot mới
+                                  [service.id]: selectedSlot || null,
                                 },
                               }));
                             }}
-                            style={styles.slotPicker}
                           >
                             {service.slots.map((slot) => (
                               <Picker.Item
                                 key={slot.id}
-                                label={`${displayTime(slot.startTime)} - ${displayTime(
-                                  slot.endTime
-                                )}`}
+                                label={`${displayTime(slot.startTime)} - ${displayTime(slot.endTime)}`}
                                 value={slot.id}
                               />
                             ))}
@@ -606,8 +686,6 @@ export default function BookingStep1({
                 ))}
               </View>
             )}
-
-         
         </View>
       </ScrollView>
     </View>
@@ -759,11 +837,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   childServicesContainer: {
-    
     backgroundColor: "#FFFAF5",
     marginTop: height * 0.01,
     borderRadius: 5,
-    
   },
   includedText: {
     fontSize: 16,
