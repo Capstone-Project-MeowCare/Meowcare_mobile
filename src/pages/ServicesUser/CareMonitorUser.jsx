@@ -308,8 +308,8 @@ export default function CareMonitorUser({ navigation, route }) {
     if (!currentDate) return false;
     const currentISODate = currentDate.toISOString().split("T")[0];
     const match = group.day === currentISODate;
-    if (!match)
-      console.log(`Task ${group.day} không khớp với ngày ${currentISODate}`);
+    // if (!match)
+    //   console.log(`Task ${group.day} không khớp với ngày ${currentISODate}`);
     return match;
   });
 

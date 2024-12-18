@@ -7,11 +7,14 @@ import {
   Image,
   Dimensions,
   Modal,
+  Alert,
 } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 import moment from "moment";
+import { getData } from "../../api/api";
+import CustomToast from "../../components/CustomToast";
 
 const { width, height } = Dimensions.get("window");
 
@@ -26,6 +29,8 @@ export default function BookingStep2({
 }) {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const isSingleDateMode = step1Info.selectedServiceId === "OTHER_SERVICES";
+  const [markedDates, setMarkedDates] = useState({});
+  const threeMonthsLater = moment().add(3, "months").format("YYYY-MM-DD");
 
   // Thêm lastResetServiceId để theo dõi dịch vụ đã reset
   useEffect(() => {
@@ -46,6 +51,40 @@ export default function BookingStep2({
   useEffect(() => {
     validateForm();
   }, [step2Info]);
+  useEffect(() => {
+    const fetchUnavailableDates = async () => {
+      try {
+        const response = await getData(
+          `/sitter-unavailable-dates/sitter/${userId}`
+        );
+        console.log("API Response:", response);
+
+        if (response && Array.isArray(response)) {
+          const formattedDates = response.reduce((acc, item) => {
+            const date = item.startDate.split("T")[0];
+            if (item.isRecurring) {
+              acc[date] = {
+                disableTouchEvent: true,
+                marked: true,
+                selectedColor: "#D9D9D9",
+                textColor: "#A0A0A0",
+              };
+            }
+            return acc;
+          }, {});
+
+          setMarkedDates(formattedDates);
+          console.log("Processed Marked Dates:", formattedDates);
+        } else {
+          console.warn("No unavailable dates found.");
+        }
+      } catch (error) {
+        console.error("Error fetching unavailable dates:", error);
+      }
+    };
+
+    fetchUnavailableDates();
+  }, [userId]);
 
   const onDayPress = (day) => {
     const dayString = day.dateString;
@@ -59,7 +98,39 @@ export default function BookingStep2({
         !step2Info.endDate &&
         moment(dayString).isAfter(step2Info.startDate)
       ) {
-        setStep2Info({ ...step2Info, endDate: dayString });
+        const daysDiff = moment(dayString).diff(
+          moment(step2Info.startDate),
+          "days"
+        );
+
+        // Kiểm tra range ngày không được vượt quá 14 ngày
+        if (daysDiff > 14) {
+          Alert.alert(
+            "Giới hạn đặt lịch",
+            "Bạn chỉ có thể chọn tối đa 14 ngày liên tục."
+          );
+          return;
+        }
+
+        // Kiểm tra range ngày có chứa ngày bận hay không
+        const rangeDates = [];
+        let currentDate = moment(step2Info.startDate);
+
+        while (currentDate.isSameOrBefore(dayString)) {
+          rangeDates.push(currentDate.format("YYYY-MM-DD"));
+          currentDate.add(1, "day");
+        }
+
+        const hasUnavailableDate = rangeDates.some((date) => markedDates[date]);
+
+        if (hasUnavailableDate) {
+          Alert.alert(
+            "Lịch bận",
+            "Khoảng ngày bạn chọn có chứa ngày bận. Vui lòng chọn lại."
+          );
+        } else {
+          setStep2Info({ ...step2Info, endDate: dayString });
+        }
       } else {
         setStep2Info({ ...step2Info, startDate: dayString, endDate: null });
       }
@@ -95,6 +166,22 @@ export default function BookingStep2({
     }
 
     return markedDates;
+  };
+  const getMergedMarkedDates = () => {
+    const userSelectedDates = getMarkedDates();
+    const mergedDates = { ...markedDates, ...userSelectedDates };
+
+    // Giữ màu xám và textColor cho các ngày bận
+    Object.keys(markedDates).forEach((key) => {
+      if (markedDates[key]?.disableTouchEvent) {
+        mergedDates[key] = {
+          ...mergedDates[key],
+          ...markedDates[key],
+        };
+      }
+    });
+
+    return mergedDates;
   };
 
   return (
@@ -176,14 +263,16 @@ export default function BookingStep2({
           <View style={styles.calendarContainer}>
             <Calendar
               minDate={moment().format("YYYY-MM-DD")}
+              maxDate={threeMonthsLater} // Giới hạn 3 tháng từ ngày hiện tại
               onDayPress={onDayPress}
-              markedDates={getMarkedDates()}
+              markedDates={getMergedMarkedDates()} // Hợp nhất ngày bận và ngày người dùng đã chọn
               markingType={"period"}
               theme={{
                 selectedDayBackgroundColor: "#902C6C",
                 todayTextColor: "#902C6C",
               }}
             />
+
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setCalendarVisible(false)}
