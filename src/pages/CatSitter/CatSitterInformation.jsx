@@ -17,34 +17,6 @@ import { getData } from "../../api/api";
 
 const { width, height } = Dimensions.get("window");
 
-const cageImages = [
-  require("../../../assets/VitaminSupplement.png"),
-  require("../../../assets/catpeople.jpg"),
-  require("../../../assets/camera.png"),
-  require("../../../assets/VitaminSupplement.png"),
-  require("../../../assets/VitaminSupplement.png"),
-  require("../../../assets/camera.png"),
-  require("../../../assets/camera.png"),
-  require("../../../assets/camera.png"),
-]; // Thay ảnh này bằng đường dẫn thực tế
-const locationData = [
-  {
-    text: "Sống trong một căn hộ",
-    image: require("../../../assets/house.png"),
-  },
-  { text: "Không có sân vườn", image: require("../../../assets/none.png") },
-  { text: "Có camera theo dõi", image: require("../../../assets/camera.png") },
-  { text: "Không có thú cưng", image: require("../../../assets/none.png") },
-  { text: "Không có trẻ em", image: require("../../../assets/none.png") },
-  {
-    text: "Có đồ chơi và thiết bị cho mèo",
-    image: require("../../../assets/toy.png"),
-  },
-  {
-    text: "Có khu vực tách riêng đặc biệt",
-    image: require("../../../assets/area.png"),
-  },
-];
 export default function CatSitterInformation({
   experience,
   skill,
@@ -54,7 +26,6 @@ export default function CatSitterInformation({
   profilePictures,
   profilePicturesCargo,
   maximumQuantity,
- 
 }) {
   const [coordinates, setCoordinates] = useState(null);
   const webViewRef = useRef(null);
@@ -210,15 +181,16 @@ export default function CatSitterInformation({
           ))}
         </View>
       </View>
-     
+
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>Môi trường và chuồng cho mèo:</Text>
         <Text style={styles.Description}>{environment}</Text>
-        <Text style={styles.titlesecond}>Số lượng thú cưng có thể nhận: {maximumQuantity}</Text>
-       
+        <Text style={styles.titlesecond}>
+          Số lượng thú cưng có thể nhận: {maximumQuantity}
+        </Text>
       </View>
 
-  {/* Thông tin chuồng gửi mèo */}
+      {/* Thông tin chuồng gửi mèo */}
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>Thông tin ảnh chuồng:</Text>
 
@@ -244,14 +216,14 @@ export default function CatSitterInformation({
             </TouchableOpacity>
           )}
         </View>
-         {/* <View style={styles.descriptionContainer}>
+        {/* <View style={styles.descriptionContainer}>
           <Text style={styles.Description}>
             {visibleImages[0]?.description
               ? `Mô tả chuồng: ${visibleImages[0]?.description}`
               : "Hiện tại tôi có 5 chuồng nuôi mèo, tất cả đều được thiết kế thoáng mát, sạch sẽ, và đầy đủ tiện nghi để đảm bảo sự thoải mái cho mèo cưng của bạn."}
           </Text>
         </View> */}
-      </View> 
+      </View>
 
       <View style={styles.trustSafetyContainer}>
         <Text style={styles.titlesecond}>Thông tin chứng chỉ:</Text>
@@ -299,7 +271,6 @@ export default function CatSitterInformation({
         />
       </View>
 
-     
       <View style={styles.addressContainer}>
         <Text style={styles.titlesecond}>Vị trí</Text>
         <Text style={styles.addressText}>{location}</Text>

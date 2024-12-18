@@ -70,7 +70,7 @@ const daysOfWeek = [
 export default function SetupSchedule({ navigation }) {
   const { user } = useAuth();
   const userId = user ? user.id : null;
-  const [isBoardingSelected, setIsBoardingSelected] = useState(false);
+  const [isBoardingSelected, setIsBoardingSelected] = useState(true);
   const [isHomeVisitSelected, setIsHomeVisitSelected] = useState(false);
 
   const [boardingSelectedDays, setBoardingSelectedDays] = useState([]);

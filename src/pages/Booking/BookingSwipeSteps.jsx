@@ -109,6 +109,7 @@ export default function SwipeStep({ navigation }) {
             onGoBack={() => setCurrentStep(1)}
             step1Info={step1Info}
             setStep1Info={setStep1Info}
+            userId={sitterId}
           />
         );
       case 3:
