@@ -225,6 +225,59 @@ export default function CareScheduleSitter({ navigation, route }) {
     }
   };
 
+  // const handleSave = async () => {
+  //   try {
+  //     setIsSaving(true);
+
+  //     // Xóa media từ server trước
+  //     for (const taskEvidenceId of mediaToDelete) {
+  //       const deleteUrl = `/task-evidences/${taskEvidenceId}`;
+  //       console.log(`Xóa Task Evidence với ID: ${taskEvidenceId}`);
+  //       try {
+  //         const response = await deleteData(deleteUrl);
+  //         if (response.status !== 1000 && response.status !== 1003) {
+  //           console.error(
+  //             `Lỗi khi xóa Task Evidence với ID: ${taskEvidenceId}`,
+  //             response
+  //           );
+  //         }
+  //       } catch (error) {
+  //         console.error(
+  //           `Lỗi khi xóa Task Evidence với ID: ${taskEvidenceId}`,
+  //           error
+  //         );
+  //       }
+  //     }
+
+  //     // Gửi payload với danh sách `newMediaList`
+  //     if (newMediaList.length > 0) {
+  //       const url = `/task-evidences/list?taskId=${taskId}`;
+  //       const response = await postData(url, newMediaList);
+
+  //       if (response.status !== 1000) {
+  //         Alert.alert("Lỗi", "Không thể lưu dịch vụ. Vui lòng thử lại.");
+  //         return;
+  //       }
+  //     }
+
+  //     console.log("Payloads gửi lên API:", newMediaList);
+
+  //     // Thành công -> Reset danh sách
+  //     setMediaToDelete([]);
+  //     setNewMediaList([]);
+  //     CustomToast({
+  //       text: "Cập nhật nhiệm vụ thành công ",
+  //       position: 300,
+  //     });
+  //     setViewMode(true); // Chuyển sang chế độ xem
+  //     navigation.goBack();
+  //   } catch (error) {
+  //     console.error("Lỗi khi gọi API POST:", error);
+  //     Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại.");
+  //   } finally {
+  //     setIsSaving(false);
+  //   }
+  // };
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -249,18 +302,43 @@ export default function CareScheduleSitter({ navigation, route }) {
         }
       }
 
-      // Gửi payload với danh sách `newMediaList`
-      if (newMediaList.length > 0) {
+      // Gửi payload với danh sách `newMediaList` sau khi upload lên Firebase
+      const uploadedMediaList = [];
+      for (const media of newMediaList) {
+        const { photoUrl, videoUrl, evidenceType } = media;
+        const localUri = photoUrl || videoUrl;
+
+        console.log("Bắt đầu upload:", localUri);
+
+        // Sử dụng firebaseTask để upload
+        const uploadedUrl = await firebaseTask(
+          localUri,
+          evidenceType === "VIDEO"
+        );
+
+        if (uploadedUrl) {
+          console.log("Upload thành công URL:", uploadedUrl);
+          uploadedMediaList.push({
+            evidenceType,
+            photoUrl: evidenceType === "PHOTO" ? uploadedUrl : null,
+            videoUrl: evidenceType === "VIDEO" ? uploadedUrl : null,
+          });
+        } else {
+          console.error("Lỗi upload file:", localUri);
+        }
+      }
+
+      console.log("Danh sách media sau khi upload:", uploadedMediaList);
+
+      if (uploadedMediaList.length > 0) {
         const url = `/task-evidences/list?taskId=${taskId}`;
-        const response = await postData(url, newMediaList);
+        const response = await postData(url, uploadedMediaList);
 
         if (response.status !== 1000) {
           Alert.alert("Lỗi", "Không thể lưu dịch vụ. Vui lòng thử lại.");
           return;
         }
       }
-
-      console.log("Payloads gửi lên API:", newMediaList);
 
       // Thành công -> Reset danh sách
       setMediaToDelete([]);
@@ -383,9 +461,7 @@ export default function CareScheduleSitter({ navigation, route }) {
             ))}
           </ScrollView>
         ) : (
-          <View style={styles.emptyMediaContainer}>
-            
-          </View>
+          <View style={styles.emptyMediaContainer}></View>
         )}
         {!viewMode &&
           photoList.filter((media) => media.isLoading).length === 0 && // Ẩn nếu đang có media loading
@@ -426,9 +502,7 @@ export default function CareScheduleSitter({ navigation, route }) {
             ))}
           </ScrollView>
         ) : (
-          <View style={styles.emptyMediaContainer}>
-           
-          </View>
+          <View style={styles.emptyMediaContainer}></View>
         )}
         {!viewMode &&
           videoList.filter((media) => media.isLoading).length === 0 && // Ẩn nếu đang có media loading
@@ -615,7 +689,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
     backgroundColor: "#FFF",
-    marginLeft:100,
+    marginLeft: 100,
   },
   mediaButtonText: {
     color: "#902C6C",

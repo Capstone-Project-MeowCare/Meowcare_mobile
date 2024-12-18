@@ -22,6 +22,7 @@ export default function BookingStep2({
   setStep2Info,
   step1Info,
   setStep1Info,
+  userId,
 }) {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const isSingleDateMode = step1Info.selectedServiceId === "OTHER_SERVICES";

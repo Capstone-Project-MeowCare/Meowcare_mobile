@@ -41,27 +41,15 @@ const ExtraServiceItem = ({ image, mainText, price }) => (
 );
 
 export default function CatSitterAssistance({ id }) {
+  // console.log("Received id in CatSitterAssistance:", id);
   const [mainServices, setMainServices] = useState([]);
   const [additionalServices, setAdditionalServices] = useState([]);
   const [childServices, setChildServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [markedDates, setMarkedDates] = useState({});
+  const [latestUpdate, setLatestUpdate] = useState(null);
   // const [sitterProfile, setSitterProfile] = useState();
-  const [expandedServices, setExpandedServices] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
-  const availableDays = {
-    "2024-10-01": { selected: true, selectedColor: "#BAE8C9" },
-    "2024-10-02": { selected: true, selectedColor: "#BAE8C9" },
-    "2024-10-03": { selected: true, selectedColor: "#BAE8C9" },
-    "2024-10-04": { selected: true, selectedColor: "#BAE8C9" },
-  };
-
-  const busyDays = {
-    "2024-10-10": { selected: true, selectedColor: "#D9D9D9" },
-    "2024-10-11": { selected: true, selectedColor: "#D9D9D9" },
-    "2024-10-12": { selected: true, selectedColor: "#D9D9D9" },
-    "2024-10-13": { selected: true, selectedColor: "#D9D9D9" },
-    "2024-10-14": { selected: true, selectedColor: "#D9D9D9" },
-  };
 
   const formatTime = (time) => {
     if (time.includes(":")) {
@@ -133,6 +121,60 @@ export default function CatSitterAssistance({ id }) {
       fetchServices();
     }
   }, [id]);
+  useEffect(() => {
+    const fetchUnavailableDates = async () => {
+      try {
+        const response = await getData(
+          `/sitter-unavailable-dates/sitter/${id}`
+        );
+        console.log("API Response:", response);
+
+        if (response && Array.isArray(response)) {
+          const unavailableDates = response.reduce((acc, item) => {
+            const date = item.startDate.split("T")[0];
+            acc[date] = {
+              selected: true,
+              marked: true,
+              selectedColor: item.isRecurring ? "#D9D9D9" : "#BAE8C9",
+            };
+            return acc;
+          }, {});
+
+          const latestCreatedAt = response.reduce((latest, item) => {
+            return new Date(item.createdAt) > new Date(latest)
+              ? item.createdAt
+              : latest;
+          }, response[0]?.createdAt);
+
+          setMarkedDates(unavailableDates);
+          setLatestUpdate(latestCreatedAt);
+        } else {
+          console.warn("No unavailable dates found.");
+        }
+      } catch (error) {
+        console.error("Error fetching unavailable dates:", error);
+      }
+    };
+
+    fetchUnavailableDates();
+  }, [id]);
+
+  const timeAgo = (date) => {
+    const now = new Date();
+    const updatedDate = new Date(date);
+    const diffMs = now - updatedDate; // Chênh lệch thời gian tính bằng ms
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMinutes < 60) {
+      return `${diffMinutes} phút trước`;
+    } else if (diffHours < 24) {
+      return `${diffHours} giờ trước`;
+    } else {
+      return `${diffDays} ngày trước`;
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -217,22 +259,26 @@ export default function CatSitterAssistance({ id }) {
 
           {/* Lịch */}
           <Text style={styles.text1}>Lịch</Text>
-          <CatSitterCalendarSetting
-            availableDays={availableDays}
-            busyDays={busyDays}
-          />
+          <View style={styles.legendContainer}>
+            <View style={styles.squareContainer}>
+              <View style={[styles.square, { backgroundColor: "#D9D9D9" }]} />
+              <Text style={styles.squareText}>Thời gian bận</Text>
+            </View>
+          </View>
+          <CatSitterCalendarSetting markedDates={markedDates} />
 
           {/* Chính sách và thông tin cập nhật */}
           <View style={styles.footerTextContainer}>
-            {/* <Text style={styles.updateText}>
-              Lịch được cập nhật 1 ngày trước
-            </Text> */}
+            {latestUpdate && (
+              <Text style={styles.updateText}>
+                Lịch được cập nhật {timeAgo(latestUpdate)}
+              </Text>
+            )}
             <View style={styles.policyTextContainer}>
               <Text style={styles.policyText}>
                 Chính sách hủy lịch MeowCare
               </Text>
               <Text style={styles.readMoreText1}> Đọc thêm</Text>
-              {/* <Text style={styles.readMoreText1}>{sitterProfile?.fullRefundDay} ngày</Text> */}
             </View>
           </View>
         </>
@@ -383,6 +429,30 @@ const styles = StyleSheet.create({
     color: "#000857",
     fontWeight: "500",
     textAlign: "center",
+  },
+  legendContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: height * 0.02,
+    width: width * 0.9,
+    alignSelf: "center",
+    right: height * 0.03,
+  },
+  squareContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: height * 0.027,
+  },
+  square: {
+    width: width * 0.035,
+    height: width * 0.035,
+    marginRight: width * 0.02,
+  },
+  squareText: {
+    fontSize: width * 0.04,
+    color: "#000857",
+    fontWeight: "600",
   },
   readMoreText1: {
     fontSize: width * 0.037,
