@@ -12,7 +12,7 @@ export default function InComeStatistics({ navigation }) {
   const [selectedMonth, setSelectedMonth] = useState("12/2024");
 
   // Tháng và dữ liệu giả lập
-  const months = ["8/2024","9/2024", "10/2024", "11/2024", "12/2024"];
+  const months = ["8/2024", "9/2024", "10/2024", "11/2024", "12/2024"];
   const incomeData = {
     totalValue: 5000,
     revenue: 4500,
@@ -35,63 +35,70 @@ export default function InComeStatistics({ navigation }) {
       <View style={styles.divider} />
 
       {/* Thanh chọn tháng */}
-      <View style = {styles.main}>
-      <ScrollView
-      horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", alignItems: "flex-start" , padding: 10,}}
-  style={styles.monthSelector}
->
-  {months.map((month, index) => (
-    <TouchableOpacity
-      key={index}
-      style={[
-        styles.monthButton,
-        selectedMonth === month && styles.selectedMonthButton,
-      ]}
-      onPress={() => setSelectedMonth(month)}
-    >
-      <Text
-        style={[
-          styles.monthText,
-          selectedMonth === month && styles.selectedMonthText,
-        ]}
-      >
-        {month}
-      </Text>
-    </TouchableOpacity>
-  ))}
-</ScrollView>
+      <View style={styles.main}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            flexDirection: "row",
+            alignItems: "flex-start",
+            padding: 10,
+          }}
+          style={styles.monthSelector}
+        >
+          {months.map((month, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.monthButton,
+                selectedMonth === month && styles.selectedMonthButton,
+              ]}
+              onPress={() => setSelectedMonth(month)}
+            >
+              <Text
+                style={[
+                  styles.monthText,
+                  selectedMonth === month && styles.selectedMonthText,
+                ]}
+              >
+                {month}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-      {/* Thống kê chi tiết */}
-      <ScrollView style={styles.detailsContainer}>
-      <View style={styles.item}>
-          <Text style={styles.itemLabel}>Tổng số đặt lịch</Text>
-          <Text style={styles.itemValue}>{incomeData.totalBookings} Đơn đặt lịch</Text>
-        </View>
-        <View style={styles.divid} />
-        <View style={styles.item}>
-          <Text style={styles.itemLabel}>Tổng giá trị</Text>
-          <Text style={styles.itemValue}>{incomeData.totalValue}đ</Text>
-        </View>
-        <View style={styles.divid} />
-        <View style={styles.item}>
-          <Text style={styles.itemLabel}>Chiết khấu + Thuế</Text>
-          <Text style={styles.itemValue}>-{incomeData.discountTax}đ</Text>
-        </View>
-        <View style={styles.divid} />
-        <View style={styles.item}>
-          <Text style={styles.itemLabel}>Thu nhập ròng</Text>
-          <Text style={styles.itemValue}>{incomeData.netIncome}đ</Text>
-        </View>
-       
-      </ScrollView>
-    </View>
+        {/* Thống kê chi tiết */}
+        <ScrollView style={styles.detailsContainer}>
+          <View style={styles.item}>
+            <Text style={styles.itemLabel}>Tổng số đặt lịch</Text>
+            <Text style={styles.itemValue}>
+              {incomeData.totalBookings} Đơn đặt lịch
+            </Text>
+          </View>
+          <View style={styles.divid} />
+          <View style={styles.item}>
+            <Text style={styles.itemLabel}>Tổng giá trị</Text>
+            <Text style={styles.itemValue}>{incomeData.totalValue}đ</Text>
+          </View>
+          <View style={styles.divid} />
+          <View style={styles.item}>
+            <Text style={styles.itemLabel}>Chiết khấu + Thuế</Text>
+            <Text style={styles.itemValue}>-{incomeData.discountTax}đ</Text>
+          </View>
+          <View style={styles.divid} />
+          <View style={styles.item}>
+            <Text style={styles.itemLabel}>Thu nhập ròng</Text>
+            <Text style={styles.itemValue}>{incomeData.netIncome}đ</Text>
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
+    flex: 1,
     backgroundColor: "#FFFAF5",
     justifyContent: "flex-start",
   },
@@ -113,29 +120,26 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D3D3D3",
     borderBottomWidth: 1,
   },
-  main:{
-
+  main: {},
+  monthButton: {
+    justifyContent: "flex-start",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    marginHorizontal: 4, // Khoảng cách giữa các tháng
+    backgroundColor: "#F0F0F0",
+    borderRadius: 8,
   },
-monthButton: {
-  justifyContent: "flex-start",
-  paddingVertical: 8,
-  paddingHorizontal: 20,
-  marginHorizontal: 4, // Khoảng cách giữa các tháng
-  backgroundColor: "#F0F0F0",
-  borderRadius: 8,
-
-},
-selectedMonthButton: {
-  backgroundColor: "#902C6C",
-},
-monthText: {
-  fontSize: 14,
-  color: "#555",
-},
-selectedMonthText: {
-  color: "#FFF",
-},
- detailsContainer: {
+  selectedMonthButton: {
+    backgroundColor: "#902C6C",
+  },
+  monthText: {
+    fontSize: 14,
+    color: "#555",
+  },
+  selectedMonthText: {
+    color: "#FFF",
+  },
+  detailsContainer: {
     backgroundColor: "#FFF",
     borderRadius: 8,
     padding: 16,
@@ -146,7 +150,7 @@ selectedMonthText: {
     elevation: 2,
     marginHorizontal: 16, // Chỉ căn lề ngang
     marginTop: 8, // Không có khoảng cách từ trên
-},
+  },
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -164,6 +168,6 @@ selectedMonthText: {
   divid: {
     borderBottomColor: "#D3D3D3",
     borderBottomWidth: 1,
-    marginBottom:10,
+    marginBottom: 10,
   },
 });

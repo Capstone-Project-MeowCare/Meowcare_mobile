@@ -102,7 +102,7 @@ export default function SetupSchedule({ navigation }) {
 
           // Cập nhật ngày không khả dụng cho Boarding và Home Visit
           setBoardingUnavailableDates(formattedUnavailableDates);
-          setHomeVisitUnavailableDates(formattedUnavailableDates);
+          // setHomeVisitUnavailableDates(formattedUnavailableDates);
         })
         .catch((error) => {
           console.error("Error fetching unavailable dates:", error);
@@ -248,7 +248,7 @@ export default function SetupSchedule({ navigation }) {
           </>
         )}
 
-        {isHomeVisitSelected && (
+        {/* {isHomeVisitSelected && (
           <>
             <Text style={styles.sectionTitle}>
               Trông tại nhà (House Sitting)
@@ -264,7 +264,7 @@ export default function SetupSchedule({ navigation }) {
               markedDates={homeVisitUnavailableDates}
             />
           </>
-        )}
+        )} */}
 
         <TouchableOpacity style={styles.saveButton} onPress={saveSchedule}>
           <Text style={styles.saveButtonText}>Lưu Lịch Làm Việc</Text>

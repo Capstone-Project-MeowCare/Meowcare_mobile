@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -15,6 +16,7 @@ import StarRating from "react-native-star-rating-widget";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { getData } from "../../api/api";
+import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -22,10 +24,13 @@ export default function FindSitterByMap() {
   const webViewRef = useRef(null);
   const route = useRoute();
   const navigation = useNavigation();
+  const { user } = useAuth();
+  const [userCoordinates, setUserCoordinates] = useState(null);
   const [catSitters, setCatSitters] = useState([]);
   const [coordinatesMap, setCoordinatesMap] = useState([]);
   const [selectedSitterId, setSelectedSitterId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingContainer, setLoadingContainer] = useState(true);
   const { latitude, longitude } = route.params || {
     latitude: 10.73507,
     longitude: 106.632935,
@@ -39,7 +44,9 @@ export default function FindSitterByMap() {
   };
   const handleReload = () => {
     // Replace màn hình hiện tại để reload
-    navigation.replace(navigation.getState().routes[navigation.getState().index].name);
+    navigation.replace(
+      navigation.getState().routes[navigation.getState().index].name
+    );
   };
   const handleSitterPress = (sitter) => {
     if (selectedSitterId === sitter.id) {
@@ -56,18 +63,49 @@ export default function FindSitterByMap() {
       `);
     }
   };
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Bán kính trái đất (km)
+    const toRad = (value) => (value * Math.PI) / 180;
 
-  // const catSittersWithVerified = catSitters.map((sitter) => ({
-  //   ...sitter,
-  //   verified: "Đã cập nhật 1 ngày trước",
-  //   reviews: "10 đánh giá",
-  // }));
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return (R * c).toFixed(2);
+  };
+  const fetchCurrentUserCoordinates = async () => {
+    try {
+      const response = await getData(`/users/${user.id}`);
+      const userAddress = response?.data?.address;
+
+      if (userAddress) {
+        const coordinates = await fetchCoordinates(userAddress);
+        if (coordinates) {
+          setUserCoordinates(coordinates);
+          console.log("User coordinates:", coordinates);
+        } else {
+          console.warn("Không tìm thấy tọa độ của user.");
+        }
+      } else {
+        console.warn("User address không có.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi fetch tọa độ user:", error);
+    }
+  };
+
   const catSittersWithVerified = catSitters.map((sitter) => ({
     ...sitter,
     verified: sitter.verified || "Chưa cập nhật",
     reviews: sitter.reviews || "0 đánh giá",
-    rating: sitter.rating || 0, // Giá trị mặc định cho rating
-    price: sitter.price || 0, // Giá trị mặc định cho giá
+    rating: sitter.rating || 0,
+    price: sitter.price || 0,
   }));
 
   // Fetch tọa độ từ location string
@@ -129,22 +167,24 @@ export default function FindSitterByMap() {
 
       const sitters = response.data;
 
-      const sittersWithDetails = await Promise.all(
-        sitters.map(async (sitter) => {
-          const userDetails = await fetchUserById(sitter.sitterId);
-          const coordinates = await fetchCoordinates(sitter.location);
+      const sittersWithDetails = sitters.map((sitter) => {
+        let distance = "Không xác định";
 
-          return {
-            ...sitter,
-            avatar: userDetails?.avatar || null,
-            email: userDetails?.email || null,
-            latitude: coordinates?.latitude || null,
-            longitude: coordinates?.longitude || null,
-          };
-        })
-      );
+        if (userCoordinates && sitter.latitude && sitter.longitude) {
+          distance = calculateDistance(
+            userCoordinates.latitude,
+            userCoordinates.longitude,
+            sitter.latitude,
+            sitter.longitude
+          );
+        }
 
-      // Lọc các sitter chỉ có status ACTIVE
+        return {
+          ...sitter,
+          distance: distance ? `${distance} km` : "Không xác định",
+        };
+      });
+
       const activeSitters = sittersWithDetails.filter(
         (sitter) => sitter.status === "ACTIVE"
       );
@@ -153,15 +193,46 @@ export default function FindSitterByMap() {
       setCoordinatesMap(activeSitters.filter((s) => s.latitude && s.longitude));
     } catch (error) {
       console.error("Error fetching sitter profiles:", error);
-      Alert.alert("Error", "Unable to load data. Please try again later.");
     } finally {
-      setLoading(false);
+      setLoadingContainer(false);
     }
   };
 
   useEffect(() => {
-    fetchSitterProfiles();
+    const fetchData = async () => {
+      setLoadingContainer(true);
+      await fetchSitterProfiles();
+      await fetchCurrentUserCoordinates();
+      setLoadingContainer(false);
+    };
+
+    fetchData();
   }, []);
+
+  // Cập nhật khoảng cách mỗi khi tọa độ user thay đổi
+  useEffect(() => {
+    if (userCoordinates) {
+      const updatedSitters = catSitters.map((sitter) => {
+        let distance = "Không xác định";
+
+        if (sitter.latitude && sitter.longitude) {
+          distance = calculateDistance(
+            userCoordinates.latitude,
+            userCoordinates.longitude,
+            sitter.latitude,
+            sitter.longitude
+          );
+        }
+
+        return {
+          ...sitter,
+          distance: distance ? `${distance} km` : "Không xác định",
+        };
+      });
+
+      setCatSitters(updatedSitters); // Cập nhật lại sitters với khoảng cách
+    }
+  }, [userCoordinates]); // Chạy lại mỗi khi `userCoordinates` thay đổi
 
   // Tạo HTML để hiển thị bản đồ
 
@@ -204,7 +275,6 @@ export default function FindSitterByMap() {
     </body>
   </html>
   `;
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -221,100 +291,115 @@ export default function FindSitterByMap() {
       </View>
       <WebView ref={webViewRef} source={{ html: osmHTML }} style={styles.map} />
       <View style={styles.lowerContainer}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.redoSearchWrapper}>
-            <View style={styles.redoSearch}>
-              <TouchableOpacity onPress={handleReload}>
-                <Text style={styles.redoSearchText}>Tải lại tìm kiếm</Text>
-              </TouchableOpacity>
-            </View>
+        {loadingContainer ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#902C6C" />
           </View>
-          {catSittersWithVerified.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.infoContainer}
-              onPress={() => handleSitterPress(item)}
-            >
-              <Image
-                source={
-                  item.avatar
-                    ? { uri: item.avatar }
-                    : require("../../../assets/avatar.png")
-                }
-                style={styles.sitterImage}
-              />
-              <View style={styles.textContainer}>
-                <View style={styles.headerRow}>
-                  <Text style={styles.name}>{item.fullName}</Text>
-                  <Text style={styles.priceLabel}>Giá mỗi đêm</Text>
-                </View>
-                <View style={styles.centerRow}>
-                  {/* <Text style={styles.description}>{item.bio}</Text>
-                  <Text style={styles.price}>150.000đ</Text> */}
-                  {item.bio ? (
-                    <Text
-                      style={styles.description}
-                      numberOfLines={2}
-                      ellipsizeMode="tail"
-                    >
-                      {item.bio}
-                    </Text>
-                  ) : null}
-                  {item.price ? (
-                    <Text
-                      style={styles.price}
-                    >{`${item.price.toString()}đ`}</Text>
-                  ) : (
-                    <Text style={styles.price}>Chưa có giá</Text>
-                  )}
-                </View>
-                <View style={styles.addressRow}>
-                  <Text style={styles.address}>{item.location}</Text>
-                </View>
-                <View style={styles.ratingContainer}>
-                  <StarRating
-                    disabled={true}
-                    maxStars={1}
-                    rating={item.rating}
-                    starSize={16}
-                    fullStarColor={"#F8B816"}
-                  />
-                  {/* <Text style={styles.ratingText}>{item.rating}</Text> */}
-                  <Text style={styles.ratingText}>
-                    {item.rating !== undefined && item.rating !== null
-                      ? item.rating.toString()
-                      : "Chưa có đánh giá"}
-                  </Text>
-
-                  <View style={styles.dotAndReviewContainer}>
-                    <View style={styles.dot} />
-                    <Text style={styles.reviews}>{item.reviews}</Text>
-                  </View>
-                </View>
-                <View style={styles.verifiedContainer}>
-                  <Image
-                    source={require("../../../assets/Verified.png")}
-                    style={styles.verifiedIcon}
-                  />
-                  <Text style={styles.verifiedText}>{item.verified}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.heartIconContainer}
-                  onPress={() => handleLikePress(item.id)}
-                >
-                  <Ionicons
-                    name={item.isLiked ? "heart" : "heart-outline"}
-                    size={width * 0.07}
-                    color={item.isLiked ? "#db1c07" : "grey"}
-                  />
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.redoSearchWrapper}>
+              <View style={styles.redoSearch}>
+                <TouchableOpacity onPress={handleReload}>
+                  <Text style={styles.redoSearchText}>Tải lại tìm kiếm</Text>
                 </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+            </View>
+            {catSittersWithVerified.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.infoContainer}
+                onPress={() => handleSitterPress(item)}
+              >
+                <Image
+                  source={
+                    item.avatar
+                      ? { uri: item.avatar }
+                      : require("../../../assets/avatar.png")
+                  }
+                  style={styles.sitterImage}
+                />
+                <View style={styles.textContainer}>
+                  <View style={styles.headerRow}>
+                    <Text style={styles.name}>{item.fullName}</Text>
+                    <Text style={styles.priceLabel}>Giá mỗi đêm</Text>
+                  </View>
+                  <View style={styles.centerRow}>
+                    {/* <Text style={styles.description}>{item.bio}</Text>
+                  <Text style={styles.price}>150.000đ</Text> */}
+                    {item.bio ? (
+                      <Text
+                        style={styles.description}
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                      >
+                        {item.bio}
+                      </Text>
+                    ) : null}
+                    {item.price ? (
+                      <Text
+                        style={styles.price}
+                      >{`${item.price.toString()}đ`}</Text>
+                    ) : (
+                      <Text style={styles.price}>Chưa có giá</Text>
+                    )}
+                  </View>
+                  {/* <View style={styles.addressRow}>
+                  <Text style={styles.address}>{item.location}</Text>
+                </View> */}
+                  <View style={styles.addressRow}>
+                    <Text style={styles.address}>{item.location}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.distanceText}>
+                      Khoảng cách đến địa điểm: {item.distance}
+                    </Text>
+                  </View>
+
+                  <View style={styles.ratingContainer}>
+                    <StarRating
+                      disabled={true}
+                      maxStars={1}
+                      rating={item.rating}
+                      starSize={16}
+                      fullStarColor={"#F8B816"}
+                    />
+                    {/* <Text style={styles.ratingText}>{item.rating}</Text> */}
+                    <Text style={styles.ratingText}>
+                      {item.rating !== undefined && item.rating !== null
+                        ? item.rating.toString()
+                        : "Chưa có đánh giá"}
+                    </Text>
+
+                    <View style={styles.dotAndReviewContainer}>
+                      <View style={styles.dot} />
+                      <Text style={styles.reviews}>{item.reviews}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.verifiedContainer}>
+                    <Image
+                      source={require("../../../assets/Verified.png")}
+                      style={styles.verifiedIcon}
+                    />
+                    <Text style={styles.verifiedText}>{item.verified}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.heartIconContainer}
+                    onPress={() => handleLikePress(item.id)}
+                  >
+                    <Ionicons
+                      name={item.isLiked ? "heart" : "heart-outline"}
+                      size={width * 0.07}
+                      color={item.isLiked ? "#db1c07" : "grey"}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
       </View>
     </View>
   );
@@ -422,6 +507,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#000857",
     textAlign: "right",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   centerRow: {
     flexDirection: "row",

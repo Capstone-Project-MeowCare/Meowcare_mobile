@@ -11,7 +11,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { getData, putData } from "../../api/api";
 import { useAuth } from "../../../auth/useAuth";
 import moment from "moment";
@@ -19,6 +19,8 @@ import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { firebaseAvatar } from "../../api/firebaseImg";
 import CustomToast from "../../components/CustomToast";
+import axios from "axios";
+import { ScrollView } from "react-native-gesture-handler";
 
 const { width } = Dimensions.get("window");
 
@@ -34,6 +36,8 @@ export default function UpdateProfile({ navigation }) {
     address: "",
   });
   const [initialProfile, setInitialProfile] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModified, setIsModified] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false); // Trạng thái hiển thị DateTimePicker
@@ -67,7 +71,40 @@ export default function UpdateProfile({ navigation }) {
   useEffect(() => {
     fetchUserData();
   }, []);
+  const fetchAddressSuggestions = async (query) => {
+    try {
+      const response = await axios.get(
+        `https://api.geoapify.com/v1/geocode/autocomplete`,
+        {
+          params: {
+            text: query,
+            apiKey: "7eaa555d1d1f4dbe9b2792ee9c726f10",
+            limit: 5,
+          },
+        }
+      );
+      setSearchResults(response.data.features || []);
+    } catch (error) {
+      console.error("Error fetching address suggestions:", error);
+    }
+  };
 
+  const handleAddressSelect = (address) => {
+    setProfile({ ...profile, address: address.properties.formatted });
+    setSearchQuery(address.properties.formatted);
+    setSearchResults([]); // Xóa kết quả tìm kiếm sau khi chọn
+  };
+
+  const handleInputChange = (text) => {
+    setSearchQuery(text);
+    setProfile({ ...profile, address: text });
+
+    if (text.length > 2) {
+      fetchAddressSuggestions(text);
+    } else {
+      setSearchResults([]);
+    }
+  };
   useEffect(() => {
     if (
       initialProfile &&
@@ -156,7 +193,7 @@ export default function UpdateProfile({ navigation }) {
               ? { uri: selectedImage }
               : profile.avatar // Nếu không có ảnh được chọn, hiển thị ảnh từ Firebase
                 ? { uri: profile.avatar }
-                : require("../../../assets/catpeople.jpg") // Nếu không có ảnh nào, hiển thị ảnh cứng
+                : require("../../../assets/avatar.png") // Nếu không có ảnh nào, hiển thị ảnh cứng
           }
           style={styles.avatar}
         />
@@ -208,11 +245,45 @@ export default function UpdateProfile({ navigation }) {
           </View>
         </View>
         <Text style={styles.label}>Địa chỉ</Text>
-        <TextInput
-          style={styles.input}
-          value={profile.address}
-          onChangeText={(text) => setProfile({ ...profile, address: text })}
-        />
+        <View style={styles.searchBarContainer}>
+          <TextInput
+            placeholder="Nhập địa chỉ"
+            style={styles.searchBar}
+            value={searchQuery}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+              handleInputChange(text);
+            }}
+          />
+          {/* Nút xóa input */}
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setSearchQuery("");
+                setSearchResults([]);
+              }}
+              style={styles.clearButton}
+            >
+              <FontAwesome name="times-circle" size={20} color="#000" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Suggestions List */}
+        {searchResults.length > 0 && (
+          <ScrollView style={styles.suggestionsList}>
+            {searchResults.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleAddressSelect(item)}
+                style={styles.suggestionItem}
+              >
+                <Text>{item.properties.formatted}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.inputemail}
@@ -388,7 +459,41 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
   },
-
+  suggestionsList: {
+    backgroundColor: "#FFF",
+    paddingHorizontal: 16,
+    maxHeight: 150, // Giới hạn chiều cao của dropdown
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    marginTop: 5,
+  },
+  suggestionItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE",
+    fontSize: 16,
+    color: "#333",
+  },
+  searchBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 8,
+    paddingLeft: 10,
+    marginTop: 5,
+  },
+  searchBar: {
+    flex: 1,
+    paddingVertical: 8,
+    fontSize: 16,
+    color: "#212121",
+  },
+  clearButton: {
+    paddingHorizontal: 8,
+    justifyContent: "center",
+    alignItems: "flex-end", // Đưa nút về cuối dòng
+  },
   verifyButton: {
     color: "#FFA726",
     fontSize: 14,
