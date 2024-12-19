@@ -23,7 +23,6 @@ function FirstRoute({
   profilePictures,
   profilePicturesCargo,
   maximumQuantity,
-
 }) {
   return (
     <View style={styles.routeContainer}>
@@ -41,7 +40,6 @@ function FirstRoute({
             profilePictures={profilePictures}
             profilePicturesCargo={profilePicturesCargo}
             maximumQuantity={maximumQuantity}
-            
           />
         </View>
       </ScrollView>
@@ -64,7 +62,7 @@ function SecondRoute() {
   );
 }
 
-function ThirdRoute({ id }) {
+function ThirdRoute({ id, fullRefundDay }) {
   return (
     <View style={styles.routeContainer}>
       <ScrollView
@@ -72,7 +70,7 @@ function ThirdRoute({ id }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.tabContent}>
-          <CatSitterAssistance id={id} />
+          <CatSitterAssistance id={id} fullRefundDay={fullRefundDay} />
         </View>
       </ScrollView>
     </View>
@@ -106,7 +104,6 @@ export default function CatSitterServicePage({ navigation }) {
         const filteredPicturesCargo = Array.isArray(fetchedPictures)
           ? fetchedPictures.filter((picture) => picture.isCargoProfilePicture)
           : [];
-
 
         // Nếu không có hình ảnh hợp lệ, đặt giá trị mặc định
         setProfilePictures(
@@ -237,21 +234,25 @@ export default function CatSitterServicePage({ navigation }) {
             children={() => (
               <FirstRoute
                 experience={sitterDetails?.experience}
-                skill={sitterDetails?.skill?.split(",").map((s) => s.trim())}
+                skill={sitterDetails?.skill?.split(";").map((s) => s.trim())}
                 environment={sitterDetails?.environment}
                 location={sitterDetails?.location}
                 userId={userId}
                 profilePictures={profilePictures}
                 profilePicturesCargo={profilePicturesCargo}
                 maximumQuantity={sitterDetails?.maximumQuantity}
-           
               />
             )}
           />
           <Tab.Screen name="Đánh giá" component={SecondRoute} />
           <Tab.Screen
             name="Dịch vụ"
-            children={() => <ThirdRoute id={userId} />} // Dùng ID mới ở đây
+            children={() => (
+              <ThirdRoute
+                id={userId}
+                fullRefundDay={sitterDetails?.fullRefundDay}
+              />
+            )} // Dùng ID mới ở đây
           />
         </Tab.Navigator>
       </View>
@@ -268,18 +269,6 @@ export default function CatSitterServicePage({ navigation }) {
           <Text style={styles.bookingText}>Đặt Lịch</Text>
         </TouchableOpacity>
       )}
-      {/* {activeTab === "Đánh giá" && user.id !== sitterDetails?.user?.id && (
-        <TouchableOpacity
-          style={styles.bookingButton}
-          onPress={() =>
-            navigation.navigate("SitterReviewScreen", {
-              sitterId: sitterDetails?.user?.id,
-            })
-          }
-        >
-          <Text style={styles.bookingText}>Đánh giá ngay</Text>
-        </TouchableOpacity>
-      )} */}
     </ScrollView>
   );
 }
