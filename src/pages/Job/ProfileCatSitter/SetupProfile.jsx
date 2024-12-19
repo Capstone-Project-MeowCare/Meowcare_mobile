@@ -40,7 +40,7 @@ export default function SetupProfile({ navigation }) {
   const [cageDescription, setCageDescription] = useState("");
   const [certificates, setCertificates] = useState([]);
   const [removedCertificates, setRemovedCertificates] = useState([]);
-
+  const [fullRefundDay, setFullRefundDay] = useState("1");
   // const renderImage = ({ item, index }) => (
   //   <View style={styles.imageContainer}>
   //     <TouchableOpacity
@@ -71,41 +71,70 @@ export default function SetupProfile({ navigation }) {
     setTimeout(() => setImageViewVisible(true), 0); // Đảm bảo trạng thái được cập nhật trước khi hiển thị
   };
 
-  const renderProfileImage = ({ item, index }) => (
-    <View style={styles.imageContainer}>
-      <TouchableOpacity
-        onPress={() => handleImagePress(index, false)} // false: ảnh cá nhân
-      >
-        <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() =>
-          setProfilePictures((prev) => prev.filter((pic) => pic.id !== item.id))
-        }
-      >
-        <Text style={styles.removeText}>X</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderProfileImage = ({ item, index }) => {
+    if (item.isPlaceholder) {
+      return (
+        <View style={styles.placeholderContainer}>
+          <View style={styles.placeholderButton}>
+            <AntDesign name="camerao" size={32} color="#902C6C" />
+            <Text style={styles.placeholderText}>
+              Thêm ảnh ({profilePictures.length}/10)
+            </Text>
+          </View>
+        </View>
+      );
+    }
 
-  const renderCageImage = ({ item, index }) => (
-    <View style={styles.imageContainer}>
-      <TouchableOpacity
-        onPress={() => handleImagePress(index, true)} // true: ảnh chuồng
-      >
-        <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() =>
-          setCagePictures((prev) => prev.filter((pic) => pic.id !== item.id))
-        }
-      >
-        <Text style={styles.removeText}>X</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    return (
+      <View style={styles.imageContainer}>
+        <TouchableOpacity onPress={() => handleImagePress(index, false)}>
+          <Image source={{ uri: item.imageUrl }} style={styles.image} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() =>
+            setProfilePictures((prev) =>
+              prev.filter((pic) => pic.id !== item.id)
+            )
+          }
+        >
+          <Text style={styles.removeText}>X</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderCageImage = ({ item, index }) => {
+    if (item.isPlaceholder) {
+      return (
+        <View style={styles.placeholderContainer1}>
+          <View style={styles.placeholderButton1}>
+            <AntDesign name="camerao" size={32} color="#902C6C" />
+            <Text style={styles.placeholderText1}>
+              Thêm ảnh chuồng ({cagePictures.length}/10)
+            </Text>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.imageContainer}>
+        <TouchableOpacity onPress={() => handleImagePress(index, true)}>
+          <Image source={{ uri: item.imageUrl }} style={styles.image} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() =>
+            setCagePictures((prev) => prev.filter((pic) => pic.id !== item.id))
+          }
+        >
+          <Text style={styles.removeText}>X</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   // const renderCertificate = ({ item }) => (
   //   <View style={styles.imageContainer}>
   //     {item.certificateType === "IMAGE" ? (
@@ -171,6 +200,11 @@ export default function SetupProfile({ navigation }) {
   };
 
   const handleImagePick = async (isCagePicture = false) => {
+    if ((isCagePicture ? cagePictures.length : profilePictures.length) >= 10) {
+      Alert.alert("Thông báo", "Bạn chỉ có thể thêm tối đa 10 ảnh.");
+      return;
+    }
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -185,7 +219,7 @@ export default function SetupProfile({ navigation }) {
             id: new Date().getTime().toString(),
             imageName: newImage.uri.split("/").pop(),
             imageUrl: newImage.uri,
-            isCargoProfilePicture: isCagePicture, // Đánh dấu loại ảnh
+            isCargoProfilePicture: isCagePicture,
           };
 
           if (isCagePicture) {
@@ -203,6 +237,7 @@ export default function SetupProfile({ navigation }) {
       console.error("Error picking image:", error);
     }
   };
+
   // const handleCertificatePick = async () => {
   //   try {
   //     const result = await DocumentPicker.getDocumentAsync({
@@ -286,28 +321,32 @@ export default function SetupProfile({ navigation }) {
         if (response?.data) {
           const profileData = response.data;
 
-          // Lọc ảnh chuồng và lấy description nếu có
-          const cargoPictures = profileData.profilePictures.filter(
-            (pic) => pic.isCargoProfilePicture
-          );
-          const cargoDescription =
-            cargoPictures.length > 0 ? cargoPictures[0].description || "" : "";
+          const skillsFromAPI = profileData.skill
+            ? profileData.skill.split(";").map((s) => s.trim()) // Tách và loại bỏ khoảng trắng
+            : [];
 
           setSitterProfileId(profileData.id || null);
           setBio(profileData.bio || "");
           setExperience(profileData.experience || "");
           setEnvironment(profileData.environment || "");
-          setSelectedSkills(
-            profileData.skill ? profileData.skill.split(",") : []
-          );
+          setSelectedSkills(skillsFromAPI); // Gán kỹ năng đã chọn từ API
           setProfilePictures(
             profileData.profilePictures.filter(
               (pic) => !pic.isCargoProfilePicture
             )
           ); // Ảnh cá nhân
-          setCagePictures(cargoPictures); // Ảnh chuồng
+          setCagePictures(
+            profileData.profilePictures.filter(
+              (pic) => pic.isCargoProfilePicture
+            )
+          ); // Ảnh chuồng
           setMaximumQuantity(profileData.maximumQuantity || "");
-          setCageDescription(cargoDescription);
+          setCageDescription(
+            profileData.profilePictures.find(
+              (pic) => pic.isCargoProfilePicture && pic.description
+            )?.description || ""
+          );
+          setFullRefundDay(profileData.fullRefundDay || "");
         } else {
           console.error("Sitter profile data not found.");
         }
@@ -316,7 +355,6 @@ export default function SetupProfile({ navigation }) {
           console.log(
             "User does not have a profile yet. Preparing for creation..."
           );
-          // Không làm gì cả để chuẩn bị cho người dùng tạo hồ sơ mới
         } else {
           console.error("Error fetching sitter profile:", error);
           Alert.alert(
@@ -419,17 +457,17 @@ export default function SetupProfile({ navigation }) {
         const newProfilePayload = {
           bio,
           experience,
-          skill: selectedSkills.join(","),
+          skill: selectedSkills.join(";"),
           rating: 0,
           location: "Thủ Đức, Quận 9, TP.HCM",
           environment,
           maximumQuantity: parseInt(maximumQuantity, 10) || 0,
           status: "INACTIVE",
           profilePictures: [],
-          latitude: 10.8499, // Vĩ độ Thủ Đức
-          longitude: 106.7698, // Kinh độ Thủ Đức
+          // latitude: 10.8499, // Vĩ độ Thủ Đức
+          // longitude: 106.7698, // Kinh độ Thủ Đức
           distance: 0,
-          fullRefundDay: 0,
+          fullRefundDay: parseInt(fullRefundDay, 10),
         };
 
         console.log("Payload gửi để tạo mới hồ sơ:", newProfilePayload);
@@ -528,7 +566,7 @@ export default function SetupProfile({ navigation }) {
         sitterId: user?.id,
         bio,
         experience,
-        skill: selectedSkills.join(","),
+        skill: selectedSkills.join(";"),
         environment,
         maximumQuantity: parseInt(maximumQuantity, 10) || 0,
         status: 0,
@@ -537,6 +575,7 @@ export default function SetupProfile({ navigation }) {
             ? { ...pic, description: cageDescription }
             : pic
         ),
+        fullRefundDay: parseInt(fullRefundDay, 10),
       };
 
       console.log("Payload gửi đến API cập nhật hồ sơ:", profileData);
@@ -562,7 +601,13 @@ export default function SetupProfile({ navigation }) {
       setIsSaving(false);
     }
   };
-
+  const handleRefundDayChange = (text) => {
+    // Chỉ cho phép nhập số trong khoảng 1-7
+    const value = text.replace(/[^0-9]/g, ""); // Loại bỏ ký tự không phải số
+    if (value === "" || (parseInt(value) >= 1 && parseInt(value) <= 7)) {
+      setFullRefundDay(value);
+    }
+  };
   const toggleSkillSelection = (skillId) => {
     const skillName = CatSitterSkill.find(
       (skill) => skill.id === skillId
@@ -583,6 +628,7 @@ export default function SetupProfile({ navigation }) {
       });
     }
   };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -627,9 +673,11 @@ export default function SetupProfile({ navigation }) {
         <Text style={styles.sectionTitle}>Ảnh của bạn</Text>
         <View style={styles.imageListContainer}>
           <FlatList
-            data={profilePictures}
+            data={[{ isPlaceholder: true }, ...profilePictures]} // Placeholder nằm ở đầu
             renderItem={renderProfileImage}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) =>
+              item.id || `placeholder-profile-${index}`
+            }
             horizontal
           />
         </View>
@@ -710,6 +758,26 @@ export default function SetupProfile({ navigation }) {
           <Text style={styles.characterCount}>{environment.length} / 500</Text>
         </View>
         <View style={styles.end}>
+          <Text style={styles.sectionTitle}>Số ngày hoàn tiền</Text>
+          <View style={styles.row}>
+            <Text style={styles.labelText}>
+              Số ngày khách hàng có thể hủy dịch vụ:
+            </Text>
+            <View style={styles.inputWithLabel}>
+              <TextInput
+                style={[styles.inputNumber, { flex: 1 }]}
+                keyboardType="number-pad"
+                maxLength={1} // Chỉ cho phép nhập 1 chữ số
+                placeholder="1"
+                value={fullRefundDay.toString()}
+                onChangeText={handleRefundDayChange}
+              />
+              <Text style={styles.staticText}>ngày</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.end}>
           <Text style={styles.sectionTitle}>Chứng chỉ của bạn</Text>
           <View style={styles.imageListContainer}>
             {/* Hiển thị danh sách chứng chỉ nếu có */}
@@ -748,9 +816,11 @@ export default function SetupProfile({ navigation }) {
           <Text style={styles.CageTitle}>Ảnh chuồng cho mèo cưng:</Text>
           <View style={styles.imageListContainer}>
             <FlatList
-              data={cagePictures}
+              data={[{ isPlaceholder: true }, ...cagePictures]} // Placeholder nằm ở đầu
               renderItem={renderCageImage}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item, index) =>
+                item.id || `placeholder-cage-${index}`
+              }
               horizontal
             />
           </View>
@@ -827,6 +897,45 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D3D3D3",
     borderBottomWidth: 1,
   },
+  placeholderContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: "rgb(252, 231, 243)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  placeholderButton: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  placeholderText: {
+    marginTop: 8,
+    textAlign: "center",
+    color: "#902C6C",
+    fontSize: 14,
+  },
+  placeholderContainer1: {
+    width: 80,
+    height: 80,
+    backgroundColor: "rgb(252, 231, 243)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  placeholderButton1: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  placeholderText1: {
+    marginBottom: 8,
+    textAlign: "center",
+    color: "#902C6C",
+    fontSize: 14,
+  },
   editProfileContainer: {
     padding: 16,
     // Add more styling and components for editing profile
@@ -893,6 +1002,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
     borderRadius: 8,
+    marginTop: 10,
   },
   addButtonText: {
     color: "#FFFFFF",
@@ -946,7 +1056,6 @@ const styles = StyleSheet.create({
   end: {
     marginBottom: 50,
   },
-
   previewProfileContainer: {
     padding: 16,
     // Add more styling and components for previewing profile
@@ -961,6 +1070,16 @@ const styles = StyleSheet.create({
     color: "#555",
     flex: 1,
   },
+  inputWithLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    // borderColor: "#D3D3D3",
+    // borderWidth: 1,
+    // borderRadius: 8,
+    height: 40,
+    width: 120, // Chiều rộng tổng hợp giữa số và chữ "ngày"
+    paddingHorizontal: 8,
+  },
   inputNumber: {
     width: 100,
     height: 40,
@@ -970,5 +1089,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     color: "#333",
+  },
+  staticText: {
+    fontSize: 14,
+    color: "#555",
+    marginLeft: 4, // Khoảng cách giữa số và chữ
   },
 });

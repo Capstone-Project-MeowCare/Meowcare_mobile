@@ -6,6 +6,7 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CatSitterCalendarSetting from "./CatSitterCalendarSetting";
@@ -40,15 +41,14 @@ const ExtraServiceItem = ({ image, mainText, price }) => (
   </View>
 );
 
-export default function CatSitterAssistance({ id }) {
-  // console.log("Received id in CatSitterAssistance:", id);
+export default function CatSitterAssistance({ id, fullRefundDay }) {
   const [mainServices, setMainServices] = useState([]);
   const [additionalServices, setAdditionalServices] = useState([]);
   const [childServices, setChildServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [markedDates, setMarkedDates] = useState({});
   const [latestUpdate, setLatestUpdate] = useState(null);
-  // const [sitterProfile, setSitterProfile] = useState();
+
   const [selectedServiceId, setSelectedServiceId] = useState(null);
 
   const formatTime = (time) => {
@@ -179,7 +179,9 @@ export default function CatSitterAssistance({ id }) {
   return (
     <View style={styles.container}>
       {loading ? (
-        <Text>Đang tải...</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#902C6C" />
+        </View>
       ) : (
         <>
           {/* Render loại dịch vụ */}
@@ -200,7 +202,7 @@ export default function CatSitterAssistance({ id }) {
                   <ServiceItem
                     image={require("../../../assets/Vector.png")}
                     mainText={service.name}
-                    price={`${service.price}đ`} // Giá trị chính xác được truyền từ mainServices
+                    price={`${service.price}đ`}
                   />
                 </TouchableOpacity>
 
@@ -256,6 +258,21 @@ export default function CatSitterAssistance({ id }) {
           )}
 
           <View style={styles.separator} />
+          <View style={styles.refundDayWrapper}>
+            <Text
+              style={[
+                styles.text1,
+                { textAlign: "left", right: height * 0.024 },
+              ]}
+            >
+              Số ngày hoàn tiền dịch vụ:
+            </Text>
+            <View style={styles.refundDayContainer}>
+              <Text style={styles.refundDayText}>
+                {fullRefundDay} <Text style={styles.dayText}>ngày</Text>
+              </Text>
+            </View>
+          </View>
 
           {/* Lịch */}
           <Text style={styles.text1}>Lịch</Text>
@@ -332,6 +349,11 @@ const styles = StyleSheet.create({
   iconAndTextContainer: {
     flexDirection: "row",
     alignItems: "center", // Căn giữa icon và text
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   serviceImage: {
     width: width * 0.1, // Kích thước hình ảnh
@@ -429,6 +451,36 @@ const styles = StyleSheet.create({
     color: "#000857",
     fontWeight: "500",
     textAlign: "center",
+  },
+  refundDayWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: width * 0.05,
+    marginTop: height * 0.02,
+  },
+  refundDayContainer: {
+    flexDirection: "row",
+    alignItems: "center", // Căn giữa theo chiều dọc
+    marginTop: height * 0.027,
+  },
+  refundDayText: {
+    fontSize: width * 0.04,
+    lineHeight: width * 0.05,
+    color: "#000857",
+    fontWeight: "600",
+  },
+  dayText: {
+    fontSize: width * 0.04,
+    lineHeight: width * 0.02,
+    color: "rgba(0, 8, 87, 0.6)",
+    fontWeight: "400",
+  },
+  dayText: {
+    fontSize: width * 0.04,
+    color: "rgba(0, 8, 87, 0.6)",
+    fontWeight: "400",
   },
   legendContainer: {
     flexDirection: "row",
