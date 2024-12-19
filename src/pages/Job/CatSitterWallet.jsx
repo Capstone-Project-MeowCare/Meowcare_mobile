@@ -74,7 +74,7 @@ export default function CatSitterProfile({ navigation }) {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate("Công Việc")}
+          onPress={() => navigation.goBack()}
         >
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>

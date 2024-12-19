@@ -2,7 +2,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, Dimensions, Image } from "react-native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
-import { Ionicons } from "@expo/vector-icons";
+import { Entypo, Ionicons } from "@expo/vector-icons";
 import Swiper from "react-native-swiper";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import CatSitterInformation from "./CatSitterInformation";
@@ -149,13 +149,27 @@ export default function CatSitterServicePage({ navigation }) {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thông tin người chăm mèo</Text>
-        <TouchableOpacity style={styles.filterButton} onPress={handleLikePress}>
-          <Ionicons
-            name={isLiked ? "heart" : "heart-outline"}
-            size={width * 0.07}
-            color={isLiked ? "#902C6C" : "grey"}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={handleLikePress}
+          >
+            <Ionicons
+              name={isLiked ? "heart" : "heart-outline"}
+              size={30} // Đặt kích thước giống nhau
+              color={isLiked ? "#902C6C" : "grey"}
+            />
+          </TouchableOpacity>
+
+          {user.id !== sitterDetails?.user?.id && (
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => console.log("Menu pressed")}
+            >
+              <Entypo name="dots-three-vertical" size={30} color="#000857" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.swiperContainer}>
@@ -283,17 +297,29 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingTop: height * 0.02,
+    alignItems: "center", // Căn giữa dọc
+    justifyContent: "space-between", // Tách đều các phần tử
     paddingHorizontal: width * 0.02,
     backgroundColor: "#FFFAF5",
+    height: height * 0.08, // Chiều cao cố định
   },
   backButton: {
-    flex: 1,
-    justifyContent: "flex-start",
+    justifyContent: "center",
+    alignItems: "center",
+    width: width * 0.1, // Chiều rộng cố định để căn đều
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center", // Đảm bảo các biểu tượng căn giữa dọc
   },
   filterButton: {
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: width * 0.02,
+  },
+  menuButton: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   backArrow: {
     width: 30,
