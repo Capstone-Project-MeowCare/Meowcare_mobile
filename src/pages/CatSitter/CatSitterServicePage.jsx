@@ -1,6 +1,17 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import { Text, View, StyleSheet, Dimensions, Image } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Dimensions,
+  Image,
+  Animated,
+  Modal,
+  Pressable,
+  TextInput,
+  Alert,
+} from "react-native";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { Entypo, Ionicons } from "@expo/vector-icons";
 import Swiper from "react-native-swiper";
@@ -8,9 +19,10 @@ import { createMaterialTopTabNavigator } from "@react-navigation/material-top-ta
 import CatSitterInformation from "./CatSitterInformation";
 import CatSitterReviews from "./CatSitterReviews";
 import CatSitterAssistance from "./CatSitterAssistance";
-import { getData } from "../../api/api";
+import { getData, postData } from "../../api/api";
 import { ActivityIndicator } from "react-native-paper";
 import { useAuth } from "../../../auth/useAuth";
+import { Picker } from "@react-native-picker/picker";
 
 const { width, height } = Dimensions.get("window");
 
@@ -91,11 +103,41 @@ export default function CatSitterServicePage({ navigation }) {
   const [profilePicturesCargo, setProfilePicturesCargo] = useState([]);
   const [activeTab, setActiveTab] = useState("Thông tin");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isModalVisible, setIsModalVisible] = useState(false); // State để hiển thị modal
+  const slideAnim = useRef(new Animated.Value(height)).current;
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
+  const [violationType, setViolationType] = useState(""); // Loại vi phạm
+  const [reportReason, setReportReason] = useState(""); // Lý do báo cáo
+  const [violationContent, setViolationContent] = useState(""); // Nội dung vi phạm
+  const [reportTypes, setReportTypes] = useState([]);
+  const handleDotsPress = () => {
+    setIsModalVisible(true);
+    Animated.timing(slideAnim, {
+      toValue: height * 0.8,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+  const closeModal = () => {
+    Animated.timing(slideAnim, {
+      toValue: height,
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => setIsModalVisible(false));
+  };
+  const openReportModal = () => {
+    closeModal(); // Tắt modal cũ
+    setIsReportModalVisible(true); // Hiển thị modal mới
+  };
+
+  const closeReportModal = () => {
+    setIsReportModalVisible(false); // Tắt modal mới
+  };
   useEffect(() => {
     const fetchSitterDetails = async () => {
       try {
         const response = await getData(`/sitter-profiles/${sitterId}`);
-        const { profilePictures: fetchedPictures } = response.data;
+        const { profilePictures: fetchedPictures, user } = response.data;
 
         // Lọc chỉ những hình ảnh có isCargoProfilePicture === false
         const filteredPictures = Array.isArray(fetchedPictures)
@@ -118,8 +160,8 @@ export default function CatSitterServicePage({ navigation }) {
         );
 
         setSitterDetails(response.data);
-      } catch (error) {
-        console.error("Error fetching sitter details:", error);
+        const sitterEmail = user?.email || "Không có email";
+        console.log("Sitter Email:", sitterEmail);
       } finally {
         setLoading(false);
       }
@@ -127,10 +169,54 @@ export default function CatSitterServicePage({ navigation }) {
 
     if (sitterId) fetchSitterDetails();
   }, [sitterId]);
+  const handleSubmitReport = async () => {
+    if (!violationType || !reportReason || !violationContent) {
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
 
+    const payload = {
+      userId: user.id, // Từ useAuth()
+      userEmail: user.email, // Từ useAuth()
+      reportedUserId: userId, // Từ route params
+      reportedUserEmail: sitterDetails?.user?.email, // Lấy từ fetchSitterDetails
+      reportTypeId: violationType, // ID loại báo cáo từ Picker
+      reason: reportReason, // Lý do báo cáo
+      description: violationContent, // Nội dung vi phạm
+    };
+
+    try {
+      const response = await postData("/reports", payload);
+      if (response.status === 1001) {
+        Alert.alert("Thành công", "Báo cáo đã được gửi thành công!");
+        closeReportModal(); // Đóng modal
+      } else {
+        Alert.alert("Thất bại", `Gửi báo cáo thất bại: ${response.message}`);
+      }
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi gửi báo cáo.");
+    }
+  };
   const handleLikePress = () => {
     setIsLiked(!isLiked);
   };
+  useEffect(() => {
+    const fetchReportTypes = async () => {
+      try {
+        const response = await getData("/report-types"); // Gọi API
+        if (response.status === 1000) {
+          setReportTypes(response.data); // Lưu danh sách loại báo cáo
+        } else {
+          console.error("Failed to fetch report types:", response.message);
+        }
+      } catch (error) {
+        console.error("Error fetching report types:", error);
+      }
+    };
+
+    fetchReportTypes();
+  }, []);
 
   return (
     <ScrollView
@@ -164,7 +250,7 @@ export default function CatSitterServicePage({ navigation }) {
           {user.id !== sitterDetails?.user?.id && (
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => console.log("Menu pressed")}
+              onPress={handleDotsPress}
             >
               <Entypo name="dots-three-vertical" size={30} color="#000857" />
             </TouchableOpacity>
@@ -283,6 +369,99 @@ export default function CatSitterServicePage({ navigation }) {
           <Text style={styles.bookingText}>Đặt Lịch</Text>
         </TouchableOpacity>
       )}
+      {isModalVisible && (
+        <Modal
+          transparent={true}
+          visible={isModalVisible}
+          animationType="none"
+          onRequestClose={closeModal}
+        >
+          <Pressable style={styles.overlay} onPress={closeModal} />
+          <Animated.View
+            style={[
+              styles.modalContent,
+              { transform: [{ translateY: slideAnim }] },
+            ]}
+          >
+            <View style={styles.modalBody}>
+              <Pressable
+                style={styles.reportButton}
+                onPress={openReportModal} // Mở modal mới
+              >
+                <Text style={styles.reportButtonText}>Báo cáo</Text>
+              </Pressable>
+            </View>
+            <Pressable style={styles.cancelButton} onPress={closeModal}>
+              <Text style={styles.cancelButtonText}>Hủy</Text>
+            </Pressable>
+          </Animated.View>
+        </Modal>
+      )}
+      {isReportModalVisible && (
+        <Modal
+          transparent={true}
+          visible={isReportModalVisible}
+          animationType="none" // Không cần animation
+          onRequestClose={closeReportModal}
+        >
+          <Pressable style={styles.overlay} onPress={closeReportModal} />
+          <View style={styles.centeredModal}>
+            <Text style={styles.reportModalText}>
+              Báo cáo vi phạm người dùng
+            </Text>
+
+            {/* Picker: Loại vi phạm */}
+            <View style={styles.pickerContainer}>
+              <Text style={styles.labelText}>Loại vi phạm</Text>
+              <Picker
+                selectedValue={violationType}
+                onValueChange={(itemValue) => setViolationType(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Chọn loại vi phạm" value="" />
+                {reportTypes.map((type) => (
+                  <Picker.Item
+                    key={type.id}
+                    label={type.name}
+                    value={type.id}
+                  />
+                ))}
+              </Picker>
+            </View>
+
+            {/* Input: Lý do báo cáo */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.labelText}>Lý do báo cáo</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Nhập lý do báo cáo"
+                value={reportReason}
+                onChangeText={setReportReason}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.labelText}>Nội dung vi phạm</Text>
+              <TextInput
+                style={styles.textarea}
+                placeholder="Nhập chi tiết nội dung vi phạm"
+                value={violationContent}
+                onChangeText={setViolationContent}
+                multiline={true}
+                numberOfLines={4}
+              />
+            </View>
+
+            {/* Nút Đóng */}
+            <Pressable
+              style={styles.closeButton}
+              onPress={handleSubmitReport} // Đóng modal
+            >
+              <Text style={styles.closeButtonText}>Gửi Báo Cáo</Text>
+            </Pressable>
+          </View>
+        </Modal>
+      )}
     </ScrollView>
   );
 }
@@ -297,20 +476,20 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "center", // Căn giữa dọc
-    justifyContent: "space-between", // Tách đều các phần tử
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: width * 0.02,
     backgroundColor: "#FFFAF5",
-    height: height * 0.08, // Chiều cao cố định
+    height: height * 0.08,
   },
   backButton: {
     justifyContent: "center",
     alignItems: "center",
-    width: width * 0.1, // Chiều rộng cố định để căn đều
+    width: width * 0.1,
   },
   headerRight: {
     flexDirection: "row",
-    alignItems: "center", // Đảm bảo các biểu tượng căn giữa dọc
+    alignItems: "center",
   },
   filterButton: {
     justifyContent: "center",
@@ -332,6 +511,129 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#000857",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Làm mờ nền
+    justifyContent: "flex-end", // Modal xuất hiện từ dưới
+  },
+  modalContent: {
+    width: "100%",
+    height: "20%",
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  modalBody: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cancelButton: {
+    width: "90%",
+    alignSelf: "center",
+    paddingVertical: 15,
+    backgroundColor: "#F8F8F8", // Màu nền
+    borderRadius: 10,
+    marginBottom: 20, // Tạo khoảng cách từ đáy modal
+    alignItems: "center",
+    zIndex: 1, // Đưa nút lên trên cùng nếu cần
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: "#902C6C",
+    fontWeight: "bold",
+  },
+  centeredModal: {
+    width: "80%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginTop: "50%", // Căn giữa màn hình
+  },
+  reportModalText: {
+    fontSize: 18,
+    color: "#000",
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  closeButton: {
+    backgroundColor: "#F8F8F8",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: "#902C6C",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  reportButton: {
+    backgroundColor: "#902C6C",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  reportButtonText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  pickerContainer: {
+    width: "90%",
+    marginBottom: 20,
+    alignSelf: "center",
+  },
+  picker: {
+    height: 50,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+  },
+  inputContainer: {
+    width: "90%",
+    marginBottom: 20,
+    alignSelf: "center",
+  },
+  labelText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#000",
+  },
+  input: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    height: 40,
+    fontSize: 14,
+    backgroundColor: "#fff",
+  },
+  textarea: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    height: 100,
+    fontSize: 14,
+    backgroundColor: "#fff",
+    textAlignVertical: "top", // Đảm bảo text bắt đầu từ trên cùng
   },
   swiperContainer: {
     height: height * 0.35,
@@ -378,7 +680,7 @@ const styles = StyleSheet.create({
   infoContent: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: height * 0.02, // Thêm margin để tránh đè lên nhau
+    marginBottom: height * 0.02,
   },
   sitterImage: {
     width: width * 0.16,

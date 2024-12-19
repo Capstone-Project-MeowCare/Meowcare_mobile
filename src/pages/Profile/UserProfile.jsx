@@ -43,34 +43,36 @@ export default function UpdateProfile({ navigation }) {
   const [showDatePicker, setShowDatePicker] = useState(false); // Trạng thái hiển thị DateTimePicker
   const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const fetchUserData = async () => {
-    try {
-      const response = await getData(`/users/${user.id}`);
-      if (response?.data) {
-        const fetchedProfile = {
-          fullName: response.data.fullName || "",
-          phone: response.data.phoneNumber || "",
-          birthDate: response.data.dob
-            ? moment(response.data.dob).format("YYYY-MM-DD")
-            : "", // Chuyển về format dễ xử lý
-          gender: response.data.gender || "",
-          email: response.data.email || "",
-          avatar: response.data.avatar || "",
-          address: response.data.address || "",
-        };
-        setProfile(fetchedProfile);
-        setInitialProfile(fetchedProfile);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await getData(`/users/${user.id}`);
+        if (response?.data) {
+          const fetchedProfile = {
+            fullName: response.data.fullName || "",
+            phone: response.data.phoneNumber || "",
+            birthDate: response.data.dob
+              ? moment(response.data.dob).format("YYYY-MM-DD")
+              : "",
+            gender: response.data.gender || "",
+            email: response.data.email || "",
+            avatar: response.data.avatar || "",
+            address: response.data.address || "",
+          };
+          setProfile(fetchedProfile);
+          setInitialProfile(fetchedProfile);
+          setSearchQuery(fetchedProfile.address); // Đồng bộ giá trị address vào searchQuery
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUserData();
-  }, []);
+  }, [user.id]);
+
   const fetchAddressSuggestions = async (query) => {
     try {
       const response = await axios.get(
@@ -176,7 +178,11 @@ export default function UpdateProfile({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 20 }}
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -366,7 +372,7 @@ export default function UpdateProfile({ navigation }) {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 

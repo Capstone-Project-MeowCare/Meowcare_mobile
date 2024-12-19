@@ -52,7 +52,9 @@ const catSitterData = [
     imageSource: require("../../../assets/catpeople.jpg"),
   },
 ];
-{/* List Cat sitter có dịch vụ Gửi thú cưng */}
+{
+  /* List Cat sitter có dịch vụ Gửi thú cưng */
+}
 function FirstRoute() {
   const navigation = useNavigation();
   const [parentPressEnabled, setParentPressEnabled] = useState(true);
@@ -71,7 +73,6 @@ function FirstRoute() {
           const firstProfilePicture = item.profilePictures.find(
             (picture) => !picture.isCargoProfilePicture
           );
-        
 
           return {
             id: item.id,
@@ -81,7 +82,6 @@ function FirstRoute() {
             profileImage: firstProfilePicture
               ? firstProfilePicture.imageUrl
               : null, // Lưu cố định hình đầu tiên
-            
           };
         })
         .slice(0, 4); // Lấy tối đa 4 sitter
@@ -155,8 +155,9 @@ function FirstRoute() {
   );
 }
 
-
-{/* List Cat sitter có dịch vụ khác */}
+{
+  /* List Cat sitter có dịch vụ khác */
+}
 function SecondRoute() {
   const navigation = useNavigation();
   const [parentPressEnabled, setParentPressEnabled] = useState(true);
@@ -175,7 +176,6 @@ function SecondRoute() {
           const firstProfilePicture = item.profilePictures.find(
             (picture) => !picture.isCargoProfilePicture
           );
-        
 
           return {
             id: item.id,
@@ -185,7 +185,6 @@ function SecondRoute() {
             profileImage: firstProfilePicture
               ? firstProfilePicture.imageUrl
               : null, // Lưu cố định hình đầu tiên
-            
           };
         })
         .slice(0, 4); // Lấy tối đa 4 sitter
@@ -218,44 +217,44 @@ function SecondRoute() {
 
   return (
     <ScrollView
-    style={styles.fullScreenContainer}
-    contentContainerStyle={styles.contentContainer}
-    showsVerticalScrollIndicator={false}
-  >
-    <View style={styles.catSitterGridContainer}>
-      {sitterData.map((item) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.catSitterItemContainer}
-          onPress={() =>
-            parentPressEnabled &&
-            navigateToSitterServicePage(navigation, item.id, item.sitterId)
-          }
-        >
-          <CatSitterCard
-            sitterName={item.fullName}
-            address={item.location}
-            imageSource={
-              item.profileImage
-                ? { uri: item.profileImage }
-                : require("../../../assets/catpeople.jpg")
+      style={styles.fullScreenContainer}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.catSitterGridContainer}>
+        {sitterData.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.catSitterItemContainer}
+            onPress={() =>
+              parentPressEnabled &&
+              navigateToSitterServicePage(navigation, item.id, item.sitterId)
             }
-            isVerified={true}
-            disableParentPress={disableParentPress}
-            enableParentPress={enableParentPress}
-          />
+          >
+            <CatSitterCard
+              sitterName={item.fullName}
+              address={item.location}
+              imageSource={
+                item.profileImage
+                  ? { uri: item.profileImage }
+                  : require("../../../assets/catpeople.jpg")
+              }
+              isVerified={true}
+              disableParentPress={disableParentPress}
+              enableParentPress={enableParentPress}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+      {/* Nút Xem Tất Cả */}
+      <View style={{ alignItems: "center", marginTop: 10 }}>
+        <TouchableOpacity onPress={() => navigation.navigate("ListCatSitter")}>
+          <Text style={{ color: "#000", fontSize: 16, fontWeight: "bold" }}>
+            Xem tất cả
+          </Text>
         </TouchableOpacity>
-      ))}
-    </View>
-    {/* Nút Xem Tất Cả */}
-    <View style={{ alignItems: "center", marginTop: 10 }}>
-      <TouchableOpacity onPress={() => navigation.navigate("ListCatSitter")}>
-        <Text style={{ color: "#000", fontSize: 16, fontWeight: "bold" }}>
-          Xem tất cả
-        </Text>
-      </TouchableOpacity>
-    </View>
-  </ScrollView>
+      </View>
+    </ScrollView>
   );
 }
 
