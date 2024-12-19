@@ -1,50 +1,124 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
   Text,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../../../auth/useAuth";
+import { getData } from "../../../api/api";
 
 export default function InComeStatistics({ navigation }) {
   const [selectedMonth, setSelectedMonth] = useState("12/2024");
+  const { user } = useAuth();
+  const [totalBookings, setTotalBookings] = useState(null);
+  const [totalRevenue, setTotalRevenue] = useState(null); // Tổng doanh thu
+  const [totalCommission, setTotalCommission] = useState(null); // Chiết khấu + Thuế
+  const [loadingBookings, setLoadingBookings] = useState(true);
+  const [loadingRevenue, setLoadingRevenue] = useState(true);
+  const [loadingCommission, setLoadingCommission] = useState(true);
 
-  // Tháng và dữ liệu giả lập
   const months = ["8/2024", "9/2024", "10/2024", "11/2024", "12/2024"];
-  const incomeData = {
-    totalValue: 5000,
-    revenue: 4500,
-    discountTax: 500,
-    netIncome: 4000,
-    totalBookings: 120,
+
+  const parseMonthToDateRange = (month) => {
+    const [monthNumber, year] = month.split("/").map(Number);
+    const fromTime = new Date(year, monthNumber - 1, 1).toISOString();
+    const toTime = new Date(year, monthNumber, 0, 23, 59, 59).toISOString();
+    return { fromTime, toTime };
   };
+
+  const fetchTotalBookings = async (month) => {
+    setLoadingBookings(true);
+    try {
+      const fetchByOrderType = async (orderType) => {
+        const response = await getData("/booking-orders/count-by-sitter", {
+          id: user.id,
+          orderType,
+        });
+        return response.status === 1000 ? response.data : 0;
+      };
+
+      const overnightBookings = await fetchByOrderType("OVERNIGHT");
+      const otherServices = await fetchByOrderType("BUY_SERVICE");
+
+      setTotalBookings({
+        overnight: overnightBookings,
+        other: otherServices,
+        total: overnightBookings + otherServices, // Tính tổng
+      });
+    } catch (error) {
+      console.error("Error fetching total bookings: ", error);
+      setTotalBookings({ overnight: 0, other: 0, total: 0 });
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  const fetchTotalRevenue = async (month) => {
+    setLoadingRevenue(true);
+    try {
+      const { fromTime, toTime } = parseMonthToDateRange(month);
+      const response = await getData("/transactions/search/total-amount", {
+        userId: user.id,
+        status: "COMPLETED",
+        fromTime,
+        toTime,
+      });
+
+      setTotalRevenue(response.status === 1000 ? response.data : 0);
+    } catch (error) {
+      console.error("Error fetching total revenue: ", error);
+      setTotalRevenue(0);
+    } finally {
+      setLoadingRevenue(false);
+    }
+  };
+
+  const fetchTotalCommission = async (month) => {
+    setLoadingCommission(true);
+    try {
+      const { fromTime, toTime } = parseMonthToDateRange(month);
+      const response = await getData("/transactions/search/total-amount", {
+        userId: user.id,
+        status: "COMPLETED",
+        transactionType: "COMMISSION",
+        fromTime,
+        toTime,
+      });
+
+      setTotalCommission(response.status === 1000 ? response.data : 0);
+    } catch (error) {
+      console.error("Error fetching total commission: ", error);
+      setTotalCommission(0);
+    } finally {
+      setLoadingCommission(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotalBookings(selectedMonth);
+    fetchTotalRevenue(selectedMonth);
+    fetchTotalCommission(selectedMonth);
+  }, [selectedMonth]);
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back-outline" size={30} color="#000857" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thống kê thu nhập</Text>
       </View>
-
-      {/* Đường kẻ ngang */}
       <View style={styles.divider} />
 
-      {/* Thanh chọn tháng */}
       <View style={styles.main}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            flexDirection: "row",
-            alignItems: "flex-start",
-            padding: 10,
-          }}
-          style={styles.monthSelector}
+          contentContainerStyle={{ flexDirection: "row", padding: 10 }}
         >
           {months.map((month, index) => (
             <TouchableOpacity
@@ -67,28 +141,81 @@ export default function InComeStatistics({ navigation }) {
           ))}
         </ScrollView>
 
-        {/* Thống kê chi tiết */}
         <ScrollView style={styles.detailsContainer}>
           <View style={styles.item}>
             <Text style={styles.itemLabel}>Tổng số đặt lịch</Text>
-            <Text style={styles.itemValue}>
-              {incomeData.totalBookings} Đơn đặt lịch
-            </Text>
+            {loadingBookings ? (
+              <ActivityIndicator size="small" color="#902C6C" />
+            ) : (
+              <Text style={styles.itemValue}>
+                {totalBookings?.total || 0} Đơn đặt lịch
+              </Text>
+            )}
           </View>
           <View style={styles.divid} />
           <View style={styles.item}>
-            <Text style={styles.itemLabel}>Tổng giá trị</Text>
-            <Text style={styles.itemValue}>{incomeData.totalValue}đ</Text>
+            <Text style={styles.itemLabel}>Tổng số dịch vụ gửi thú cưng</Text>
+            {loadingBookings ? (
+              <ActivityIndicator size="small" color="#902C6C" />
+            ) : (
+              <Text style={styles.itemValue}>
+                {totalBookings?.overnight || 0} Đơn
+              </Text>
+            )}
+          </View>
+          <View style={styles.divid} />
+          <View style={styles.item}>
+            <Text style={styles.itemLabel}>Tổng số dịch vụ khác</Text>
+            {loadingBookings ? (
+              <ActivityIndicator size="small" color="#902C6C" />
+            ) : (
+              <Text style={styles.itemValue}>
+                {totalBookings?.other || 0} Đơn
+              </Text>
+            )}
+          </View>
+          <View style={styles.divid} />
+          <View style={styles.item}>
+            <Text style={styles.itemLabel}>Doanh số</Text>
+            {loadingRevenue ? (
+              <ActivityIndicator size="small" color="#902C6C" />
+            ) : (
+              <Text style={styles.itemValue}>
+                {totalRevenue?.toLocaleString() || 0}đ
+              </Text>
+            )}
           </View>
           <View style={styles.divid} />
           <View style={styles.item}>
             <Text style={styles.itemLabel}>Chiết khấu + Thuế</Text>
-            <Text style={styles.itemValue}>-{incomeData.discountTax}đ</Text>
+            {loadingCommission ? (
+              <ActivityIndicator size="small" color="#902C6C" />
+            ) : (
+              <Text
+                style={[
+                  styles.itemValue,
+                  { color: "red" }, // Màu đỏ cho chiết khấu + thuế
+                ]}
+              >
+                -{totalCommission?.toLocaleString() || 0}đ
+              </Text>
+            )}
           </View>
           <View style={styles.divid} />
           <View style={styles.item}>
             <Text style={styles.itemLabel}>Thu nhập ròng</Text>
-            <Text style={styles.itemValue}>{incomeData.netIncome}đ</Text>
+            {loadingRevenue || loadingCommission ? (
+              <ActivityIndicator size="small" color="#902C6C" />
+            ) : (
+              <Text
+                style={[
+                  styles.itemValue,
+                  { color: "green" }, // Màu xanh lá cho thu nhập ròng
+                ]}
+              >
+                {(totalRevenue - totalCommission)?.toLocaleString() || 0}đ
+              </Text>
+            )}
           </View>
         </ScrollView>
       </View>
