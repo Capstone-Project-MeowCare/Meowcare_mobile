@@ -11,7 +11,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { Ionicons } from '@expo/vector-icons'
+import { Ionicons } from "@expo/vector-icons";
 import { getData, putData } from "../../api/api";
 
 import { ActivityIndicator } from "react-native-paper";
@@ -140,7 +140,7 @@ export default function BookingDetailRequest({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-      <TouchableOpacity
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -239,24 +239,6 @@ export default function BookingDetailRequest({ navigation }) {
             {otherDetails.note || "Không có lời nhắn"}
           </Text>
         </View>
-        {/* <View style={styles.section}>
-          <Text style={styles.petLabel}>Dịch vụ khách đã chọn:</Text>
-          <View style={styles.dotTextContainer}>
-            <View style={styles.textWrapper}>
-              <Text style={styles.dot}>•</Text>
-              <Text style={styles.dotText}>Thức ăn đã chọn (</Text>
-              <Text style={styles.highlight}>2</Text>
-              <Text style={styles.dotText}> ngày x </Text>
-              <Text style={styles.highlight}>50.000đ</Text>
-              <Text style={styles.dotText}>):</Text>
-            </View>
-            <Text style={styles.price}>100.000đ</Text>
-          </View>
-        </View>
-        <View style={styles.totalPaymentContainer}>
-          <Text style={styles.totalPaymentLabel}>Tổng thanh toán:</Text>
-          <Text style={styles.totalPaymentPrice}>350.000đ</Text>
-        </View> */}
         <View style={styles.section}>
           <Text style={styles.petLabel}>Dịch vụ khách đã chọn:</Text>
 
@@ -304,47 +286,53 @@ export default function BookingDetailRequest({ navigation }) {
         </View>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.rejectButton} // Sử dụng style của nút "Từ chối"
-            onPress={handleOpenModal} // Mở Modal
+          {/* Chỉ hiển thị nút nếu trạng thái không phải là "COMPLETED" */}
+          {otherDetails?.status !== "COMPLETED" && (
+            <TouchableOpacity
+              style={styles.rejectButton} // Sử dụng style của nút "Từ chối"
+              onPress={handleOpenModal} // Mở Modal
+            >
+              <Text style={styles.buttonText}>Hủy yêu cầu đặt lịch</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Modal Lý Do Hủy */}
+        <Modal
+          visible={isModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={handleCloseModal}
         >
-          <Text style={styles.buttonText}>Hủy yêu cầu đặt lịch</Text>
-        </TouchableOpacity>
-      </View>
-      {/* Modal Lý Do Hủy */}
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={handleCloseModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Lý do bạn muốn hủy đặt lịch?</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Nhập lý do..."
-              value={cancelReason}
-              onChangeText={setCancelReason}
-              multiline
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleCloseModal}
-              >
-                <Text style={styles.modalButtonText}>Quay lại</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleConfirmCancel}
-              >
-                <Text style={styles.modalButtonText}>Xác nhận hủy</Text>
-              </TouchableOpacity>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                Lý do bạn muốn hủy đặt lịch?
+              </Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Nhập lý do..."
+                value={cancelReason}
+                onChangeText={setCancelReason}
+                multiline
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCloseModal}
+                >
+                  <Text style={styles.modalButtonText}>Quay lại</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={handleConfirmCancel}
+                >
+                  <Text style={styles.modalButtonText}>Xác nhận hủy</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
       </ScrollView>
     </View>
   );
@@ -379,7 +367,6 @@ const styles = StyleSheet.create({
   divider: {
     borderBottomColor: "#D3D3D3", // Màu của đường kẻ ngang
     borderBottomWidth: 1, // Độ dày của đường kẻ
-   
   },
   backArrow: {
     width: 30,

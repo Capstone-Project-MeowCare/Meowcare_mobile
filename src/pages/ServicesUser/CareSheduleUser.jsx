@@ -45,6 +45,32 @@ export default function CareSheduleUser({ navigation, route }) {
   };
 
   useEffect(() => {
+    const fetchTaskDetails = async () => {
+      try {
+        if (!taskId) {
+          console.log("Không có taskId, không gọi API.");
+          return;
+        }
+
+        const taskResponse = await getData(`/tasks/${taskId}`);
+        if (taskResponse?.status === 1000 && taskResponse.data) {
+          const { description } = taskResponse.data;
+          setNoteText(description || "Chưa có ghi chú nào.");
+        } else {
+          console.error(
+            "Không tìm thấy dữ liệu từ /tasks:",
+            taskResponse?.message
+          );
+        }
+      } catch (error) {
+        console.error("Lỗi khi gọi API /tasks:", error);
+      }
+    };
+
+    fetchTaskDetails();
+  }, [taskId]);
+
+  useEffect(() => {
     const fetchTaskEvidence = async () => {
       setLoading(true);
       try {
@@ -62,9 +88,6 @@ export default function CareSheduleUser({ navigation, route }) {
           Array.isArray(response.data) &&
           response.data.length > 0
         ) {
-          const selectedEvidence = response.data[0];
-          setNoteText(selectedEvidence.comment || "");
-
           const photoListFromAPI = [];
           const videoListFromAPI = [];
 
@@ -96,7 +119,7 @@ export default function CareSheduleUser({ navigation, route }) {
           console.log("Không có dữ liệu Task Evidence.");
         }
       } catch (error) {
-        console.error("Lỗi khi gọi API:", error);
+        console.error("Lỗi khi gọi API /task-evidences:", error);
       } finally {
         setLoading(false);
       }

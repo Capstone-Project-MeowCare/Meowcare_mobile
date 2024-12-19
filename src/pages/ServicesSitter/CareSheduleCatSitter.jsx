@@ -128,7 +128,29 @@ export default function CareScheduleSitter({ navigation, route }) {
       );
     }
   };
+  useEffect(() => {
+    const fetchTaskDetails = async () => {
+      try {
+        if (!taskId) {
+          console.error("Không có taskId để lấy dữ liệu.");
+          return;
+        }
 
+        const response = await getData(`/tasks/${taskId}`);
+        if (response?.status === 1000 && response?.data) {
+          setNoteText(response.data.description || ""); // Gán giá trị description
+        } else {
+          console.error("Không lấy được dữ liệu task:", response);
+        }
+      } catch (error) {
+        console.error("Lỗi khi gọi API GET /tasks/{id}:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTaskDetails();
+  }, [taskId]);
   useEffect(() => {
     const fetchTaskEvidence = async () => {
       setLoading(true);
@@ -338,6 +360,28 @@ export default function CareScheduleSitter({ navigation, route }) {
           Alert.alert("Lỗi", "Không thể lưu dịch vụ. Vui lòng thử lại.");
           return;
         }
+      }
+
+      // Gọi API PUT để cập nhật description
+      const updateTaskUrl = `/tasks/${taskId}`;
+      const updatePayload = {
+        description: noteText, // Lấy từ giá trị ghi chú người dùng nhập
+      };
+
+      try {
+        const updateResponse = await putData(updateTaskUrl, updatePayload);
+
+        if (updateResponse.status === 1002) {
+          console.log("Cập nhật task thành công:", updateResponse.data);
+        } else {
+          console.error("Lỗi cập nhật task:", updateResponse);
+          Alert.alert("Lỗi", "Không thể cập nhật task. Vui lòng thử lại.");
+          return;
+        }
+      } catch (error) {
+        console.error("Lỗi khi gọi API PUT /tasks/{id}:", error);
+        Alert.alert("Lỗi", "Có lỗi xảy ra khi cập nhật task.");
+        return;
       }
 
       // Thành công -> Reset danh sách

@@ -48,54 +48,51 @@ export default function Transaction({ navigation }) {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Gọi API để lấy danh sách giao dịch
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const endpoint = `/transactions/user/${user.id}`;
-        const response = await getData(endpoint);
+  const fetchTransactions = async () => {
+    try {
+      const queryParams = `userId=${user.id}&status=COMPLETED&page=1&size=10&sort=updatedAt&direction=DESC`;
+      const endpoint = `/transactions/search/pagination?${queryParams}`;
+      const response = await getData(endpoint);
 
-        if (
-          response.status === 1000 &&
-          Array.isArray(response.data) &&
-          response.data.length > 0
-        ) {
-          const transformedTransactions = response.data.map((item) => {
-            const isExpense = item.fromUserId === user.id;
-            return {
-              id: item.id,
-              title:
-                item.transactionType === "PAYMENT"
-                  ? "Thanh toán dịch vụ"
-                  : "Tiền chiết khấu ",
-              amount: `${
-                isExpense ? "-" : "+"
-              }${item.amount.toLocaleString()} ${item.currency}`,
-              date: new Date(item.createdAt).toISOString().split("T")[0],
-              type: isExpense ? "expense" : "income",
-            };
-          });
-          setTransactions(transformedTransactions);
-          setFilteredTransactions(transformedTransactions);
-        } else {
-          // Nếu không có giao dịch, đặt trạng thái rỗng
-          setTransactions([]);
-          setFilteredTransactions([]);
-          console.warn("No transactions found");
-        }
-      } catch (error) {
-        // console.error("Error fetching transactions:", error.message);
-        setTransactions([]); // Đảm bảo trạng thái rỗng khi có lỗi
+      if (
+        response.status === 1000 &&
+        Array.isArray(response.data.content) &&
+        response.data.content.length > 0
+      ) {
+        const transformedTransactions = response.data.content.map((item) => {
+          const isExpense = item.fromUserId === user.id;
+          return {
+            id: item.id,
+            title:
+              item.transactionType === "PAYMENT"
+                ? "Thanh toán dịch vụ"
+                : "Tiền chiết khấu",
+            amount: `${isExpense ? "-" : "+"}${item.amount.toLocaleString()} ${item.currency}`,
+            date: new Date(item.createdAt).toISOString().split("T")[0],
+            type: isExpense ? "expense" : "income",
+          };
+        });
+        setTransactions(transformedTransactions);
+        setFilteredTransactions(transformedTransactions);
+      } else {
+        setTransactions([]);
         setFilteredTransactions([]);
-      } finally {
-        setLoading(false);
+        // console.warn("No transactions found");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      setTransactions([]);
+      setFilteredTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (user?.id) {
       fetchTransactions();
     }
-  }, [user]);
+  }, [user, startDate, endDate]);
 
   const filterTransactions = () => {
     const filtered = transactions.filter((item) => {
@@ -129,6 +126,7 @@ export default function Transaction({ navigation }) {
       </View>
     );
   }
+
   return (
     <View style={styles.container}>
       {/* Header */}

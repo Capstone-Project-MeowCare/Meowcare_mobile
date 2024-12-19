@@ -383,9 +383,7 @@ export default function Service() {
               {/* Hiển thị nút dựa trên serviceType */}
               {(item.serviceType === "MAIN_SERVICE" ||
                 item.serviceType === "ADDITION_SERVICE") &&
-              (item.status === "IN_PROGRESS" ||
-                item.status === "CONFIRMED" ||
-                item.status === "COMPLETED") ? (
+              (item.status === "IN_PROGRESS" || item.status === "CONFIRMED") ? (
                 <View style={styles.buttonRow}>
                   <CustomButton
                     title="Theo dõi lịch"
@@ -420,6 +418,21 @@ export default function Service() {
   ) : 
   */
               null}
+              {item.status === "COMPLETED" && (
+                <View style={styles.buttonRow}>
+                  <CustomButton
+                    title="Xem chi tiết"
+                    onPress={() =>
+                      navigation.navigate("BookingDetailRequest", {
+                        bookingId: item.id,
+                        serviceName: item.serviceName,
+                        userName: item.userName,
+                        catName: item.catName,
+                      })
+                    }
+                  />
+                </View>
+              )}
             </View>
           )}
           ListFooterComponent={
@@ -522,8 +535,8 @@ const styles = StyleSheet.create({
     width: width * 0.13,
     height: width * 0.13,
     marginHorizontal: width * 0.025,
-    borderRadius: (width * 0.13) / 2, 
-    overflow: 'hidden',
+    borderRadius: (width * 0.13) / 2,
+    overflow: "hidden",
   },
   searchContainer: {
     flexDirection: "row",

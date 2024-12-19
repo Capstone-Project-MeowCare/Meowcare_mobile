@@ -5,6 +5,7 @@ import {
   Dimensions,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getData } from "../../api/api";
@@ -14,6 +15,7 @@ const { width, height } = Dimensions.get("window");
 export default function ConfirmPayment({ navigation, route }) {
   const { bookingId } = route.params;
   const [bookingDetails, setBookingDetails] = useState(null);
+  const [commissionRate, setCommissionRate] = useState(0); // Giá trị % chiết khấu
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -29,12 +31,30 @@ export default function ConfirmPayment({ navigation, route }) {
       }
     };
 
+    const fetchConfig = async () => {
+      try {
+        const response = await getData(`/api/config`);
+        if (response?.status === 1000) {
+          const commissionConfig = response.data.find(
+            (config) => config.configKey === "APP_COMMISSION_SETTING"
+          );
+          if (commissionConfig) {
+            setCommissionRate(parseFloat(commissionConfig.configValue));
+          }
+        } else {
+          console.error("Failed to fetch config:", response?.message);
+        }
+      } catch (error) {
+        console.error("Error fetching config:", error);
+      }
+    };
+
     if (bookingId) {
       fetchBookingDetails();
     }
+    fetchConfig();
   }, [bookingId]);
 
-  // Hàm loại bỏ trùng lặp dựa trên service.id
   const uniqueMainServices = (services) => {
     return Array.from(
       new Map(
@@ -45,6 +65,38 @@ export default function ConfirmPayment({ navigation, route }) {
     );
   };
 
+  if (!bookingDetails || commissionRate === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#902C6C" />
+      </View>
+    );
+  }
+
+  const daysBooked =
+    Math.round(
+      (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
+        new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
+        (1000 * 60 * 60 * 24)
+    ) + 1 || 1;
+
+  const petCount = Array.from(
+    new Map(
+      bookingDetails?.bookingDetailWithPetAndServices.map((detail) => [
+        detail.pet?.id,
+        detail.pet,
+      ])
+    )
+  ).length;
+
+  const mainServiceTotal = uniqueMainServices(
+    bookingDetails?.bookingDetailWithPetAndServices || []
+  ).reduce((sum, detail) => sum + (detail.service?.price || 0), 0);
+
+  const totalAmount = mainServiceTotal * daysBooked * petCount;
+  const discountAmount = (totalAmount * commissionRate) / 100;
+  const netAmount = totalAmount - discountAmount;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -54,189 +106,28 @@ export default function ConfirmPayment({ navigation, route }) {
 
       <View style={styles.contentContainer}>
         <View style={styles.paymentDetails}>
-          {/* Loại dịch vụ  */}
-          <View style={styles.row}>
-            <Text style={styles.itemText}>• Loại dịch vụ:</Text>
-            <Text style={styles.priceText}>
-              {`${uniqueMainServices(
-                bookingDetails?.bookingDetailWithPetAndServices || []
-              )
-                .reduce((sum, detail) => sum + (detail.service?.price || 0), 0)
-                .toLocaleString()}đ`}
-            </Text>
-          </View>
-
-          {/* Số ngày đặt */}
-          <View style={styles.row}>
-            <Text style={styles.itemText}>
-              • Số ngày đặt:{" "}
-              {Math.round(
-                (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-                  new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
-                  (1000 * 60 * 60 * 24)
-              ) + 1 || 1}{" "}
-              ngày
-            </Text>
-            <Text style={styles.priceText}>
-              {`${(
-                uniqueMainServices(
-                  bookingDetails?.bookingDetailWithPetAndServices || []
-                ).reduce(
-                  (sum, detail) => sum + (detail.service?.price || 0),
-                  0
-                ) *
-                (Math.round(
-                  (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-                    new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
-                    (1000 * 60 * 60 * 24)
-                ) + 1 || 1)
-              ).toLocaleString()}đ`}
-            </Text>
-          </View>
-
-          {/* Số lượng mèo */}
-          <View style={styles.row}>
-            <Text style={styles.itemText}>
-              • Số lượng mèo:{" "}
-              {
-                Array.from(
-                  new Map(
-                    bookingDetails?.bookingDetailWithPetAndServices.map(
-                      (detail) => [detail.pet?.id, detail.pet]
-                    )
-                  )
-                ).length
-              }{" "}
-              mèo
-            </Text>
-            <Text style={styles.priceText}>
-              {`${(
-                uniqueMainServices(
-                  bookingDetails?.bookingDetailWithPetAndServices || []
-                ).reduce(
-                  (sum, detail) => sum + (detail.service?.price || 0),
-                  0
-                ) *
-                Array.from(
-                  new Map(
-                    bookingDetails?.bookingDetailWithPetAndServices.map(
-                      (detail) => [detail.pet?.id, detail.pet]
-                    )
-                  )
-                ).length
-              ).toLocaleString()}đ`}
-            </Text>
-          </View>
-
           {/* Tổng tiền */}
           <View style={styles.row}>
             <Text style={styles.sectionTitle}>Tổng tiền:</Text>
-            <Text style={styles.totalText}>
-              {`${(
-                uniqueMainServices(
-                  bookingDetails?.bookingDetailWithPetAndServices || []
-                ).reduce(
-                  (sum, detail) => sum + (detail.service?.price || 0),
-                  0
-                ) *
-                (Math.round(
-                  (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-                    new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
-                    (1000 * 60 * 60 * 24)
-                ) + 1 || 1) *
-                Array.from(
-                  new Map(
-                    bookingDetails?.bookingDetailWithPetAndServices.map(
-                      (detail) => [detail.pet?.id, detail.pet]
-                    )
-                  )
-                ).length
-              ).toLocaleString()}đ`}
-            </Text>
+            <Text
+              style={styles.totalText}
+            >{`${totalAmount.toLocaleString()}đ`}</Text>
           </View>
 
           {/* Tiền chiết khấu */}
           <View style={styles.row}>
-            <Text style={styles.sectionTitle}>Tiền chiết khấu (10%):</Text>
+            <Text style={styles.sectionTitle}>Tiền chiết khấu:</Text>
             <Text style={styles.discountText}>
-              {`-${(
-                uniqueMainServices(
-                  bookingDetails?.bookingDetailWithPetAndServices || []
-                ).reduce(
-                  (sum, detail) => sum + (detail.service?.price || 0),
-                  0
-                ) *
-                (Math.round(
-                  (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-                    new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
-                    (1000 * 60 * 60 * 24)
-                ) + 1 || 1) *
-                Array.from(
-                  new Map(
-                    bookingDetails?.bookingDetailWithPetAndServices.map(
-                      (detail) => [detail.pet?.id, detail.pet]
-                    )
-                  )
-                ).length *
-                0.1
-              ).toLocaleString()}đ`}
+              {`-${discountAmount.toLocaleString()}đ (${commissionRate}%)`}
             </Text>
           </View>
 
           {/* Tổng số tiền nhận được */}
           <View style={styles.row}>
             <Text style={styles.sectionTitle}>Tổng số tiền nhận được:</Text>
-            <Text style={styles.remainingText}>
-              {`${(
-                uniqueMainServices(
-                  bookingDetails?.bookingDetailWithPetAndServices || []
-                ).reduce(
-                  (sum, detail) => sum + (detail.service?.price || 0),
-                  0
-                ) *
-                  (Math.round(
-                    (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-                      new Date(bookingDetails?.startDate).setHours(
-                        0,
-                        0,
-                        0,
-                        0
-                      )) /
-                      (1000 * 60 * 60 * 24)
-                  ) + 1 || 1) *
-                  Array.from(
-                    new Map(
-                      bookingDetails?.bookingDetailWithPetAndServices.map(
-                        (detail) => [detail.pet?.id, detail.pet]
-                      )
-                    )
-                  ).length -
-                uniqueMainServices(
-                  bookingDetails?.bookingDetailWithPetAndServices || []
-                ).reduce(
-                  (sum, detail) => sum + (detail.service?.price || 0),
-                  0
-                ) *
-                  (Math.round(
-                    (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-                      new Date(bookingDetails?.startDate).setHours(
-                        0,
-                        0,
-                        0,
-                        0
-                      )) /
-                      (1000 * 60 * 60 * 24)
-                  ) + 1 || 1) *
-                  Array.from(
-                    new Map(
-                      bookingDetails?.bookingDetailWithPetAndServices.map(
-                        (detail) => [detail.pet?.id, detail.pet]
-                      )
-                    )
-                  ).length *
-                  0.1
-              ).toLocaleString()}đ`}
-            </Text>
+            <Text
+              style={styles.remainingText}
+            >{`${netAmount.toLocaleString()}đ`}</Text>
           </View>
         </View>
       </View>
