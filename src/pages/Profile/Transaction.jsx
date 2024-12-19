@@ -55,7 +55,11 @@ export default function Transaction({ navigation }) {
         const endpoint = `/transactions/user/${user.id}`;
         const response = await getData(endpoint);
 
-        if (response.status === 1000) {
+        if (
+          response.status === 1000 &&
+          Array.isArray(response.data) &&
+          response.data.length > 0
+        ) {
           const transformedTransactions = response.data.map((item) => {
             const isExpense = item.fromUserId === user.id;
             return {
@@ -74,10 +78,15 @@ export default function Transaction({ navigation }) {
           setTransactions(transformedTransactions);
           setFilteredTransactions(transformedTransactions);
         } else {
-          console.warn("Failed to fetch transactions:", response.message);
+          // Nếu không có giao dịch, đặt trạng thái rỗng
+          setTransactions([]);
+          setFilteredTransactions([]);
+          console.warn("No transactions found");
         }
       } catch (error) {
-        console.error("Error fetching transactions:", error);
+        // console.error("Error fetching transactions:", error.message);
+        setTransactions([]); // Đảm bảo trạng thái rỗng khi có lỗi
+        setFilteredTransactions([]);
       } finally {
         setLoading(false);
       }
@@ -189,14 +198,23 @@ export default function Transaction({ navigation }) {
         />
       )}
 
-      {/* Danh sách giao dịch */}
-      <FlatList
-        data={filteredTransactions}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTransaction}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {/* Kiểm tra nếu không có giao dịch */}
+      {filteredTransactions.length === 0 ? (
+        <View style={styles.noTransactionContainer}>
+          <Text style={styles.noTransactionText}>
+            Bạn không có giao dịch nào.
+          </Text>
+        </View>
+      ) : (
+        /* Danh sách giao dịch */
+        <FlatList
+          data={filteredTransactions}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTransaction}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
@@ -310,5 +328,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFAF5",
+  },
+  noTransactionContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20, // Thêm khoảng cách nếu cần
+  },
+  noTransactionText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#8E8E8E", // Màu sắc nhẹ nhàng
+    textAlign: "center",
   },
 });
