@@ -33,10 +33,11 @@ export default function InComeStatistics({ navigation }) {
   const fetchTotalBookings = async (month) => {
     setLoadingBookings(true);
     try {
-      const fetchByOrderType = async (orderType) => {
+      const fetchByOrderType = async (orderType, status = "COMPLETED") => {
         const response = await getData("/booking-orders/count-by-sitter", {
           id: user.id,
           orderType,
+          status, // Thêm tham số status
         });
         return response.status === 1000 ? response.data : 0;
       };
@@ -60,15 +61,12 @@ export default function InComeStatistics({ navigation }) {
   const fetchTotalRevenue = async (month) => {
     setLoadingRevenue(true);
     try {
-      const { fromTime, toTime } = parseMonthToDateRange(month);
-      const response = await getData("/transactions/search/total-amount", {
-        userId: user.id,
-        status: "COMPLETED",
-        transactionType: "PAYMENT", // Chỉ lấy các giao dịch PAYMENT
-        fromTime,
-        toTime,
-      });
+      // Sử dụng user.id làm sitterId
+      const response = await getData(
+        `/booking-orders/total-amount?sitterId=${user.id}&status=COMPLETED`
+      );
 
+      // Đặt tổng doanh số (totalRevenue)
       setTotalRevenue(response.status === 1000 ? response.data : 0);
     } catch (error) {
       console.error("Error fetching total revenue: ", error);

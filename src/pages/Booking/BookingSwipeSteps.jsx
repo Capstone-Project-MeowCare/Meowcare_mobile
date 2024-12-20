@@ -22,6 +22,7 @@ export default function SwipeStep({ navigation }) {
   const [additionalServices, setAdditionalServices] = useState([]);
   const route = useRoute();
   const sitterId = route.params?.sitterId;
+
   useEffect(() => {
     console.log("SwipeStep received sitterId:", sitterId);
   }, [sitterId]);
@@ -37,6 +38,7 @@ export default function SwipeStep({ navigation }) {
     customFood: "",
     childServices: [],
     selectedAdditionalServices: [],
+    selectedAdditionalServiceNames: [],
   });
   const [selectedExtras, setSelectedExtras] = useState([]);
   // State lưu thông tin từ Step 2
@@ -60,21 +62,13 @@ export default function SwipeStep({ navigation }) {
     note: "",
   });
 
-  // State lưu thông tin từ Step 5 (checkbox)
-  const [step5Checked, setStep5Checked] = useState(false);
-
-  // const onSwipeLeft = () => {
-  //   if (currentStep < 5 && isValid) {
-  //     setCurrentStep(currentStep + 1);
-  //   }
-  // };
   const onSwipeLeft = () => {
     if (currentStep === 2) {
       if (step2Info.startDate && !step2Info.endDate) {
         setStep2Info((prev) => ({ ...prev, endDate: prev.startDate })); // Gán endDate = startDate
       }
     }
-    if (currentStep < 5 && isValid) {
+    if (currentStep < 4 && isValid) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -95,8 +89,8 @@ export default function SwipeStep({ navigation }) {
             setIsValid={setIsValid}
             selectedExtras={selectedExtras}
             setSelectedExtras={setSelectedExtras}
-            additionalServices={additionalServices} // Truyền vào đây nếu cần
-            setAdditionalServices={setAdditionalServices} // Thêm dòng này
+            additionalServices={additionalServices}
+            setAdditionalServices={setAdditionalServices}
             userId={sitterId}
           />
         );
@@ -131,14 +125,6 @@ export default function SwipeStep({ navigation }) {
             setIsValid={setIsValid}
           />
         );
-      case 5:
-        return (
-          <BookingStep5
-            onGoBack={() => setCurrentStep(4)}
-            step5Checked={step5Checked}
-            setStep5Checked={setStep5Checked}
-          />
-        );
       default:
         return <BookingStep1 setIsValid={setIsValid} />;
     }
@@ -156,7 +142,7 @@ export default function SwipeStep({ navigation }) {
     >
       {renderStep()}
       <View style={styles.fixedFooter}>
-        {currentStep < 5 && (
+        {currentStep < 4 && (
           <TouchableOpacity
             style={[styles.nextButton, !isValid && styles.disabledButton]}
             onPress={() => {
@@ -173,37 +159,11 @@ export default function SwipeStep({ navigation }) {
             </Text>
           </TouchableOpacity>
         )}
-        {currentStep === 5 && (
+        {currentStep === 4 && (
           <TouchableOpacity
-            style={[styles.nextButton, !step5Checked && styles.disabledButton]}
-            // onPress={() => {
-            //   if (step5Checked) {
-            //     console.log(
-            //       "Final step1Info:",
-            //       JSON.stringify(step1Info, null, 2)
-            //     );
-            //     navigation.navigate("ServicePayment", {
-            //       step1Info: {
-            //         ...step1Info,
-            //         additionalServices: step1Info.additionalServices.map(
-            //           (service) => ({
-            //             ...service,
-            //             ...(step1Info.selectedServiceTime?.[service.id] || {}), // Gộp startTime và endTime
-            //           })
-            //         ),
-            //       },
-            //       selectedExtras: selectedExtras.filter(
-            //         (extra) => extra.isSelected
-            //       ),
-            //       step2Info,
-            //       step3Info,
-            //       contactInfo,
-            //       sitterId,
-            //     });
-            //   }
-            // }}
+            style={[styles.nextButton, !isValid && styles.disabledButton]}
             onPress={() => {
-              if (step5Checked) {
+              if (isValid) {
                 const serializedStep1Info = {
                   ...step1Info,
                   childServices: step1Info.childServices.map((service) => ({
@@ -251,13 +211,10 @@ export default function SwipeStep({ navigation }) {
                 });
               }
             }}
-            disabled={!step5Checked}
+            disabled={!isValid}
           >
             <Text
-              style={[
-                styles.nextText,
-                !step5Checked && styles.disabledNextText,
-              ]}
+              style={[styles.nextText, !isValid && styles.disabledNextText]}
             >
               Hoàn thành
             </Text>

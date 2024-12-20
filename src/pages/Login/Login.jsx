@@ -237,13 +237,6 @@ export default function Login() {
       const deviceId = Device.osBuildId || "unknown_deviceId";
       const deviceName = Device.modelName || "unknown_device";
 
-      console.log("Dữ liệu gửi đến API:", {
-        email: data.email,
-        password: data.password,
-        deviceId,
-        deviceName,
-      });
-
       const responseData = await postData("/auth/token", {
         email: data.email,
         password: data.password,
@@ -257,11 +250,14 @@ export default function Login() {
         throw new Error("Phản hồi API không hợp lệ");
       }
 
-      // Lấy accessToken và refreshToken từ phản hồi
-      const { token, refreshToken } = responseData.data;
+      // Lấy accessToken, refreshToken, và tokenExpiresAt từ phản hồi
+      const { token, refreshToken, tokenExpiresAt, refreshTokenExpiresAt } =
+        responseData.data;
 
       console.log("AccessToken:", token);
+      console.log("Token Expiration:", tokenExpiresAt);
       console.log("RefreshToken:", refreshToken);
+      console.log("RefreshToken Expiration:", refreshTokenExpiresAt);
 
       // Lấy thông tin người dùng
       const userInfo = responseData.data.user;
@@ -275,17 +271,29 @@ export default function Login() {
         email: userInfo.email,
         roles: userInfo.roles,
         fullName: userInfo.fullName,
+        avatar: userInfo.avatar,
+        address: userInfo.address,
+        phoneNumber: userInfo.phoneNumber,
+        gender: userInfo.gender,
+        status: userInfo.status,
       };
 
       console.log("Dữ liệu người dùng:", userData);
 
-      // Gọi login để lưu thông tin user, accessToken và refreshToken
-      login(userData, { token, refreshToken });
+      // Lưu thông tin vào useAuth hoặc hệ thống lưu trữ
+      login(userData, {
+        token,
+        refreshToken,
+        tokenExpiresAt,
+        refreshTokenExpiresAt,
+      });
 
       console.log("Thông tin người dùng đã được lưu vào useAuth:", {
         userData,
         token,
         refreshToken,
+        tokenExpiresAt,
+        refreshTokenExpiresAt,
       });
 
       setLoading(false);
@@ -409,7 +417,7 @@ export default function Login() {
             </CustomButton>
           </FormProvider>
           <View style={{ margin: height * 0.02 }} />
-          <View style={styles.lineContainer}>
+          {/* <View style={styles.lineContainer}>
             <View style={styles.line} />
             <Text style={styles.lineText}>Hoặc tiếp tục với</Text>
             <View style={styles.line} />
@@ -421,7 +429,7 @@ export default function Login() {
             <TouchableOpacity style={styles.iconWrapper}>
               <FontAwesome name="google" size={40} color="#FFFFFF" />
             </TouchableOpacity>
-          </View>
+          </View> */}
           <View style={{ margin: height * 0.02 }} />
           <Text
             style={{

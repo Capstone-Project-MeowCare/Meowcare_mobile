@@ -51,41 +51,49 @@ export default function BookingStep5({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.mainContent}>
-        <Text style={[styles.textBold, { fontSize: 18 }]}>
-  ĐIỀU KHOẢN DỊCH VỤ
-</Text>
+          <Text style={[styles.textBold, { fontSize: 18 }]}>
+            ĐIỀU KHOẢN DỊCH VỤ
+          </Text>
 
-<Text style={styles.textBold}>1. Trách nhiệm của nền tảng:</Text>
-<Text style={styles.text}>
-  • Nền tảng chỉ cung cấp dịch vụ kết nối giữa khách hàng và người chăm sóc thú cưng.
-</Text>
-<Text style={styles.text}>
-  • Nền tảng <Text style={styles.textBold}>không chịu trách nhiệm</Text> trực tiếp đối với tổn thất hoặc thiệt hại trong quá trình cung cấp dịch vụ bởi người chăm sóc.
-</Text>
-{/* <Text style={styles.text}>
+          <Text style={styles.textBold}>1. Trách nhiệm của nền tảng:</Text>
+          <Text style={styles.text}>
+            • Nền tảng chỉ cung cấp dịch vụ kết nối giữa khách hàng và người
+            chăm sóc thú cưng.
+          </Text>
+          <Text style={styles.text}>
+            • Nền tảng{" "}
+            <Text style={styles.textBold}>không chịu trách nhiệm</Text> trực
+            tiếp đối với tổn thất hoặc thiệt hại trong quá trình cung cấp dịch
+            vụ bởi người chăm sóc.
+          </Text>
+          {/* <Text style={styles.text}>
   • Khuyến khích khách hàng sử dụng <Text style={styles.textBold}>bảo hiểm bên thứ ba</Text> để bảo vệ quyền lợi.
 </Text> */}
 
-<Text style={styles.textBold}>2. Trách nhiệm của khách hàng:</Text>
-<Text style={styles.text}>
-  • Cung cấp thông tin chính xác, đầy đủ về thú cưng và các yêu cầu đặc biệt.
-</Text>
-{/* <Text style={styles.text}>
+          <Text style={styles.textBold}>2. Trách nhiệm của khách hàng:</Text>
+          <Text style={styles.text}>
+            • Cung cấp thông tin chính xác, đầy đủ về thú cưng và các yêu cầu
+            đặc biệt.
+          </Text>
+          {/* <Text style={styles.text}>
   • Chọn mua gói bảo hiểm bên thứ ba để đảm bảo bồi thường rủi ro nếu thú cưng có giá trị cao.
 </Text> */}
 
-<Text style={styles.textBold}>3. Chi phí và thanh toán:</Text>
-<Text style={styles.text}>
-  • Tổng chi phí bao gồm chi phí dịch vụ chăm sóc và các khoản phụ phí nếu có (ví dụ: bảo hiểm).
-</Text>
-<Text style={styles.text}>
-  • Khách hàng có thể chọn thanh toán toàn bộ trước khi đặt lịch hoặcthanh toán trả sau khi dịch vụ hoàn tất.
-</Text>
-<Text style={styles.textBold}>4. Giải quyết tranh chấp:</Text>
-<Text style={styles.text}>
-• Nền tảng sẽ hỗ trợ khách hàng và người chăm sóc giải quyết các vấn đề phát sinh trong quá trình sử dụng dịch vụ.
-</Text>
-          
+          <Text style={styles.textBold}>3. Chi phí và thanh toán:</Text>
+          <Text style={styles.text}>
+            • Tổng chi phí bao gồm chi phí dịch vụ chăm sóc và các khoản phụ phí
+            nếu có (ví dụ: bảo hiểm).
+          </Text>
+          <Text style={styles.text}>
+            • Khách hàng có thể chọn thanh toán toàn bộ trước khi đặt lịch
+            hoặcthanh toán trả sau khi dịch vụ hoàn tất.
+          </Text>
+          <Text style={styles.textBold}>4. Giải quyết tranh chấp:</Text>
+          <Text style={styles.text}>
+            • Nền tảng sẽ hỗ trợ khách hàng và người chăm sóc giải quyết các vấn
+            đề phát sinh trong quá trình sử dụng dịch vụ.
+          </Text>
+
           <View style={styles.checkboxContainer}>
             <Checkbox
               value={step5Checked}
