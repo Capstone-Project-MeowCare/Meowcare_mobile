@@ -52,10 +52,12 @@ export default function ListCatSitter({ navigation }) {
           location: item.location,
           price: item.mainServicePrice,
           reviews: `${item.numberOfReview || 0} đánh giá`,
-          distance: item.distance ? `${item.distance} km` : "Không xác định",
+          distance: item.distance
+            ? `Khoảng cách: ${parseFloat(item.distance).toFixed(2)} km`
+            : "Không xác định", // Làm tròn khoảng cách thành 2 chữ số
           imageSource: item.avatar
             ? { uri: item.avatar }
-            : require("../../../assets/catpeople.jpg"), // Sử dụng avatar từ API hoặc ảnh mặc định
+            : require("../../../assets/avatar.png"), // Sử dụng avatar từ API hoặc ảnh mặc định
         }));
         setSitterData(formattedData);
       } else {
@@ -86,7 +88,9 @@ export default function ListCatSitter({ navigation }) {
         <Text style={styles.sitterName}>{item.fullName}</Text>
         <Text style={styles.sitterLocation}>{item.location}</Text>
         <Text style={styles.sitterPrice}>
-          {item.price ? `${item.price.toLocaleString()}đ` : "Chưa có giá"}
+          {item.price
+            ? `Dịch vụ qua đêm: ${item.price.toLocaleString()}đ`
+            : "Chưa có giá"}
         </Text>
         <Text style={styles.sitterReviews}>{item.reviews}</Text>
         <Text style={styles.sitterDistance}>{item.distance}</Text>

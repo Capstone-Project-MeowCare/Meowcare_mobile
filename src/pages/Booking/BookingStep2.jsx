@@ -61,15 +61,15 @@ export default function BookingStep2({
 
         if (response && Array.isArray(response)) {
           const formattedDates = response.reduce((acc, item) => {
-            const date = item.startDate.split("T")[0];
-            if (item.isRecurring) {
-              acc[date] = {
-                disableTouchEvent: true,
-                marked: true,
-                selectedColor: "#D9D9D9",
-                textColor: "#A0A0A0",
-              };
-            }
+            const date = item.date.split("T")[0]; // Lấy ngày từ trường `date`
+
+            acc[date] = {
+              disableTouchEvent: true,
+              marked: true,
+              selectedColor: "#D9D9D9",
+              textColor: "#A0A0A0",
+            };
+
             return acc;
           }, {});
 
@@ -90,9 +90,23 @@ export default function BookingStep2({
     const dayString = day.dateString;
 
     if (isSingleDateMode) {
-      setStep2Info({ ...step2Info, startDate: dayString, endDate: null });
+      // Nếu đang ở chế độ chọn 1 ngày
+      if (step2Info.startDate === dayString) {
+        // Nếu nhấn lại vào ngày đã chọn, bỏ chọn ngày đó
+        setStep2Info({ ...step2Info, startDate: null, endDate: null });
+      } else {
+        setStep2Info({ ...step2Info, startDate: dayString, endDate: null });
+      }
     } else {
-      if (!step2Info.startDate) {
+      // Nếu đang ở chế độ chọn khoảng ngày
+      if (step2Info.startDate === dayString) {
+        // Nếu nhấn lại vào ngày bắt đầu, bỏ chọn cả khoảng
+        setStep2Info({ ...step2Info, startDate: null, endDate: null });
+      } else if (step2Info.endDate === dayString) {
+        // Nếu nhấn lại vào ngày kết thúc, chỉ bỏ ngày kết thúc
+        setStep2Info({ ...step2Info, endDate: null });
+      } else if (!step2Info.startDate) {
+        // Chọn ngày bắt đầu nếu chưa chọn
         setStep2Info({ ...step2Info, startDate: dayString, endDate: null });
       } else if (
         !step2Info.endDate &&
@@ -132,6 +146,7 @@ export default function BookingStep2({
           setStep2Info({ ...step2Info, endDate: dayString });
         }
       } else {
+        // Reset chọn ngày bắt đầu nếu ngày được nhấn không hợp lệ
         setStep2Info({ ...step2Info, startDate: dayString, endDate: null });
       }
     }

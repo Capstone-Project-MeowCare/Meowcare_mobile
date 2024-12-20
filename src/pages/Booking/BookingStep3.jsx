@@ -33,7 +33,11 @@ export default function BookingStep3({
     try {
       const response = await getData(`/pet-profiles/user/${user.id}`);
       if (response?.data) {
-        setCatData(response.data);
+        // Lọc chỉ những thú cưng có trạng thái ACTIVE
+        const activeCats = response.data.filter(
+          (cat) => cat.status === "ACTIVE"
+        );
+        setCatData(activeCats);
       }
     } catch (error) {
       console.error("Error fetching cat data:", error);
