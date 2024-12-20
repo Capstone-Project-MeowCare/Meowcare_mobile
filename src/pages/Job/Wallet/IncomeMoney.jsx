@@ -64,6 +64,7 @@ export default function InComeStatistics({ navigation }) {
       const response = await getData("/transactions/search/total-amount", {
         userId: user.id,
         status: "COMPLETED",
+        transactionType: "PAYMENT", // Chỉ lấy các giao dịch PAYMENT
         fromTime,
         toTime,
       });
@@ -213,7 +214,7 @@ export default function InComeStatistics({ navigation }) {
                   { color: "green" }, // Màu xanh lá cho thu nhập ròng
                 ]}
               >
-                {(totalRevenue - totalCommission)?.toLocaleString() || 0}đ
+                {Math.max(totalRevenue - totalCommission, 0)?.toLocaleString()}đ
               </Text>
             )}
           </View>

@@ -158,14 +158,24 @@ export default function FindSitterByMap() {
   // Fetch sitter profiles và kết hợp dữ liệu
   const fetchSitterProfiles = async () => {
     try {
-      const response = await getData("/sitter-profiles");
+      const response = await getData("/sitter-profiles/search", {
+        latitude: userCoordinates?.latitude || latitude,
+        longitude: userCoordinates?.longitude || longitude,
+        serviceType: "MAIN_SERVICE",
+        page: 1,
+        size: 10,
+      });
 
-      if (!response || !response.data || !Array.isArray(response.data)) {
+      if (
+        !response ||
+        !response.data ||
+        !Array.isArray(response.data.content)
+      ) {
         console.error("Invalid data from API");
         return;
       }
 
-      const sitters = response.data;
+      const sitters = response.data.content;
 
       const sittersWithDetails = sitters.map((sitter) => {
         let distance = "Không xác định";
@@ -182,6 +192,8 @@ export default function FindSitterByMap() {
         return {
           ...sitter,
           distance: distance ? `${distance} km` : "Không xác định",
+          price: sitter.mainServicePrice, // Giá từ API
+          reviews: `${sitter.numberOfReview || 0} đánh giá`, // Số lượng đánh giá
         };
       });
 
@@ -327,8 +339,6 @@ export default function FindSitterByMap() {
                     <Text style={styles.priceLabel}>Giá mỗi đêm</Text>
                   </View>
                   <View style={styles.centerRow}>
-                    {/* <Text style={styles.description}>{item.bio}</Text>
-                  <Text style={styles.price}>150.000đ</Text> */}
                     {item.bio ? (
                       <Text
                         style={styles.description}
@@ -341,21 +351,17 @@ export default function FindSitterByMap() {
                     {item.price ? (
                       <Text
                         style={styles.price}
-                      >{`${item.price.toString()}đ`}</Text>
+                      >{`${item.price.toLocaleString()}đ`}</Text>
                     ) : (
                       <Text style={styles.price}>Chưa có giá</Text>
                     )}
                   </View>
+
                   {/* <View style={styles.addressRow}>
                   <Text style={styles.address}>{item.location}</Text>
                 </View> */}
                   <View style={styles.addressRow}>
                     <Text style={styles.address}>{item.location}</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.distanceText}>
-                      Khoảng cách đến địa điểm: {item.distance}
-                    </Text>
                   </View>
 
                   <View style={styles.ratingContainer}>
@@ -366,7 +372,6 @@ export default function FindSitterByMap() {
                       starSize={16}
                       fullStarColor={"#F8B816"}
                     />
-                    {/* <Text style={styles.ratingText}>{item.rating}</Text> */}
                     <Text style={styles.ratingText}>
                       {item.rating !== undefined && item.rating !== null
                         ? item.rating.toString()
@@ -378,12 +383,10 @@ export default function FindSitterByMap() {
                       <Text style={styles.reviews}>{item.reviews}</Text>
                     </View>
                   </View>
-                  <View style={styles.verifiedContainer}>
-                    <Image
-                      source={require("../../../assets/Verified.png")}
-                      style={styles.verifiedIcon}
-                    />
-                    <Text style={styles.verifiedText}>{item.verified}</Text>
+                  <View>
+                    <Text style={styles.distanceText}>
+                      Khoảng cách đến địa điểm: {item.distance}
+                    </Text>
                   </View>
                   <TouchableOpacity
                     style={styles.heartIconContainer}
