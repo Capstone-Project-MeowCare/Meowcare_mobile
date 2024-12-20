@@ -14,30 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { getData } from "../../api/api";
 import { useAuth } from "../../../auth/useAuth";
 
-const transactions = [
-  {
-    id: "1",
-    title: "Nạp tiền vào ví",
-    amount: "+200,000 VND",
-    date: "2024-11-20",
-    type: "income",
-  },
-  {
-    id: "2",
-    title: "Thanh toán dịch vụ chăm sóc",
-    amount: "-500,000 VND",
-    date: "2024-11-18",
-    type: "expense",
-  },
-  {
-    id: "3",
-    title: "Hoàn tiền dịch vụ",
-    amount: "+300,000 VND",
-    date: "2024-11-15",
-    type: "income",
-  },
-];
-
 export default function Transaction({ navigation }) {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
@@ -61,12 +37,29 @@ export default function Transaction({ navigation }) {
       ) {
         const transformedTransactions = response.data.content.map((item) => {
           const isExpense = item.fromUserId === user.id;
+          let title = "";
+
+          // Xác định tiêu đề giao dịch
+          switch (item.transactionType) {
+            case "PAYMENT":
+              title = "Thanh toán dịch vụ";
+              break;
+            case "COMMISSION":
+              title = "Tiền chiết khấu";
+              break;
+            case "TOP_UP":
+              title = "Nạp tiền vào ví";
+              break;
+            case "WITHDRAW":
+              title = "Rút tiền từ ví";
+              break;
+            default:
+              title = "Giao dịch khác";
+          }
+
           return {
             id: item.id,
-            title:
-              item.transactionType === "PAYMENT"
-                ? "Thanh toán dịch vụ"
-                : "Tiền chiết khấu",
+            title,
             amount: `${isExpense ? "-" : "+"}${item.amount.toLocaleString()} ${item.currency}`,
             date: new Date(item.createdAt).toISOString().split("T")[0],
             type: isExpense ? "expense" : "income",
@@ -77,7 +70,6 @@ export default function Transaction({ navigation }) {
       } else {
         setTransactions([]);
         setFilteredTransactions([]);
-        // console.warn("No transactions found");
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);

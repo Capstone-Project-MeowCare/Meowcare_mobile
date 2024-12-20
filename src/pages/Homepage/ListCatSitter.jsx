@@ -16,7 +16,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { getData } from "../../api/api";
 import Slider from "@react-native-community/slider";
 
-
 export default function ListCatSitter({ navigation }) {
   const [sitterData, setSitterData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,30 +26,57 @@ export default function ListCatSitter({ navigation }) {
     additionalServices: false,
   });
 
-  // Fetch dữ liệu từ API
-  useEffect(() => {
-    const fetchSitters = async () => {
-      try {
-        const response = await getData("/sitter-profiles");
-        const formattedData = response.data.map((item) => ({
+  const fetchSitters = async () => {
+    try {
+      setLoading(true);
+
+      // Lấy tọa độ user
+      const userCoordinates = { latitude: 10.73507, longitude: 106.632935 }; // Thay bằng tọa độ thật nếu có
+
+      const response = await getData("/sitter-profiles/search", {
+        latitude: userCoordinates.latitude,
+        longitude: userCoordinates.longitude,
+        serviceType: "MAIN_SERVICE",
+        minPrice: filters.priceRange[0],
+        maxPrice: filters.priceRange[1],
+        minQuantity:
+          filters.petCount === "3+" ? 3 : parseInt(filters.petCount, 10),
+        page: 1,
+        size: 10,
+      });
+
+      if (response?.data?.content) {
+        const formattedData = response.data.content.map((item) => ({
           id: item.id,
           fullName: item.fullName,
           location: item.location,
-          imageSource: require("../../../assets/catpeople.jpg"),
+          price: item.mainServicePrice,
+          reviews: `${item.numberOfReview || 0} đánh giá`,
+          distance: item.distance ? `${item.distance} km` : "Không xác định",
+          imageSource: item.avatar
+            ? { uri: item.avatar }
+            : require("../../../assets/catpeople.jpg"), // Sử dụng avatar từ API hoặc ảnh mặc định
         }));
         setSitterData(formattedData);
-      } catch (error) {
-        console.error("Error fetching sitters:", error);
-      } finally {
-        setLoading(false);
+      } else {
+        setSitterData([]); // Không có dữ liệu
       }
-    };
+    } catch (error) {
+      console.error("Error fetching sitters:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Gọi fetchSitters khi component được mount lần đầu
+  useEffect(() => {
     fetchSitters();
   }, []);
 
   const applyFilters = () => {
-    console.log("Lọc theo giá:", filters.priceRange);
+    console.log("Áp dụng bộ lọc:", filters);
     setIsFilterVisible(false); // Ẩn modal sau khi lọc
+    fetchSitters(); // Gọi lại API với bộ lọc
   };
 
   const renderItem = ({ item }) => (
@@ -59,6 +85,11 @@ export default function ListCatSitter({ navigation }) {
       <View style={styles.cardContent}>
         <Text style={styles.sitterName}>{item.fullName}</Text>
         <Text style={styles.sitterLocation}>{item.location}</Text>
+        <Text style={styles.sitterPrice}>
+          {item.price ? `${item.price.toLocaleString()}đ` : "Chưa có giá"}
+        </Text>
+        <Text style={styles.sitterReviews}>{item.reviews}</Text>
+        <Text style={styles.sitterDistance}>{item.distance}</Text>
       </View>
       <TouchableOpacity style={styles.favoriteButton}>
         <Ionicons name="heart-outline" size={20} color="#FF4D67" />
@@ -96,6 +127,7 @@ export default function ListCatSitter({ navigation }) {
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -122,61 +154,83 @@ export default function ListCatSitter({ navigation }) {
                   setFilters((prev) => ({ ...prev, distance: value }))
                 }
               />
-            {/* Lọc Giá Tiền */}
-            <Text style={styles.filterLabel}>Giá dịch vụ (VND)</Text>
-            <View style={styles.priceRangeContainer}>
-              <Text style={styles.priceText}>
-                {filters.priceRange[0].toLocaleString()}đ
-              </Text>
-              <Text style={styles.sign}> -</Text>
-              <Text style={styles.priceText}>
-                {filters.priceRange[1].toLocaleString()}đ
-              </Text>
-            </View>
-            <Slider
-              style={{ width: "100%", height: 40 }}
-              minimumValue={20000}
-              maximumValue={500000}
-              step={10000}
-              minimumTrackTintColor="#902C6C"
-              maximumTrackTintColor="#D3D3D3"
-              thumbTintColor="#902C6C"
-              value={filters.priceRange[1]}
-              onValueChange={(value) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  priceRange: [prev.priceRange[0], value],
-                }))
-              }
-            />
+              {/* Lọc Giá Tiền */}
+              <Text style={styles.filterLabel}>Giá dịch vụ (VND)</Text>
+              <View style={styles.priceRangeContainer}>
+                <Text style={styles.priceText}>
+                  {filters.priceRange[0].toLocaleString()}đ
+                </Text>
+                <Text style={styles.sign}> -</Text>
+                <Text style={styles.priceText}>
+                  {filters.priceRange[1].toLocaleString()}đ
+                </Text>
+              </View>
+              <Slider
+                style={{ width: "100%", height: 40 }}
+                minimumValue={20000}
+                maximumValue={500000}
+                step={10000}
+                minimumTrackTintColor="#902C6C"
+                maximumTrackTintColor="#D3D3D3"
+                thumbTintColor="#902C6C"
+                value={filters.priceRange[1]}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    priceRange: [prev.priceRange[0], value],
+                  }))
+                }
+              />
 
               {/* Dịch vụ thêm */}
-          <View style={styles.filterRow}>
-             <Text style={styles.filterLabel}>Dịch vụ thêm</Text>
-            <TouchableOpacity style={[styles.switchContainer, filters.additionalServices && styles.switchActive,]} 
-            onPress={() =>setFilters((prev) => ({...prev,additionalServices: !prev.additionalServices, })) } >
-          <View
-              style={[
-               styles.switchCircle,
-                filters.additionalServices && styles.switchCircleActive,
-            ]}
-              />
-            </TouchableOpacity>
-            </View>
+              <View style={styles.filterRow}>
+                <Text style={styles.filterLabel}>Dịch vụ thêm</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.switchContainer,
+                    filters.additionalServices && styles.switchActive,
+                  ]}
+                  onPress={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      additionalServices: !prev.additionalServices,
+                    }))
+                  }
+                >
+                  <View
+                    style={[
+                      styles.switchCircle,
+                      filters.additionalServices && styles.switchCircleActive,
+                    ]}
+                  />
+                </TouchableOpacity>
+              </View>
 
-             {/* Số lượng thú cưng */}
+              {/* Số lượng thú cưng */}
               <Text style={styles.filterLabel}>Số lượng thú cưng</Text>
               <View style={styles.petCountContainer}>
-                  {["1", "2", "3+"].map((count) => (
-              <TouchableOpacity key={count} style={[ styles.petCountButton,filters.petCount === count && styles.petCountButtonActive,]}
-                    onPress={() => setFilters((prev) => ({ ...prev, petCount: count }))}
-                     >
-              <Text style={[ styles.petCountText, filters.petCount === count && styles.petCountTextActive, ]}>
-                 {count}
-             </Text>
-           </TouchableOpacity>
-            ))}
-            </View>
+                {["1", "2", "3+"].map((count) => (
+                  <TouchableOpacity
+                    key={count}
+                    style={[
+                      styles.petCountButton,
+                      filters.petCount === count && styles.petCountButtonActive,
+                    ]}
+                    onPress={() =>
+                      setFilters((prev) => ({ ...prev, petCount: count }))
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.petCountText,
+                        filters.petCount === count && styles.petCountTextActive,
+                      ]}
+                    >
+                      {count}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </ScrollView>
 
             {/* Nút Áp dụng */}
@@ -302,42 +356,42 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 20,
   },
- filterRow: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: 20,
-  marginTop:10,
-},
-filterLabel: {
-  fontSize: 16,
-  fontWeight: "bold",
-  color: "#1F1F1F",
-},
-switchContainer: {
-  width: 50, // Chiều rộng của công tắc
-  height: 25, // Chiều cao của công tắc
-  borderRadius: 15, // Bo tròn
-  backgroundColor: "#D3D3D3", // Màu nền mặc định
-  justifyContent: "center",
-  paddingHorizontal: 5,
-  position: "relative",
-},
-switchActive: {
-  backgroundColor: "#902C6C", // Màu nền khi kích hoạt
-},
-switchCircle: {
-  width: 20,
-  height: 20,
-  borderRadius: 10,
-  backgroundColor: "#FFF", // Màu của vòng tròn
-  position: "absolute",
-  left: 5, // Vị trí khi chưa kích hoạt
-  transition: "0.3s", // Hiệu ứng mượt mà
-},
-switchCircleActive: {
-  left: 25, // Vị trí khi kích hoạt
-},
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1F1F1F",
+  },
+  switchContainer: {
+    width: 50, // Chiều rộng của công tắc
+    height: 25, // Chiều cao của công tắc
+    borderRadius: 15, // Bo tròn
+    backgroundColor: "#D3D3D3", // Màu nền mặc định
+    justifyContent: "center",
+    paddingHorizontal: 5,
+    position: "relative",
+  },
+  switchActive: {
+    backgroundColor: "#902C6C", // Màu nền khi kích hoạt
+  },
+  switchCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#FFF", // Màu của vòng tròn
+    position: "absolute",
+    left: 5, // Vị trí khi chưa kích hoạt
+    transition: "0.3s", // Hiệu ứng mượt mà
+  },
+  switchCircleActive: {
+    left: 25, // Vị trí khi kích hoạt
+  },
   toggleButton: {
     padding: 10,
     backgroundColor: "#FFF",
@@ -372,45 +426,45 @@ switchCircleActive: {
     marginBottom: 10,
   },
   priceText: {
-  fontSize: 16,
-  fontWeight: "bold",
-  color: "#1F1F1F",
-  borderWidth: 1, // Đường viền
-  borderColor: "#D3D3D3", // Màu viền
-  borderRadius: 5, // Góc bo viền
-  padding: 5, // Khoảng cách giữa chữ và viền
-  textAlign: "center", // Căn giữa văn bản
-  minWidth: 60, // Đảm bảo kích thước tối thiểu
-},
-sign: {
-  fontSize: 20,
-},
-petCountContainer: {
-  margin: 12,
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  borderWidth: 1,
-  borderColor: "#D3D3D3",
-  borderRadius: 8,
-  overflow: "hidden",
-},
-petCountButton: {
-  flex: 1,
-  paddingVertical: 10,
-  alignItems: "center",
-  borderRightWidth: 1,
-  borderRightColor: "#D3D3D3",
-},
-petCountButtonActive: {
-  backgroundColor: "#902C6C",
-},
-petCountText: {
-  fontSize: 16,
-  fontWeight: "bold",
-  color: "#666",
-},
-petCountTextActive: {
-  color: "#FFF",
-},
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1F1F1F",
+    borderWidth: 1, // Đường viền
+    borderColor: "#D3D3D3", // Màu viền
+    borderRadius: 5, // Góc bo viền
+    padding: 5, // Khoảng cách giữa chữ và viền
+    textAlign: "center", // Căn giữa văn bản
+    minWidth: 60, // Đảm bảo kích thước tối thiểu
+  },
+  sign: {
+    fontSize: 20,
+  },
+  petCountContainer: {
+    margin: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D3D3D3",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  petCountButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRightWidth: 1,
+    borderRightColor: "#D3D3D3",
+  },
+  petCountButtonActive: {
+    backgroundColor: "#902C6C",
+  },
+  petCountText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#666",
+  },
+  petCountTextActive: {
+    color: "#FFF",
+  },
 });
