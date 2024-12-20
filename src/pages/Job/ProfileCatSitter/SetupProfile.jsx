@@ -569,7 +569,7 @@ export default function SetupProfile({ navigation }) {
         skill: selectedSkills.join(";"),
         environment,
         maximumQuantity: parseInt(maximumQuantity, 10) || 0,
-        status: 0,
+        // status: 0,
         profilePictures: sanitizedPictures.map((pic) =>
           pic.isCargoProfilePicture
             ? { ...pic, description: cageDescription }
@@ -830,7 +830,7 @@ export default function SetupProfile({ navigation }) {
           >
             <Text style={styles.addButtonText}>Thêm ảnh chuồng</Text>
           </TouchableOpacity>
-          <TextInput
+          {/* <TextInput
             style={styles.textInput}
             multiline
             numberOfLines={4}
@@ -839,7 +839,7 @@ export default function SetupProfile({ navigation }) {
             value={cageDescription} // Hiển thị giá trị
             onChangeText={(text) => setCageDescription(text)}
           />
-          <Text style={styles.characterCount}>{environment.length} / 500</Text>
+          <Text style={styles.characterCount}>{environment.length} / 500</Text> */}
         </View>
       </ScrollView>
     </View>

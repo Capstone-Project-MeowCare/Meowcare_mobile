@@ -336,7 +336,7 @@ export default function FindSitterByMap() {
                 <View style={styles.textContainer}>
                   <View style={styles.headerRow}>
                     <Text style={styles.name}>{item.fullName}</Text>
-                    <Text style={styles.priceLabel}>Giá mỗi đêm</Text>
+                    <Text style={styles.priceLabel}>Giá mỗi ngày</Text>
                   </View>
                   <View style={styles.centerRow}>
                     {item.bio ? (

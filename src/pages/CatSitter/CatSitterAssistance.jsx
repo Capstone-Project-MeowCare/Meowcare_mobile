@@ -267,21 +267,6 @@ export default function CatSitterAssistance({ id, fullRefundDay }) {
           )}
 
           <View style={styles.separator} />
-          <View style={styles.refundDayWrapper}>
-            <Text
-              style={[
-                styles.text1,
-                { textAlign: "left", right: height * 0.024 },
-              ]}
-            >
-              Số ngày hoàn tiền dịch vụ:
-            </Text>
-            <View style={styles.refundDayContainer}>
-              <Text style={styles.refundDayText}>
-                {fullRefundDay} <Text style={styles.dayText}>ngày</Text>
-              </Text>
-            </View>
-          </View>
 
           {/* Lịch */}
           <Text style={styles.text1}>Lịch</Text>
@@ -300,6 +285,21 @@ export default function CatSitterAssistance({ id, fullRefundDay }) {
                 Lịch được cập nhật {timeAgo(latestUpdate)}
               </Text>
             )}
+            <View style={styles.refundDayWrapper}>
+              <Text
+                style={[
+                  styles.updateText,
+                  { textAlign: "left", left: height * 0.007 },
+                ]}
+              >
+                Số ngày hoàn tiền dịch vụ:
+              </Text>
+              <View style={styles.refundDayContainer}>
+                <Text style={styles.refundDayText}>
+                  {fullRefundDay} <Text style={styles.dayText}>ngày</Text>
+                </Text>
+              </View>
+            </View>
             <View style={styles.policyTextContainer}>
               <Text style={styles.policyText}>
                 Chính sách hủy lịch MeowCare
@@ -471,8 +471,9 @@ const styles = StyleSheet.create({
   },
   refundDayContainer: {
     flexDirection: "row",
-    alignItems: "center", // Căn giữa theo chiều dọc
-    marginTop: height * 0.027,
+    alignItems: "center",
+    marginBottom: height * 0.0062,
+    marginRight: height * 0.05,
   },
   refundDayText: {
     fontSize: width * 0.04,

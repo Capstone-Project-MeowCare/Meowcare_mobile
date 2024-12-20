@@ -59,7 +59,7 @@ function FirstRoute({
   );
 }
 
-function SecondRoute() {
+function SecondRoute({ id }) {
   return (
     <View style={styles.routeContainer}>
       <ScrollView
@@ -67,7 +67,7 @@ function SecondRoute() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.tabContent}>
-          <CatSitterReviews />
+          <CatSitterReviews id={id} />
         </View>
       </ScrollView>
     </View>
@@ -344,7 +344,11 @@ export default function CatSitterServicePage({ navigation }) {
               />
             )}
           />
-          <Tab.Screen name="Đánh giá" component={SecondRoute} />
+          <Tab.Screen
+            name="Đánh giá"
+            children={() => <SecondRoute id={userId} />}
+          />
+
           <Tab.Screen
             name="Dịch vụ"
             children={() => (

@@ -30,13 +30,17 @@ export default function ListCatSitter({ navigation }) {
     try {
       setLoading(true);
 
-      // Lấy tọa độ user
-      const userCoordinates = { latitude: 10.73507, longitude: 106.632935 }; // Thay bằng tọa độ thật nếu có
+      const userCoordinates = { latitude: 10.73507, longitude: 106.632935 };
+
+      // Xác định serviceType dựa trên filters.additionalServices
+      const serviceType = filters.additionalServices
+        ? "ADDITION_SERVICE"
+        : "MAIN_SERVICE";
 
       const response = await getData("/sitter-profiles/search", {
         latitude: userCoordinates.latitude,
         longitude: userCoordinates.longitude,
-        serviceType: "MAIN_SERVICE",
+        serviceType, // Sử dụng serviceType linh hoạt
         minPrice: filters.priceRange[0],
         maxPrice: filters.priceRange[1],
         minQuantity:
@@ -45,24 +49,23 @@ export default function ListCatSitter({ navigation }) {
         size: 10,
       });
 
-      if (response?.data?.content) {
-        const formattedData = response.data.content.map((item) => ({
-          id: item.id,
+      const formattedData =
+        response?.data?.content?.map((item) => ({
+          id: `${serviceType}_${item.id}`, // Đảm bảo id duy nhất
           fullName: item.fullName,
           location: item.location,
           price: item.mainServicePrice,
+          additionalService: serviceType === "ADDITION_SERVICE", // Đặt true nếu đang lọc dịch vụ thêm
           reviews: `${item.numberOfReview || 0} đánh giá`,
           distance: item.distance
             ? `Khoảng cách: ${parseFloat(item.distance).toFixed(2)} km`
-            : "Không xác định", // Làm tròn khoảng cách thành 2 chữ số
+            : "Không xác định",
           imageSource: item.avatar
             ? { uri: item.avatar }
-            : require("../../../assets/avatar.png"), // Sử dụng avatar từ API hoặc ảnh mặc định
-        }));
-        setSitterData(formattedData);
-      } else {
-        setSitterData([]); // Không có dữ liệu
-      }
+            : require("../../../assets/avatar.png"),
+        })) || [];
+
+      setSitterData(formattedData);
     } catch (error) {
       console.error("Error fetching sitters:", error);
     } finally {
@@ -89,10 +92,14 @@ export default function ListCatSitter({ navigation }) {
         <Text style={styles.sitterLocation}>{item.location}</Text>
         <Text style={styles.sitterPrice}>
           {item.price
-            ? `Dịch vụ qua đêm: ${item.price.toLocaleString()}đ`
+            ? `Dịch vụ gửi thú cưng: ${item.price.toLocaleString()}đ`
             : "Chưa có giá"}
         </Text>
-        <Text style={styles.sitterReviews}>{item.reviews}</Text>
+        {item.additionalService && ( // Hiển thị nếu có dịch vụ khác
+          <Text style={styles.additionalServiceText}>
+            Có cung cấp dịch vụ khác
+          </Text>
+        )}
         <Text style={styles.sitterDistance}>{item.distance}</Text>
       </View>
       <TouchableOpacity style={styles.favoriteButton}>
@@ -128,7 +135,7 @@ export default function ListCatSitter({ navigation }) {
       ) : (
         <FlatList
           data={sitterData}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => `${item.id}_${index}`}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}

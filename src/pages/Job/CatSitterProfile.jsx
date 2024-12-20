@@ -116,31 +116,39 @@ export default function CatSitterProfile({ navigation }) {
               console.log("Sitter Profile ID:", sitterInfo.sitterProfileId);
 
               const endpoint = `/sitter-profiles/status/${sitterInfo.sitterProfileId}?status=${newStatus}`;
-
               const response = await putData(endpoint);
 
               if (response?.status === 1002) {
                 // Cập nhật trạng thái mới
                 setSitterInfo((prev) => ({ ...prev, status: newStatus }));
 
-                // Hiển thị thông báo
+                // Hiển thị thông báo thành công
                 CustomToast({
                   text: `${actionText} thành công`,
                   position: 300,
                 });
               } else {
-                Alert.alert(
-                  "Thất bại",
-                  `Không thể ${actionText.toLowerCase()}. Vui lòng thử lại sau.`
-                );
-                console.error("Failed to update status:", response);
+                throw new Error(response?.data?.message || "Không xác định");
               }
             } catch (error) {
-              console.error("Lỗi khi cập nhật trạng thái:", error);
-              Alert.alert(
-                "Lỗi",
-                `Không thể ${actionText.toLowerCase()}. Vui lòng thử lại.`
-              );
+              // console.error("Lỗi khi cập nhật trạng thái:", error);
+
+              // Xử lý lỗi và hiển thị thông báo
+              if (
+                error.response?.status === 400 &&
+                error.response?.data?.message ===
+                  "Wallet balance must be at least 200000"
+              ) {
+                Alert.alert(
+                  "Thông báo",
+                  "Số dư ví phải ít nhất 200.000đ để bắt đầu kinh doanh. Vui lòng thử lại."
+                );
+              } else {
+                Alert.alert(
+                  "Lỗi",
+                  `Không thể ${actionText.toLowerCase()}. Vui lòng thử lại.`
+                );
+              }
             }
           },
         },
@@ -148,6 +156,7 @@ export default function CatSitterProfile({ navigation }) {
       { cancelable: true }
     );
   };
+
   const navigateToSitterServicePage = (navigation, sitterProfileId, userId) => {
     navigation.navigate("SitterServicePage", {
       sitterId: sitterProfileId, // ID của sitter profile
