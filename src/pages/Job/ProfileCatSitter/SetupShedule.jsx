@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import { useAuth } from "../../../../auth/useAuth";
-import { getData, postData } from "../../../api/api";
+import { deleteData, getData, postData } from "../../../api/api";
 
 // Set Vietnamese localization
 LocaleConfig.locales["vi"] = {
@@ -71,38 +71,33 @@ export default function SetupSchedule({ navigation }) {
   const { user } = useAuth();
   const userId = user ? user.id : null;
   const [isBoardingSelected, setIsBoardingSelected] = useState(true);
-  const [isHomeVisitSelected, setIsHomeVisitSelected] = useState(false);
-
+  const [initialUnavailableDates, setInitialUnavailableDates] = useState([]);
   const [boardingSelectedDays, setBoardingSelectedDays] = useState([]);
-  const [homeVisitSelectedDays, setHomeVisitSelectedDays] = useState([]);
-
   const [boardingUnavailableDates, setBoardingUnavailableDates] = useState({});
-  const [homeVisitUnavailableDates, setHomeVisitUnavailableDates] = useState(
-    {}
-  );
+  const [idsToDelete, setIdsToDelete] = useState([]);
   useEffect(() => {
     if (userId) {
-      // Gọi API lấy danh sách ngày không khả dụng sử dụng hàm getData
       getData(`/sitter-unavailable-dates/sitter/${userId}`)
-        .then((unavailableDates) => {
-          // Chuyển dữ liệu trả về thành định dạng mà Calendar yêu cầu
-          const formattedUnavailableDates = unavailableDates.reduce(
-            (acc, item) => {
-              // Lấy ngày trong `startDate` và định dạng lại
-              const date = item.startDate.split("T")[0]; // Lấy phần ngày (YYYY-MM-DD)
-              acc[date] = {
-                selected: true,
-                marked: true,
-                selectedColor: "#D3D3D3", // Màu đánh dấu ngày không khả dụng
-              };
+        .then((response) => {
+          if (response && Array.isArray(response)) {
+            const formattedUnavailableDates = response.reduce((acc, item) => {
+              if (item.date) {
+                const date = item.date.split("T")[0]; // Lấy phần ngày (YYYY-MM-DD)
+                acc[date] = {
+                  id: item.id, // Lưu ID của ngày bận
+                  selected: true,
+                  marked: true,
+                  selectedColor: "#D3D3D3",
+                };
+              }
               return acc;
-            },
-            {}
-          );
+            }, {});
 
-          // Cập nhật ngày không khả dụng cho Boarding và Home Visit
-          setBoardingUnavailableDates(formattedUnavailableDates);
-          // setHomeVisitUnavailableDates(formattedUnavailableDates);
+            setBoardingUnavailableDates(formattedUnavailableDates);
+            setInitialUnavailableDates(Object.keys(formattedUnavailableDates)); // Lưu danh sách ngày ban đầu
+          } else {
+            console.error("API trả về định dạng không phải là mảng:", response);
+          }
         })
         .catch((error) => {
           console.error("Error fetching unavailable dates:", error);
@@ -110,34 +105,32 @@ export default function SetupSchedule({ navigation }) {
     }
   }, [userId]);
 
-  const toggleDaySelection = (dayId, service) => {
-    const setSelectedDays =
-      service === "boarding"
-        ? setBoardingSelectedDays
-        : setHomeVisitSelectedDays;
-    const selectedDays =
-      service === "boarding" ? boardingSelectedDays : homeVisitSelectedDays;
+  // const toggleDaySelection = (dayId) => {
+  //   if (boardingSelectedDays.includes(dayId)) {
+  //     setBoardingSelectedDays(
+  //       boardingSelectedDays.filter((day) => day !== dayId)
+  //     );
+  //   } else {
+  //     setBoardingSelectedDays([...boardingSelectedDays, dayId]);
+  //   }
+  // };
 
-    if (selectedDays.includes(dayId)) {
-      setSelectedDays(selectedDays.filter((day) => day !== dayId));
-    } else {
-      setSelectedDays([...selectedDays, dayId]);
-    }
-  };
+  const toggleUnavailableDate = (date) => {
+    console.log("Toggled date:", date);
 
-  const toggleUnavailableDate = (date, service) => {
-    const setUnavailableDates =
-      service === "boarding"
-        ? setBoardingUnavailableDates
-        : setHomeVisitUnavailableDates;
-    const unavailableDates =
-      service === "boarding"
-        ? boardingUnavailableDates
-        : homeVisitUnavailableDates;
+    setBoardingUnavailableDates((prevDates) => {
+      console.log("Previous Dates:", prevDates);
 
-    setUnavailableDates((prevDates) => {
       const newDates = { ...prevDates };
       if (newDates[date]) {
+        const id = newDates[date]?.id;
+        console.log(`Processing date: ${date}, id: ${id}`);
+        if (id) {
+          setIdsToDelete((prev) => {
+            console.log("Adding ID to delete list:", id);
+            return prev.includes(id) ? prev : [...prev, id];
+          });
+        }
         delete newDates[date];
       } else {
         newDates[date] = {
@@ -145,59 +138,138 @@ export default function SetupSchedule({ navigation }) {
           marked: true,
           selectedColor: "#D3D3D3",
         };
+        console.log("Added new date:", date);
       }
+
+      console.log("Updated Dates:", newDates);
       return newDates;
     });
   };
 
-  const saveSchedule = () => {
-    const unavailableDates = [
-      ...Object.keys(boardingUnavailableDates),
-      ...Object.keys(homeVisitUnavailableDates),
-    ];
+  const renderCalendar = () => {
+    const today = new Date();
+    const disableDates = {};
 
-    unavailableDates.forEach((date) => {
-      const requestData = {
-        startDate: `${date}T17:59:46.415Z`,
-        endDate: `${date}T17:59:46.415Z`,
-        dayOfWeek: "", // Lấy ngày trong tuần của date nếu cần
-        isRecurring: true,
+    for (
+      let d = new Date(2000, 0, 1);
+      d < today.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + 1)
+    ) {
+      const dateString = d.toISOString().split("T")[0];
+      disableDates[dateString] = {
+        disabled: true,
+        disableTouchEvent: true,
       };
-      postData("/sitter-unavailable-dates", requestData)
-        .then((response) => {
-          console.log("Lịch làm việc đã được lưu!", response);
-        })
-        .catch((error) => {
-          console.error("Lỗi khi lưu lịch làm việc:", error);
-        });
-    });
+    }
 
-    Alert.alert("Thông báo", "Lịch làm việc của bạn đã được lưu thành công!");
+    return (
+      <Calendar
+        onDayPress={(day) => toggleUnavailableDate(day.dateString)}
+        markedDates={{
+          ...Object.keys(boardingUnavailableDates).reduce((acc, date) => {
+            acc[date] = {
+              ...boardingUnavailableDates[date],
+            };
+            return acc;
+          }, {}),
+          ...disableDates, // Thêm các ngày bị vô hiệu hóa
+        }}
+      />
+    );
   };
 
-  const renderDaySelection = (service, selectedDays) => (
-    <View style={styles.daySelectionContainer}>
-      {daysOfWeek.map((day) => (
-        <TouchableOpacity
-          key={day.id}
-          style={[
-            styles.dayButton,
-            selectedDays.includes(day.id) && styles.dayButtonSelected,
-          ]}
-          onPress={() => toggleDaySelection(day.id, service)}
-        >
-          <Text
-            style={[
-              styles.dayButtonText,
-              selectedDays.includes(day.id) && styles.dayButtonTextSelected,
-            ]}
-          >
-            {day.name}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+  const saveSchedule = async () => {
+    const allSelectedDates = Object.keys(boardingUnavailableDates);
+    const newDates = allSelectedDates.filter(
+      (date) => !initialUnavailableDates.includes(date)
+    ); // Chỉ lấy ngày mới
+
+    try {
+      // Xử lý xóa ngày với Promise.all
+      if (idsToDelete.length > 0) {
+        const updatedDates = { ...boardingUnavailableDates }; // Bản sao trạng thái
+
+        const deletePromises = idsToDelete.map(async (id) => {
+          await deleteData(`/sitter-unavailable-dates/${id}`);
+          const dateToDelete = Object.keys(updatedDates).find(
+            (key) => updatedDates[key]?.id === id
+          );
+          if (dateToDelete) {
+            delete updatedDates[dateToDelete]; // Xóa ngày khỏi bản sao
+          }
+        });
+
+        await Promise.all(deletePromises);
+
+        setBoardingUnavailableDates(updatedDates); // Cập nhật trạng thái một lần
+        console.log("Tất cả ngày bận đã được xóa:", updatedDates);
+      }
+
+      // Xử lý thêm mới ngày
+      if (newDates.length > 0) {
+        const updatedDates = { ...boardingUnavailableDates }; // Bản sao trạng thái
+
+        const createPromises = newDates.map(async (date) => {
+          const formattedDate = `${date}T00:00:00Z`;
+          const requestData = {
+            date: formattedDate,
+            dayOfWeek: "",
+            isRecurring: false,
+            type: "RANGE",
+          };
+
+          const response = await postData(
+            "/sitter-unavailable-dates",
+            requestData
+          );
+          const { id } = response; // Giả sử API trả về ID của ngày mới
+          updatedDates[date] = {
+            id,
+            selected: true,
+            marked: true,
+            selectedColor: "#D3D3D3",
+          }; // Thêm ngày vào bản sao
+        });
+
+        await Promise.all(createPromises);
+
+        setBoardingUnavailableDates(updatedDates); // Cập nhật trạng thái một lần
+        console.log("Tất cả ngày bận mới đã được thêm:", updatedDates);
+      }
+
+      Alert.alert("Thông báo", "Lịch làm việc của bạn đã được cập nhật!");
+      setIdsToDelete([]); // Reset danh sách ID cần xóa
+      navigation.goBack();
+    } catch (error) {
+      console.error("Lỗi khi cập nhật lịch làm việc:", error.response || error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi cập nhật lịch làm việc.");
+    }
+  };
+
+  // const renderDaySelection = () => (
+  //   <View style={styles.daySelectionContainer}>
+  //     {daysOfWeek.map((day) => (
+  //       <TouchableOpacity
+  //         key={day.id}
+  //         style={[
+  //           styles.dayButton,
+  //           boardingSelectedDays.includes(day.id) && styles.dayButtonSelected,
+  //         ]}
+  //         onPress={() => toggleDaySelection(day.id)}
+  //       >
+  //         <Text
+  //           style={[
+  //             styles.dayButtonText,
+  //             boardingSelectedDays.includes(day.id) &&
+  //               styles.dayButtonTextSelected,
+  //           ]}
+  //         >
+  //           {day.name}
+  //         </Text>
+  //       </TouchableOpacity>
+  //     ))}
+  //   </View>
+  // );
 
   return (
     <View style={styles.container}>
@@ -218,54 +290,20 @@ export default function SetupSchedule({ navigation }) {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.sectionTitle}>Chọn dịch vụ bạn cung cấp</Text>
         <View style={styles.serviceOption}>
-          <Text style={styles.optionLabel}>Gủi thú cưng (Boarding)</Text>
+          <Text style={styles.optionLabel}>Gửi thú cưng (Boarding)</Text>
           <Switch
             value={isBoardingSelected}
             onValueChange={setIsBoardingSelected}
           />
         </View>
-        {/* <View style={styles.serviceOption}>
-          <Text style={styles.optionLabel}>Trông tại nhà (House Sitting)</Text>
-          <Switch
-            value={isHomeVisitSelected}
-            onValueChange={setIsHomeVisitSelected}
-          />
-        </View> */}
 
         {isBoardingSelected && (
           <>
-            <Text style={styles.sectionTitle}>Gủi thú cưng (Boarding)</Text>
-            {/* <Text style={styles.subTitle}>Chọn ngày trong tuần bạn rảnh </Text>
-            {renderDaySelection("boarding", boardingSelectedDays)} */}
-
+            <Text style={styles.sectionTitle}>Gửi thú cưng (Boarding)</Text>
             <Text style={styles.subTitle}>Chọn ngày không thể chăm sóc</Text>
-            <Calendar
-              onDayPress={(day) =>
-                toggleUnavailableDate(day.dateString, "boarding")
-              }
-              markedDates={boardingUnavailableDates} // Dùng state từ API
-            />
+            {renderCalendar()}
           </>
         )}
-
-        {/* {isHomeVisitSelected && (
-          <>
-            <Text style={styles.sectionTitle}>
-              Trông tại nhà (House Sitting)
-            </Text>
-            <Text style={styles.subTitle}>Chọn ngày trong tuần bạn rảnh</Text>
-            {renderDaySelection("homeVisit", homeVisitSelectedDays)}
-
-            <Text style={styles.subTitle}>Chọn ngày không thể chăm sóc</Text>
-            <Calendar
-              onDayPress={(day) =>
-                toggleUnavailableDate(day.dateString, "homeVisit")
-              }
-              markedDates={homeVisitUnavailableDates}
-            />
-          </>
-        )} */}
-
         <TouchableOpacity style={styles.saveButton} onPress={saveSchedule}>
           <Text style={styles.saveButtonText}>Lưu Lịch Làm Việc</Text>
         </TouchableOpacity>

@@ -184,6 +184,20 @@ export default function CareMonitorCatSitter({ navigation, route }) {
     const currentISODate = currentDate.toISOString().split("T")[0];
     return group.day === currentISODate;
   });
+  useEffect(() => {
+    if (filteredTasks.length > 0) {
+      // Đặt trạng thái expandedStates về false cho tất cả các nhóm
+      const resetStates = filteredTasks.map(() => false);
+      setExpandedStates(resetStates);
+
+      // Đặt lại chiều cao mặc định cho tất cả nhóm
+      const heights = filteredTasks.map(
+        () => new Animated.Value(height * 0.04)
+      );
+      setAnimatedHeights(heights);
+    }
+    // Chỉ chạy khi currentDate hoặc filteredTasks thay đổi
+  }, [currentDate, filteredTasks.length]);
 
   const handleCompleteBooking = async () => {
     try {
