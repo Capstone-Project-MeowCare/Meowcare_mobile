@@ -87,6 +87,18 @@ export default function Activity() {
               detail.service?.serviceType === "ADDITION_SERVICE"
           );
 
+          // Xử lý thời gian hiển thị
+          const time =
+            service?.service?.serviceType === "ADDITION_SERVICE"
+              ? booking.startDate
+                ? new Date(booking.startDate).toLocaleDateString("vi-VN")
+                : "Unknown Date"
+              : booking.startDate && booking.endDate
+                ? `${new Date(booking.startDate).toLocaleDateString(
+                    "vi-VN"
+                  )} - ${new Date(booking.endDate).toLocaleDateString("vi-VN")}`
+                : "Unknown Time";
+
           return {
             id: booking.id,
             userId: booking.user?.id,
@@ -100,11 +112,7 @@ export default function Activity() {
               uniquePets.map((pet) => pet.petName).join(", ") || "Unknown Pet",
             pets: uniquePets,
             serviceName: service?.service?.name || "Unknown Service",
-            time: booking.startDate
-              ? `${new Date(booking.startDate).toLocaleDateString(
-                  "vi-VN"
-                )} - ${new Date(booking.endDate).toLocaleDateString("vi-VN")}`
-              : "Unknown Time",
+            time: time, // Cập nhật thời gian
             status: finalStatus,
             statusLabel: getStatusLabel(finalStatus),
             statusColor: getStatusColor(getStatusLabel(finalStatus)),
@@ -279,7 +287,9 @@ export default function Activity() {
                     }
                   />
                 )} */}
-                {item.status === "CONFIRMED" && (
+                {["COMPLETED", "IN_PROGRESS", "CONFIRMED"].includes(
+                  item.status
+                ) && (
                   <CustomButton
                     title="Xem chi tiết"
                     style={styles.cancelButton}

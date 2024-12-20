@@ -23,46 +23,6 @@ import { db } from "../../configs/firebase";
 import { useFocusEffect } from "@react-navigation/native";
 const { width, height } = Dimensions.get("window");
 
-// Data mẫu cho các nhiệm vụ
-const taskData = [
-  {
-    time: "6:00 - 7:00 AM",
-    taskName: "Feeding the cat",
-    status: "Hoàn thành",
-    statusColor: "#4CAF50",
-  },
-  {
-    time: "7:00 - 8:00 AM",
-    taskName: "Playingg with the cat",
-    status: "Đang diễn ra",
-    statusColor: "#FFC107",
-  },
-  {
-    time: "8:00 - 9:00 AM",
-    taskName: "Groomingg the cat",
-    status: "Chưa bắt đầu",
-    statusColor: "#9E9E9E",
-  },
-  {
-    time: "9:00 - 10:00 AM",
-    taskName: "Cleaning the litter box",
-    status: "Chưa bắt đầu",
-    statusColor: "#9E9E9E",
-  },
-  {
-    time: "10:00 - 11:00 AM",
-    taskName: "Taking pictures of the cat",
-    status: "Chưa bắt đầu",
-    statusColor: "#9E9E9E",
-  },
-  {
-    time: "11:00 - 12:00 AM",
-    taskName: "Preparing cat food",
-    status: "Chưa bắt đầu",
-    statusColor: "#9E9E9E",
-  },
-];
-
 export default function CareMonitorUser({ navigation, route }) {
   const {
     userEmail,
@@ -112,7 +72,19 @@ export default function CareMonitorUser({ navigation, route }) {
       );
     }
   }, [currentDate, filteredTasks]);
+  useEffect(() => {
+    if (filteredTasks.length > 0) {
+      // Đặt tất cả trạng thái expandedStates về false
+      const resetStates = filteredTasks.map(() => false);
+      setExpandedStates(resetStates);
 
+      // Đặt lại chiều cao cho các nhóm
+      const heights = filteredTasks.map(
+        () => new Animated.Value(height * 0.04)
+      );
+      setAnimatedHeights(heights);
+    }
+  }, [currentDate, filteredTasks]);
   useFocusEffect(
     useCallback(() => {
       const fetchCareSchedule = async () => {

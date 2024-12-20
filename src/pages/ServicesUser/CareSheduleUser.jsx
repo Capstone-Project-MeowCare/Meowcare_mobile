@@ -224,9 +224,11 @@ export default function CareSheduleUser({ navigation, route }) {
         onRequestClose={() => setImageViewVisible(false)}
       />
       <View style={styles.separatorThin} />
-      <TouchableOpacity style={styles.requestButton}>
-        <Text style={styles.buttonText}>Yêu cầu thông tin</Text>
-      </TouchableOpacity>
+      {status !== "Chưa hoàn thành" && status !== "Chưa bắt đầu" && (
+        <TouchableOpacity style={styles.requestButton}>
+          <Text style={styles.buttonText}>Yêu cầu thông tin</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

@@ -15,11 +15,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { getData, putData } from "../../api/api";
 
 import { ActivityIndicator } from "react-native-paper";
+import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
 export default function BookingDetailRequest({ navigation }) {
   const route = useRoute();
+  const { user: currentUser } = useAuth();
   const { bookingId } = route.params;
   const [bookingDetails, setBookingDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,6 +49,7 @@ export default function BookingDetailRequest({ navigation }) {
     handleCloseModal();
   };
   useEffect(() => {
+    console.log("Booking ID:", bookingId);
     const fetchBookingDetails = async () => {
       try {
         const response = await getData(`/booking-orders/${bookingId}`);
@@ -62,16 +65,34 @@ export default function BookingDetailRequest({ navigation }) {
           );
 
           // Lấy Main Service từ danh sách dịch vụ
-          const mainService = rawDetails.bookingDetailWithPetAndServices.find(
-            (detail) => detail.service?.serviceType === "MAIN_SERVICE"
-          );
+          const mainService =
+            rawDetails.bookingDetailWithPetAndServices.find(
+              (detail) => detail.service?.serviceType === "MAIN_SERVICE"
+            ) || rawDetails.bookingDetailWithPetAndServices[0]; // Lấy dịch vụ đầu tiên nếu không có MAIN_SERVICE
 
-          console.log("Main Service:", mainService);
+          const sitterId = rawDetails?.sitter?.id || null;
+          const userId = rawDetails?.user?.id || null;
+
+          // Xử lý thời gian hiển thị
+          const time =
+            mainService?.service?.serviceType === "ADDITION_SERVICE"
+              ? rawDetails.startDate
+                ? new Date(rawDetails.startDate).toLocaleDateString("vi-VN")
+                : "Unknown Date"
+              : rawDetails.startDate && rawDetails.endDate
+                ? `${new Date(rawDetails.startDate).toLocaleDateString(
+                    "vi-VN"
+                  )} - ${new Date(rawDetails.endDate).toLocaleDateString("vi-VN")}`
+                : "Unknown Time";
 
           setBookingDetails({
             ...rawDetails,
-            mainService: mainService, // Lưu Main Service vào state
+            mainService: mainService,
             mainServiceName: mainService?.service?.name || "Không xác định",
+            sitterId: sitterId,
+            userId: userId,
+            totalAmount: rawDetails?.totalAmount || 0, // Thêm totalAmount từ API
+            time: time, // Lưu thời gian xử lý
           });
         }
       } catch (error) {
@@ -126,17 +147,9 @@ export default function BookingDetailRequest({ navigation }) {
     )
   ).length;
 
-  // Tính tổng giá trị
-  const dailyPrice = bookingDetails.mainService?.service?.price || 0; // Giá loại dịch vụ  mỗi ngày
-  const pricePerDay = dailyPrice * daysBooked; // Giá theo số ngày đã đặt
-  const pricePerPet = dailyPrice * petCount;
-
-  // Giá mỗi ngày cho tất cả mèo
-  const pricePerDayForAllPets = dailyPrice * petCount * daysBooked;
-
-  // Tổng số tiền (bao gồm số lượng mèo và số ngày đã đặt)
-  const totalPrice = pricePerDayForAllPets;
-
+  const canShowReviewButton =
+    otherDetails?.status === "COMPLETED" &&
+    currentUser?.id === bookingDetails?.userId;
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -181,11 +194,11 @@ export default function BookingDetailRequest({ navigation }) {
                 {bookingDetails?.mainServiceName || "Không xác định"}
               </Text>
             </View>
+
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Thời gian:</Text>
               <Text style={styles.detailValue}>
-                {new Date(otherDetails.startDate).toLocaleDateString("vi-VN")} -{" "}
-                {new Date(otherDetails.endDate).toLocaleDateString("vi-VN")}
+                {bookingDetails?.time || "Không xác định"}
               </Text>
             </View>
           </View>
@@ -267,33 +280,46 @@ export default function BookingDetailRequest({ navigation }) {
             ))}
 
           {/* Hiển thị giá chi tiết */}
-          <View style={styles.priceRow}>
+          {/* <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>
               Giá mỗi ngày ({daysBooked} ngày) x Số lượng mèo ({petCount} mèo):
             </Text>
             <Text style={styles.priceValue}>
               {`${pricePerDayForAllPets.toLocaleString()}đ`}
             </Text>
-          </View>
+          </View> */}
         </View>
 
         {/* Tổng số tiền */}
         <View style={styles.totalPaymentContainer}>
           <Text style={styles.priceLabel1}>Tổng số tiền:</Text>
           <Text style={styles.priceValue1}>
-            {`${totalPrice.toLocaleString()}đ`}
+            {`${bookingDetails.totalAmount.toLocaleString()}đ`}
           </Text>
         </View>
 
         <View style={styles.buttonContainer}>
-          {/* Chỉ hiển thị nút nếu trạng thái không phải là "COMPLETED" */}
-          {otherDetails?.status !== "COMPLETED" && (
+          {canShowReviewButton ? (
             <TouchableOpacity
-              style={styles.rejectButton} // Sử dụng style của nút "Từ chối"
-              onPress={handleOpenModal} // Mở Modal
+              style={styles.acceptButton}
+              onPress={() => {
+                navigation.navigate("SitterReviewScreen", {
+                  bookingId: bookingId,
+                  sitterId: bookingDetails?.sitterId,
+                });
+              }}
             >
-              <Text style={styles.buttonText}>Hủy yêu cầu đặt lịch</Text>
+              <Text style={styles.buttonText}>Đánh giá</Text>
             </TouchableOpacity>
+          ) : (
+            otherDetails?.status !== "COMPLETED" && (
+              <TouchableOpacity
+                style={styles.rejectButton}
+                onPress={handleOpenModal} // Mở Modal để hủy
+              >
+                <Text style={styles.buttonText}>Hủy yêu cầu đặt lịch</Text>
+              </TouchableOpacity>
+            )
           )}
         </View>
 
@@ -444,6 +470,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.005,
+    flexWrap: "wrap", // Cho phép xuống dòng khi nội dung dài
   },
   detailLabel: {
     fontSize: width * 0.033,
@@ -454,7 +481,9 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: width * 0.033,
     color: "rgba(0,8,87,0.8)",
+    flexShrink: 1, // Cho phép xuống dòng nếu không đủ chỗ
   },
+
   detailLabel1: {
     fontSize: width * 0.035,
     fontWeight: "bold",
@@ -566,11 +595,11 @@ const styles = StyleSheet.create({
   acceptButton: {
     backgroundColor: "#2E67D1",
     borderRadius: 8,
-    width: width * 0.6,
+    width: width * 0.9,
     height: height * 0.05,
     justifyContent: "center",
     alignItems: "center",
-    right: height * 0.03,
+    right: height * 0.02,
   },
   rejectButton: {
     backgroundColor: "#FF003D",

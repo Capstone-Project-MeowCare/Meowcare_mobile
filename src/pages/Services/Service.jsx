@@ -43,28 +43,28 @@ export default function Service() {
     "Hoàn thành",
     "Đã hủy",
   ];
-  // const filteredData =
-  //   selectedTab === "Tất cả"
-  //     ? bookingData
-  //     : bookingData.filter((item) => {
-  //         switch (selectedTab) {
-  //           case "Chờ xác nhận":
-  //             return item.status === "AWAITING_PAYMENT";
-  //           case "Đã xác nhận":
-  //             return item.status === "CONFIRMED";
-  //           case "Đang diễn ra":
-  //             return item.status === "IN_PROGRESS";
-  //           case "Hoàn thành":
-  //             return item.status === "COMPLETED";
-  //           case "Đã hủy":
-  //             return item.status === "CANCELLED";
-  //           default:
-  //             return true;
-  //         }
-  //       });
-  const filteredData = bookingData.filter((item) =>
-    ["IN_PROGRESS", "CONFIRMED", "COMPLETED"].includes(item.status)
-  );
+  const filteredData =
+    selectedTab === "Tất cả"
+      ? bookingData
+      : bookingData.filter((item) => {
+          switch (selectedTab) {
+            case "Chờ xác nhận":
+              return item.status === "AWAITING_PAYMENT";
+            case "Đã xác nhận":
+              return item.status === "CONFIRMED";
+            case "Đang diễn ra":
+              return item.status === "IN_PROGRESS";
+            case "Hoàn thành":
+              return item.status === "COMPLETED";
+            case "Đã hủy":
+              return item.status === "CANCELLED";
+            default:
+              return true;
+          }
+        });
+  // const filteredData = bookingData.filter((item) =>
+  //   ["IN_PROGRESS", "CONFIRMED", "COMPLETED"].includes(item.status)
+  // );
 
   const hasSitterRole =
     Array.isArray(roles) && roles.some((role) => role.roleName === "SITTER");
@@ -374,7 +374,6 @@ export default function Service() {
                 )}
               </View>
               <Text style={styles.label}>Dịch vụ: {item.serviceName}</Text>
-
               <Text style={styles.label}>
                 Mèo của người đặt: {item.catName}
               </Text>
@@ -383,56 +382,36 @@ export default function Service() {
               {/* Hiển thị nút dựa trên serviceType */}
               {(item.serviceType === "MAIN_SERVICE" ||
                 item.serviceType === "ADDITION_SERVICE") &&
-              (item.status === "IN_PROGRESS" || item.status === "CONFIRMED") ? (
-                <View style={styles.buttonRow}>
-                  <CustomButton
-                    title="Theo dõi lịch"
-                    onPress={() =>
-                      navigation.navigate("CareMonitorCatSitter", {
-                        userEmail: item.userEmail,
-                        sitterEmail: item.sitterEmail,
-                        bookingId: item.id,
-                        userId: item.userId,
-                        sitterId: item.sitterId,
-                        serviceName: item.serviceName,
-                        userPhoneNumber: item.userPhoneNumber,
-                      })
-                    }
-                  />
-                </View>
-              ) : /*
-  item.serviceType === "ADDITION_SERVICE" ? (
-    <View style={styles.buttonRow}>
-      <CustomButton
-        title="Xem chi tiết"
-        onPress={() =>
-          navigation.navigate("BookingDetailRequest", {
-            bookingId: item.id,
-            serviceName: item.serviceName,
-            userName: item.userName,
-            catName: item.catName,
-          })
-        }
-      />
-    </View>
-  ) : 
-  */
-              null}
-              {item.status === "COMPLETED" && (
-                <View style={styles.buttonRow}>
-                  <CustomButton
-                    title="Xem chi tiết"
-                    onPress={() =>
-                      navigation.navigate("BookingDetailRequest", {
-                        bookingId: item.id,
-                        serviceName: item.serviceName,
-                        userName: item.userName,
-                        catName: item.catName,
-                      })
-                    }
-                  />
-                </View>
-              )}
+                (item.status === "IN_PROGRESS" ||
+                  item.status === "CONFIRMED") && (
+                  <View style={[styles.buttonRow, { flexDirection: "row" }]}>
+                    <CustomButton
+                      title="Theo dõi lịch"
+                      onPress={() =>
+                        navigation.navigate("CareMonitorCatSitter", {
+                          userEmail: item.userEmail,
+                          sitterEmail: item.sitterEmail,
+                          bookingId: item.id,
+                          userId: item.userId,
+                          sitterId: item.sitterId,
+                          serviceName: item.serviceName,
+                          userPhoneNumber: item.userPhoneNumber,
+                        })
+                      }
+                    />
+                    <CustomButton
+                      title="Xem chi tiết"
+                      onPress={() =>
+                        navigation.navigate("BookingDetailRequest", {
+                          bookingId: item.id,
+                          serviceName: item.serviceName,
+                          userName: item.userName,
+                          catName: item.catName,
+                        })
+                      }
+                    />
+                  </View>
+                )}
             </View>
           )}
           ListFooterComponent={

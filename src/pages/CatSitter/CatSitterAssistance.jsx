@@ -131,28 +131,37 @@ export default function CatSitterAssistance({ id, fullRefundDay }) {
 
         if (response && Array.isArray(response)) {
           const unavailableDates = response.reduce((acc, item) => {
-            const date = item.startDate.split("T")[0];
-            acc[date] = {
-              selected: true,
-              marked: true,
-              selectedColor: item.isRecurring ? "#D9D9D9" : "#BAE8C9",
-            };
+            if (item.date) {
+              // Kiểm tra date có tồn tại
+              const date = item.date.split("T")[0]; // Lấy phần ngày (YYYY-MM-DD)
+              acc[date] = {
+                selected: true,
+                marked: true,
+                selectedColor: item.isRecurring ? "#D9D9D9" : "#D9D9D9", // Màu sắc tùy thuộc vào isRecurring
+              };
+            } else {
+              // console.warn(`Item missing date: ${JSON.stringify(item)}`);
+            }
             return acc;
           }, {});
 
           const latestCreatedAt = response.reduce((latest, item) => {
-            return new Date(item.createdAt) > new Date(latest)
-              ? item.createdAt
-              : latest;
-          }, response[0]?.createdAt);
+            if (item.createdAt) {
+              // Kiểm tra createdAt có tồn tại
+              return new Date(item.createdAt) > new Date(latest)
+                ? item.createdAt
+                : latest;
+            }
+            return latest;
+          }, response[0]?.createdAt || new Date().toISOString());
 
           setMarkedDates(unavailableDates);
           setLatestUpdate(latestCreatedAt);
         } else {
-          console.warn("No unavailable dates found.");
+          // console.warn("No unavailable dates found.");
         }
       } catch (error) {
-        console.error("Error fetching unavailable dates:", error);
+        // console.error("Error fetching unavailable dates:", error);
       }
     };
 
