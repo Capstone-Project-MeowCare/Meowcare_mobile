@@ -103,19 +103,20 @@ export default function ServicePaymentMethod() {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => handlePaymentMethodSelection("Ví điện tử", "wallet")}
-      >
-        <View style={styles.paymentMethodRow}>
-          <Ionicons name="wallet-outline" size={25} color="black" />
-          <Text style={styles.methodText}>Thanh toán qua Ví</Text>
-          <View style={styles.radioButton}>
-            {selectedOption === "Ví điện tử" ? (
-              <View style={styles.radioButtonSelected} />
-            ) : null}
-          </View>
-        </View>
-      </TouchableOpacity>
+      {/* Tạm Ẩn Phương Thức Thanh Toán qua Ví */}
+      {/* <TouchableOpacity
+  onPress={() => handlePaymentMethodSelection("Ví điện tử", "wallet")}
+>
+  <View style={styles.paymentMethodRow}>
+    <Ionicons name="wallet-outline" size={25} color="black" />
+    <Text style={styles.methodText}>Thanh toán qua Ví</Text>
+    <View style={styles.radioButton}>
+      {selectedOption === "Ví điện tử" ? (
+        <View style={styles.radioButtonSelected} />
+      ) : null}
+    </View>
+  </View>
+</TouchableOpacity> */}
     </View>
   );
 }

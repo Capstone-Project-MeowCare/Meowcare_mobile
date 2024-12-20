@@ -39,10 +39,9 @@ export default function ServicePayment() {
   const [bookingId, setBookingId] = useState(null);
   const [days, setDays] = useState(1);
   const [catsCount, setCatsCount] = useState(0);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
-    "Chọn phương thức thanh toán"
-  );
-  const [selectedIcon, setSelectedIcon] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("MoMo");
+  const [selectedIcon, setSelectedIcon] = useState("momo");
+
   useEffect(() => {
     console.log("Received step1Info in ServicePayment:", step1Info);
     if (step1Info?.childServices) {
@@ -62,6 +61,7 @@ export default function ServicePayment() {
     const numberOfDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
     const days = numberOfDays > 0 ? numberOfDays : 1;
 
+    // Dịch vụ chính
     if (
       step1Info.selectedServiceId &&
       step1Info.selectedServiceId !== "OTHER_SERVICES"
@@ -73,6 +73,7 @@ export default function ServicePayment() {
       });
     }
 
+    // Dịch vụ con
     if (
       Array.isArray(step1Info.childServices) &&
       step1Info.childServices.length > 0
@@ -100,37 +101,19 @@ export default function ServicePayment() {
       });
     }
 
-    if (Array.isArray(step1Info.selectedAdditionalServices)) {
-      step1Info.selectedAdditionalServices.forEach((serviceId) => {
-        const additionalService = step1Info.additionalServices?.find(
-          (service) => service.id === serviceId
-        );
-
-        if (additionalService) {
-          const slot = step1Info.selectedSlot?.[serviceId];
-          const startTime =
-            slot && slot.startTime
-              ? new Date(slot.startTime).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "";
-          const endTime =
-            slot && slot.endTime
-              ? new Date(slot.endTime).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "";
-
-          selectedServices.push({
-            name: additionalService.name || "Dịch vụ bổ sung không xác định",
-            price: additionalService.price || 0,
-            type: "ADDITIONAL_SERVICE",
-            startTime,
-            endTime,
-          });
-        }
+    // Dịch vụ bổ sung
+    if (
+      Array.isArray(step1Info.selectedAdditionalServiceNames) &&
+      step1Info.selectedAdditionalServiceNames.length > 0
+    ) {
+      step1Info.selectedAdditionalServiceNames.forEach((serviceName, index) => {
+        selectedServices.push({
+          name: serviceName,
+          price:
+            step1Info.totalAdditionalPrice /
+            step1Info.selectedAdditionalServiceNames.length, // Chia đều giá
+          type: "ADDITIONAL_SERVICE",
+        });
       });
     }
 

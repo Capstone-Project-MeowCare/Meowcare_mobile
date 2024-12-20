@@ -63,7 +63,7 @@ function FirstRoute() {
   const fetchSitterData = async () => {
     try {
       const response = await getData("/sitter-profiles");
-      console.log("Response Data:", response.data);
+      // console.log("Response Data:", response.data);
 
       // Xử lý dữ liệu đúng định dạng từ API
       const formattedData = response.data

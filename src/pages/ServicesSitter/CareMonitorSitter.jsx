@@ -81,21 +81,15 @@ export default function CareMonitorCatSitter({ navigation, route }) {
 
       if (response?.data?.tasks && Array.isArray(response.data.tasks)) {
         const tasks = response.data.tasks
-          .map((task) => {
+          .flatMap((task) => {
             if (!task.startTime || !task.endTime) return null;
 
-            // Chuyển đổi thời gian từ UTC sang giờ địa phương
             const startDate = new Date(task.startTime);
             const endDate = new Date(task.endTime);
+            startDate.setHours(startDate.getHours() + 7);
+            endDate.setHours(endDate.getHours() + 7);
 
-            // Tự động nhận diện nếu thời gian là UTC
-            const isUTC = startDate.getUTCHours() === startDate.getHours();
-            if (isUTC) {
-              startDate.setHours(startDate.getHours() + 7);
-              endDate.setHours(endDate.getHours() + 7);
-            }
-
-            return {
+            const mappedTask = {
               id: task.id,
               day: `${startDate.getFullYear()}-${String(
                 startDate.getMonth() + 1
@@ -105,23 +99,47 @@ export default function CareMonitorCatSitter({ navigation, route }) {
               )}-${String(startDate.getDate()).padStart(2, "0")}`,
               time: `${String(startDate.getHours()).padStart(2, "0")}:${String(
                 startDate.getMinutes()
-              ).padStart(2, "0")} - ${String(endDate.getHours()).padStart(
+              ).padStart(
                 2,
                 "0"
-              )}:${String(endDate.getMinutes()).padStart(2, "0")}`,
+              )} - ${String(endDate.getHours()).padStart(2, "0")}:${String(
+                endDate.getMinutes()
+              ).padStart(2, "0")}`,
               name: task.name || "Không có mô tả",
+              description: task.description || "Không có mô tả chi tiết",
               status: mapStatus(task.status),
               statusColor: getStatusColor(task.status),
               petProfile: task.petProfile || null,
               haveEvidence: task.haveEvidence || false,
+              subTasks: task.subTasks || [], // Thêm subTasks nếu tồn tại
             };
+
+            // Nếu có subTasks, thêm chúng như các task con
+            if (task.subTasks && task.subTasks.length > 0) {
+              const subTaskMapped = task.subTasks.map((subTask) => ({
+                ...mappedTask, // Kế thừa thông tin từ task cha
+                id: subTask.id, // ID của subTask
+                name: subTask.name || "Không có mô tả (subtask)",
+                description:
+                  subTask.description || "Không có mô tả chi tiết (subtask)",
+                haveEvidence: subTask.haveEvidence || false,
+              }));
+
+              return [mappedTask, ...subTaskMapped];
+            }
+
+            return mappedTask;
           })
           .filter((task) => task !== null);
 
         const groupedTasks = groupTasks(tasks);
-
         originalTasksRef.current = groupedTasks;
         setTasks(groupedTasks);
+
+        if (!currentDate && groupedTasks.length > 0) {
+          const firstTaskDay = groupedTasks[0].day;
+          setCurrentDate(new Date(firstTaskDay));
+        }
       } else {
         setTasks([]);
       }
@@ -129,8 +147,6 @@ export default function CareMonitorCatSitter({ navigation, route }) {
       if (response?.data?.startTime && response?.data?.endTime) {
         const scheduleStart = new Date(response.data.startTime);
         const scheduleEnd = new Date(response.data.endTime);
-
-        // Chuyển đổi thời gian của lịch trình
         scheduleStart.setHours(scheduleStart.getHours() + 7);
         scheduleEnd.setHours(scheduleEnd.getHours() + 7);
 
@@ -139,7 +155,11 @@ export default function CareMonitorCatSitter({ navigation, route }) {
           endTime: scheduleEnd,
         });
 
-        if (!currentDate) {
+        if (
+          !currentDate ||
+          currentDate < scheduleStart ||
+          currentDate > scheduleEnd
+        ) {
           setCurrentDate(scheduleStart);
         }
       }
@@ -165,8 +185,7 @@ export default function CareMonitorCatSitter({ navigation, route }) {
         taskMap.set(key, { time: task.time, day: task.day, tasks: [task] });
       } else {
         const existingTasks = taskMap.get(key).tasks;
-        const isDuplicate = existingTasks.some((t) => t.id === task.id);
-        if (!isDuplicate) {
+        if (!existingTasks.some((t) => t.id === task.id)) {
           existingTasks.push(task);
         }
       }
@@ -178,7 +197,6 @@ export default function CareMonitorCatSitter({ navigation, route }) {
       return aDate - bDate;
     });
   };
-
   const filteredTasks = tasks.filter((group) => {
     if (!currentDate) return false;
     const currentISODate = currentDate.toISOString().split("T")[0];

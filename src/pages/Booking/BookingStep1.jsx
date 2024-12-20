@@ -417,6 +417,9 @@ export default function BookingStep1({
     if (isLoading) return; // Ngăn chặn thao tác nếu đang xử lý
     setIsLoading(true);
 
+    // Lấy thông tin dịch vụ hiện tại
+    const service = additionalServices.find((s) => s.id === serviceId);
+
     if (isChecked) {
       // Fetch slots khi checkbox được tích
       try {
@@ -433,6 +436,12 @@ export default function BookingStep1({
             (id) => id !== serviceId
           );
 
+      const updatedSelectedNames = isChecked
+        ? [...(prev.selectedAdditionalServiceNames || []), service?.name || ""]
+        : (prev.selectedAdditionalServiceNames || []).filter(
+            (name) => name !== service?.name
+          );
+
       const updatedSelectedSlot = { ...(prev.selectedSlot || {}) };
 
       if (!isChecked) {
@@ -440,10 +449,17 @@ export default function BookingStep1({
         delete updatedSelectedSlot[serviceId];
       }
 
+      // Cập nhật tổng giá của các dịch vụ đã chọn
+      const updatedTotalPrice = isChecked
+        ? (prev.totalAdditionalPrice || 0) + (service?.price || 0)
+        : (prev.totalAdditionalPrice || 0) - (service?.price || 0);
+
       return {
         ...prev,
         selectedAdditionalServices: updatedSelectedIds,
+        selectedAdditionalServiceNames: updatedSelectedNames, // Thêm danh sách tên dịch vụ
         selectedSlot: updatedSelectedSlot,
+        totalAdditionalPrice: updatedTotalPrice, // Thêm tổng giá vào step1Info
       };
     });
 
@@ -484,6 +500,9 @@ export default function BookingStep1({
       step1Info.additionalServices
     );
   }, [step1Info.additionalServices]);
+  useEffect(() => {
+    console.log("Updated step1Info:", JSON.stringify(step1Info, null, 2));
+  }, [step1Info]);
 
   useEffect(() => {
     if (isDisplayingAdditionalServices) {

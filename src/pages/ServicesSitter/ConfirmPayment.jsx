@@ -6,6 +6,7 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getData } from "../../api/api";
@@ -55,16 +56,6 @@ export default function ConfirmPayment({ navigation, route }) {
     fetchConfig();
   }, [bookingId]);
 
-  const uniqueMainServices = (services) => {
-    return Array.from(
-      new Map(
-        services
-          .filter((detail) => detail.service?.serviceType === "MAIN_SERVICE")
-          .map((detail) => [detail.service.id, detail])
-      ).values()
-    );
-  };
-
   if (!bookingDetails || commissionRate === 0) {
     return (
       <View style={styles.loadingContainer}>
@@ -73,29 +64,20 @@ export default function ConfirmPayment({ navigation, route }) {
     );
   }
 
-  const daysBooked =
-    Math.round(
-      (new Date(bookingDetails?.endDate).setHours(0, 0, 0, 0) -
-        new Date(bookingDetails?.startDate).setHours(0, 0, 0, 0)) /
-        (1000 * 60 * 60 * 24)
-    ) + 1 || 1;
+  // Tổng tiền từ API
+  const totalAmount = bookingDetails.totalAmount || 0;
 
-  const petCount = Array.from(
-    new Map(
-      bookingDetails?.bookingDetailWithPetAndServices.map((detail) => [
-        detail.pet?.id,
-        detail.pet,
-      ])
-    )
-  ).length;
-
-  const mainServiceTotal = uniqueMainServices(
-    bookingDetails?.bookingDetailWithPetAndServices || []
-  ).reduce((sum, detail) => sum + (detail.service?.price || 0), 0);
-
-  const totalAmount = mainServiceTotal * daysBooked * petCount;
+  // Tiền chiết khấu
   const discountAmount = (totalAmount * commissionRate) / 100;
+
+  // Tổng tiền thực nhận
   const netAmount = totalAmount - discountAmount;
+
+  // Danh sách tên dịch vụ
+  const serviceNames = bookingDetails.bookingDetailWithPetAndServices
+    .map((detail) => detail.service?.name)
+    .filter((name) => name)
+    .join(", ");
 
   return (
     <View style={styles.container}>
@@ -105,42 +87,55 @@ export default function ConfirmPayment({ navigation, route }) {
       <View style={styles.divider} />
 
       <View style={styles.contentContainer}>
-        <View style={styles.paymentDetails}>
-          {/* Tổng tiền */}
-          <View style={styles.row}>
-            <Text style={styles.sectionTitle}>Tổng tiền:</Text>
-            <Text
-              style={styles.totalText}
-            >{`${totalAmount.toLocaleString()}đ`}</Text>
-          </View>
+        {/* Hiển thị tên dịch vụ */}
+        <View style={styles.row}>
+          <Text style={styles.sectionTitle}>Tên dịch vụ:</Text>
+          <Text style={styles.serviceText}>{serviceNames}</Text>
+        </View>
 
-          {/* Tiền chiết khấu */}
-          <View style={styles.row}>
-            <Text style={styles.sectionTitle}>Tiền chiết khấu:</Text>
-            <Text style={styles.discountText}>
-              {`-${discountAmount.toLocaleString()}đ (${commissionRate}%)`}
-            </Text>
-          </View>
+        {/* Tổng tiền */}
+        <View style={styles.row}>
+          <Text style={styles.sectionTitle}>Tổng tiền:</Text>
+          <Text
+            style={styles.totalText}
+          >{`${totalAmount.toLocaleString()}đ`}</Text>
+        </View>
 
-          {/* Tổng số tiền nhận được */}
-          <View style={styles.row}>
-            <Text style={styles.sectionTitle}>Tổng số tiền nhận được:</Text>
-            <Text
-              style={styles.remainingText}
-            >{`${netAmount.toLocaleString()}đ`}</Text>
-          </View>
+        {/* Tiền chiết khấu */}
+        <View style={styles.row}>
+          <Text style={styles.sectionTitle}>Tiền chiết khấu:</Text>
+          <Text style={styles.discountText}>
+            {`-${discountAmount.toLocaleString()}đ (${commissionRate}%)`}
+          </Text>
+        </View>
+
+        {/* Tổng số tiền nhận được */}
+        <View style={styles.row}>
+          <Text style={styles.sectionTitle}>Tổng số tiền nhận được:</Text>
+          <Text
+            style={styles.remainingText}
+          >{`${netAmount.toLocaleString()}đ`}</Text>
         </View>
       </View>
 
       <TouchableOpacity
         style={styles.confirmButton}
         onPress={() => {
-          alert("Thanh toán thành công! Dịch vụ đã hoàn tất.");
-          navigation.navigate("Công Việc");
+          Alert.alert(
+            "Xác nhận thanh toán",
+            "Thanh toán thành công! Dịch vụ đã hoàn tất.",
+            [
+              {
+                text: "OK",
+                onPress: () => navigation.navigate("Công Việc"),
+              },
+            ]
+          );
         }}
       >
         <Text style={styles.confirmButtonText}>Xác nhận thanh toán</Text>
       </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.reportButton}
         onPress={() => {
