@@ -8,22 +8,28 @@ const { width, height } = Dimensions.get("window");
 export const Intro = ({ navigation }) => {
   const { user } = useAuth(); // Lấy thông tin user từ useAuth
 
+  // useEffect(() => {
+  //   const checkAuthentication = () => {
+  //     if (user?.id) {
+  //       console.log("Người dùng đã đăng nhập:", user);
+  //       navigation.replace("Homes", { screen: "Home" }); // Chuyển hướng đến Home
+  //     } else {
+  //       console.log("Người dùng chưa đăng nhập. Điều hướng đến Login.");
+  //       navigation.replace("Login"); // Chuyển hướng đến Login
+  //     }
+  //   };
+
+  //   const timer = setTimeout(checkAuthentication, 3000);
+
+  //   return () => clearTimeout(timer); // Xóa timer khi component bị unmount
+  // }, [user, navigation]);
   useEffect(() => {
-    const checkAuthentication = () => {
-      if (user?.id) {
-        console.log("Người dùng đã đăng nhập:", user);
-        navigation.replace("Homes", { screen: "Home" }); // Chuyển hướng đến Home
-      } else {
-        console.log("Người dùng chưa đăng nhập. Điều hướng đến Login.");
-        navigation.replace("Login"); // Chuyển hướng đến Login
-      }
-    };
+    const timer = setTimeout(() => {
+      navigation.navigate("Login");
+    }, 3000);
 
-    const timer = setTimeout(checkAuthentication, 3000);
-
-    return () => clearTimeout(timer); // Xóa timer khi component bị unmount
-  }, [user, navigation]);
-
+    return () => clearTimeout(timer);
+  }, [navigation]);
   return (
     <View style={styles.container}>
       <Image
