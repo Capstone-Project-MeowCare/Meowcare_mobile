@@ -32,7 +32,6 @@ export default function ListCatSitter({ navigation }) {
 
       const userCoordinates = { latitude: 10.73507, longitude: 106.632935 };
 
-      // Xác định serviceType dựa trên filters.additionalServices
       const serviceType = filters.additionalServices
         ? "ADDITION_SERVICE"
         : "MAIN_SERVICE";
@@ -40,7 +39,7 @@ export default function ListCatSitter({ navigation }) {
       const response = await getData("/sitter-profiles/search", {
         latitude: userCoordinates.latitude,
         longitude: userCoordinates.longitude,
-        serviceType, // Sử dụng serviceType linh hoạt
+        serviceType,
         minPrice: filters.priceRange[0],
         maxPrice: filters.priceRange[1],
         minQuantity:
@@ -51,11 +50,12 @@ export default function ListCatSitter({ navigation }) {
 
       const formattedData =
         response?.data?.content?.map((item) => ({
-          id: `${serviceType}_${item.id}`, // Đảm bảo id duy nhất
+          id: item.id, // ID của profile sitter
+          sitterId: item.sitterId, // ID của user
           fullName: item.fullName,
           location: item.location,
           price: item.mainServicePrice,
-          additionalService: serviceType === "ADDITION_SERVICE", // Đặt true nếu đang lọc dịch vụ thêm
+          additionalService: serviceType === "ADDITION_SERVICE",
           reviews: `${item.numberOfReview || 0} đánh giá`,
           distance: item.distance
             ? `Khoảng cách: ${parseFloat(item.distance).toFixed(2)} km`
@@ -73,11 +73,17 @@ export default function ListCatSitter({ navigation }) {
     }
   };
 
-  // Gọi fetchSitters khi component được mount lần đầu
+  // Hàm điều hướng đến trang SitterServicePage
+  const navigateToSitterServicePage = (sitterProfileId, userId) => {
+    navigation.navigate("SitterServicePage", {
+      sitterId: sitterProfileId,
+      userId,
+    });
+  };
+
   useEffect(() => {
     fetchSitters();
   }, []);
-
   const applyFilters = () => {
     console.log("Áp dụng bộ lọc:", filters);
     setIsFilterVisible(false); // Ẩn modal sau khi lọc
@@ -85,7 +91,10 @@ export default function ListCatSitter({ navigation }) {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.cardContainer}>
+    <TouchableOpacity
+      onPress={() => navigateToSitterServicePage(item.id, item.sitterId)}
+      style={styles.cardContainer}
+    >
       <Image source={item.imageSource} style={styles.sitterImage} />
       <View style={styles.cardContent}>
         <Text style={styles.sitterName}>{item.fullName}</Text>
@@ -95,7 +104,7 @@ export default function ListCatSitter({ navigation }) {
             ? `Dịch vụ gửi thú cưng: ${item.price.toLocaleString()}đ`
             : "Chưa có giá"}
         </Text>
-        {item.additionalService && ( // Hiển thị nếu có dịch vụ khác
+        {item.additionalService && (
           <Text style={styles.additionalServiceText}>
             Có cung cấp dịch vụ khác
           </Text>
@@ -105,7 +114,7 @@ export default function ListCatSitter({ navigation }) {
       <TouchableOpacity style={styles.favoriteButton}>
         <Ionicons name="heart-outline" size={20} color="#FF4D67" />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

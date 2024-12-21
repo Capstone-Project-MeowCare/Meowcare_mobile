@@ -22,39 +22,6 @@ import { useAuth } from "../../../auth/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
-const catSitterData = [
-  {
-    id: "1",
-    sitterName: "Nguyễn Hoài Phúc",
-    address: "25 Thủ Đức, TP.HCM",
-    isVerified: true,
-    imageSource: require("../../../assets/1.jpg"),
-  },
-  {
-    id: "2",
-    sitterName: "User",
-    address: "25 Thủ Đức, TP.HCM",
-    isVerified: true,
-    imageSource: require("../../../assets/catpeople.jpg"),
-  },
-  {
-    id: "3",
-    sitterName: "User",
-    address: "25 Thủ Đức, TP.HCM",
-    isVerified: true,
-    imageSource: require("../../../assets/catpeople.jpg"),
-  },
-  {
-    id: "4",
-    sitterName: "User",
-    address: "25 Thủ Đức, TP.HCM",
-    isVerified: true,
-    imageSource: require("../../../assets/catpeople.jpg"),
-  },
-];
-{
-  /* List Cat sitter có dịch vụ Gửi thú cưng */
-}
 function FirstRoute() {
   const navigation = useNavigation();
   const [parentPressEnabled, setParentPressEnabled] = useState(true);
